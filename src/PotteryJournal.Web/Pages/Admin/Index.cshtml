@@ -1,0 +1,37 @@
+@page "/admin"
+@model PotteryJournal.Web.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin";
+}
+
+<h1 class="h3 mb-4">Admin</h1>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Pottery Journal</h2>
+        <p class="text-muted">Create and edit pieces, upload photos.</p>
+        <a class="btn btn-primary" href="/admin/pieces">Manage Pieces</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Events</h2>
+        <p class="text-muted">Create and edit upcoming events.</p>
+        <a class="btn btn-primary" href="/admin/events">Manage Events</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Allowed Admins</h2>
+        <p class="text-muted">Manage who can sign in to this admin area.</p>
+        <a class="btn btn-primary" href="/admin/allowed-admins">Manage Allowed Admins</a>
+      </div>
+    </div>
+  </div>
+</div>

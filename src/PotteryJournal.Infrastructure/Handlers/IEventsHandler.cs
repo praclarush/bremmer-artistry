@@ -1,0 +1,59 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using PotteryJournal.Infrastructure.Models;
+using PotteryJournal.SharedKernel.Core;
+
+namespace PotteryJournal.Infrastructure.Handlers
+{
+    /// <summary>
+    /// Business logic for events shown on the Events page, calendar, and Home teaser.
+    /// </summary>
+    public interface IEventsHandler
+    {
+        /// <summary>
+        /// Gets events starting now or later, in chronological order.
+        /// </summary>
+        Task<DataHandlerResponse<List<EventModel>>> GetUpcomingAsync();
+
+        /// <summary>
+        /// Gets every event, most recently starting first, for the admin list.
+        /// </summary>
+        Task<DataHandlerResponse<List<EventModel>>> GetAllAsync();
+
+        /// <summary>
+        /// Gets a single event by its primary key.
+        /// </summary>
+        /// <param name="id">The event's primary key.</param>
+        Task<DataHandlerResponse<EventModel>> GetByIdAsync(Guid id);
+
+        /// <summary>
+        /// Creates a new event.
+        /// </summary>
+        /// <param name="model">The fields submitted from the admin create form.</param>
+        /// <param name="createdByEmail">The email of the admin creating the event.</param>
+        Task<DataHandlerResponse<Guid>> CreateAsync(EventSaveModel model, string createdByEmail);
+
+        /// <summary>
+        /// Updates an existing event's fields.
+        /// </summary>
+        /// <param name="id">The event's primary key.</param>
+        /// <param name="model">The fields submitted from the admin edit form.</param>
+        Task<HandlerResponse> UpdateAsync(Guid id, EventSaveModel model);
+
+        /// <summary>
+        /// Deletes an event. Does not delete its banner image file -- callers must do that via
+        /// <see cref="Services.IImageStorageService"/>.
+        /// </summary>
+        /// <param name="id">The event's primary key.</param>
+        Task<HandlerResponse> DeleteAsync(Guid id);
+
+        /// <summary>
+        /// Sets or replaces an event's banner image file name.
+        /// </summary>
+        /// <param name="id">The event's primary key.</param>
+        /// <param name="fileName">The newly stored file name, as returned by <see cref="Services.IImageStorageService"/>.</param>
+        /// <returns>A response whose <c>Data</c> is the previous file name, if any, for the caller to delete from disk.</returns>
+        Task<DataHandlerResponse<string?>> SetImageAsync(Guid id, string fileName);
+    }
+}

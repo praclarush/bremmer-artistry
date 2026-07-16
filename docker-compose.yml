@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__PotteryJournal: "Host=db;Port=5432;Database=potteryjournal;Username=potteryjournal;Password=${POSTGRES_PASSWORD}"
+      Authentication__Google__ClientId: "${GOOGLE_CLIENT_ID}"
+      Authentication__Google__ClientSecret: "${GOOGLE_CLIENT_SECRET}"
+      POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL: "${BOOTSTRAP_ADMIN_EMAIL}"
+      Uploads__RootPath: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: potteryjournal
+      POSTGRES_USER: potteryjournal
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U potteryjournal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  uploads:

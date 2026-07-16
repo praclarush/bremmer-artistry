@@ -1,0 +1,17 @@
+.admin-thumb {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 1px solid #dee2e6;
+}
+
+.admin-repeatable-row {
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.admin-repeatable-row.row-removed {
+  display: none;
+}

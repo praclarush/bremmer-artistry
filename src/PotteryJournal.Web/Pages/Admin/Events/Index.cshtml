@@ -1,0 +1,38 @@
+@page "/admin/events"
+@model PotteryJournal.Web.Pages.Admin.Events.IndexModel
+@{
+    ViewData["Title"] = "Events";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 m-0">Events</h1>
+  <a class="btn btn-primary" href="/admin/events/edit">New Event</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Starts</th>
+      <th>Title</th>
+      <th>Venue</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (PotteryJournal.Infrastructure.Models.EventModel evt in Model.Events)
+    {
+      <tr>
+        <td>@evt.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+        <td>@evt.Title</td>
+        <td>@evt.VenueName</td>
+        <td class="text-end">
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/events/edit/@evt.Id">Edit</a>
+          <form method="post" asp-page-handler="Delete" asp-route-id="@evt.Id" class="d-inline"
+                onsubmit="return confirm('Delete &quot;@evt.Title&quot;?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

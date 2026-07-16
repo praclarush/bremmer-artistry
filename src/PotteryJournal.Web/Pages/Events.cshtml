@@ -1,0 +1,36 @@
+@page "/events"
+@{
+    ViewData["Title"] = "Events";
+    ViewData["ActiveNav"] = "Events";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/events.css" asp-append-version="true">
+}
+
+<div class="section-heading">
+  <h2>Events</h2>
+</div>
+
+<div class="events-toolbar">
+  <div class="view-toggle">
+    <button type="button" id="listViewBtn" class="active">List</button>
+    <button type="button" id="calendarViewBtn">Calendar</button>
+  </div>
+</div>
+
+<div id="eventCards" class="event-cards"></div>
+<p id="eventsEmptyState" class="empty-state hidden">No upcoming events right now -- check back soon.</p>
+
+<div id="calendarContainer" class="calendar hidden">
+  <div class="calendar-nav">
+    <button type="button" id="calendarPrev" aria-label="Previous month">&lsaquo;</button>
+    <span class="calendar-month-label" id="calendarMonthLabel"></span>
+    <button type="button" id="calendarNext" aria-label="Next month">&rsaquo;</button>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
+@section Scripts {
+  <script src="~/js/events.js" asp-append-version="true"></script>
+}

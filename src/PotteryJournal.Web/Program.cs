@@ -1,0 +1,204 @@
+using System.Security.Claims;
+using System.Text.Json;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using PotteryJournal.Infrastructure.Data;
+using PotteryJournal.Infrastructure.Handlers;
+using PotteryJournal.Infrastructure.Models;
+using PotteryJournal.Infrastructure.Options;
+using PotteryJournal.Infrastructure.Services;
+using PotteryJournal.SharedKernel.Core;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Admin");
+    options.Conventions.AllowAnonymousToPage("/Admin/Login");
+    options.Conventions.AllowAnonymousToPage("/Admin/AccessDenied");
+});
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PotteryJournal")));
+
+builder.Services.Configure<UploadsOptions>(builder.Configuration.GetSection("Uploads"));
+
+builder.Services.AddScoped<IPieceHandler, PieceHandler>();
+builder.Services.AddScoped<IEventsHandler, EventsHandler>();
+builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
+builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
+builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        // Deliberately leave DefaultChallengeScheme unset (falls back to DefaultScheme, Cookie).
+        // An [Authorize] failure must land on the Cookie handler's LoginPath -- our own
+        // /Admin/Login page -- not challenge Google directly. Google is only ever challenged
+        // explicitly, from Login.cshtml's "Sign in with Google" button.
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    })
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Admin/Login";
+        options.AccessDeniedPath = "/Admin/AccessDenied";
+    })
+    .AddGoogle(options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
+
+        // Reject the sign-in outright unless the authenticated Google email is on the
+        // AllowedAdmins list -- there is no open signup for this app.
+        options.Events.OnCreatingTicket = async context =>
+        {
+            string? email = context.Principal?.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                context.Fail("Google did not return an email address.");
+                return;
+            }
+
+            IAllowedAdminsHandler allowedAdminsHandler = context.HttpContext.RequestServices.GetRequiredService<IAllowedAdminsHandler>();
+            DataHandlerResponse<bool> response = await allowedAdminsHandler.IsAllowedAsync(email);
+            if (!response.IsSuccess || !response.Data)
+            {
+                context.Fail($"{email} is not on the admin allow-list.");
+            }
+        };
+
+        options.Events.OnRemoteFailure = context =>
+        {
+            context.Response.Redirect("/Admin/AccessDenied");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+const string DataEndpointsRateLimiterPolicy = "DataEndpoints";
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter(DataEndpointsRateLimiterPolicy, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 120;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+});
+
+var app = builder.Build();
+
+using (IServiceScope startupScope = app.Services.CreateScope())
+{
+    AppDbContext dbContext = startupScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    if (dbContext.Database.IsRelational())
+    {
+        // The in-memory provider used by integration tests doesn't support migrations.
+        await dbContext.Database.MigrateAsync();
+    }
+
+    string? bootstrapAdminEmail = builder.Configuration["POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL"];
+    if (string.IsNullOrWhiteSpace(bootstrapAdminEmail))
+    {
+        app.Logger.LogWarning(
+            "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL is not set -- if the AllowedAdmins list is empty, no one will be able to sign in.");
+    }
+    else
+    {
+        IAllowedAdminsHandler allowedAdminsHandler = startupScope.ServiceProvider.GetRequiredService<IAllowedAdminsHandler>();
+        await allowedAdminsHandler.EnsureBootstrapAdminAsync(bootstrapAdminEmail);
+    }
+}
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+string uploadsRootPath = Path.Combine(app.Environment.ContentRootPath, app.Configuration["Uploads:RootPath"] ?? "uploads");
+Directory.CreateDirectory(uploadsRootPath);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRootPath),
+    RequestPath = "/uploads",
+    OnPrepareResponse = context =>
+    {
+        // Uploaded file names are unique per upload and never reused, so cache aggressively --
+        // matches the original static site's nginx.conf treatment of piece photos.
+        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+    },
+});
+
+app.UseRouting();
+app.UseRateLimiter();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+// Plain JSON endpoints backing this site's own pages -- not a public API. They replace the
+// old static site's checked-in pieces.json with server-generated data from Postgres.
+app.MapGet("/pottery-journal/data", async (string? category, IPieceHandler pieceHandler) =>
+{
+    DataHandlerResponse<List<PieceDetailModel>> response = await pieceHandler.GetAllDetailsAsync(category);
+    return JsonResult(response.Data ?? new List<PieceDetailModel>());
+}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+
+app.MapGet("/events/data", async (IEventsHandler eventsHandler) =>
+{
+    DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetUpcomingAsync();
+    return JsonResult(response.Data ?? new List<EventModel>());
+}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+
+app.MapGet("/events/{id:guid}/ics", async (Guid id, IEventsHandler eventsHandler, IIcsGenerator icsGenerator) =>
+{
+    DataHandlerResponse<EventModel> eventResponse = await eventsHandler.GetByIdAsync(id);
+    if (!eventResponse.IsSuccess || eventResponse.Data is null)
+    {
+        return Results.NotFound();
+    }
+
+    DataHandlerResponse<byte[]> icsResponse = icsGenerator.GenerateEventIcs(eventResponse.Data);
+    if (!icsResponse.IsSuccess || icsResponse.Data is null)
+    {
+        return Results.Problem("Could not generate the calendar file.");
+    }
+
+    return Results.File(icsResponse.Data, "text/calendar", $"{eventResponse.Data.Title}.ics");
+}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+
+app.Run();
+
+// Serializes to a JSON string up front rather than using Results.Json's streaming PipeWriter
+// path, which is incompatible with the TestServer response pipe used by WebApplicationFactory
+// integration tests. Payloads here are small, so the perf difference is immaterial.
+static IResult JsonResult<T>(T data)
+{
+    JsonSerializerOptions options = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+    return Results.Content(JsonSerializer.Serialize(data, options), "application/json");
+}
+
+// Exposes the top-level statements' implicit Program class to PotteryJournal.Web.Tests for
+// WebApplicationFactory<Program>.
+public partial class Program
+{
+}

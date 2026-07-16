@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>@ViewData["Title"] - Admin - Bremmer Artistry</title>
+<link rel="icon" href="~/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="~/css/admin.css" asp-append-version="true">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/admin">Bremmer Artistry Admin</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="/admin/pieces">Pieces</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/events">Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="/admin/allowed-admins">Allowed Admins</a></li>
+      </ul>
+      <span class="navbar-text me-3">@(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value)</span>
+      <form method="post" asp-page="/Admin/Logout">
+        <button type="submit" class="btn btn-outline-light btn-sm">Sign out</button>
+      </form>
+    </div>
+  </div>
+</nav>
+
+<div class="container pb-5">
+  @if (TempData["StatusMessage"] is string statusMessage && !string.IsNullOrEmpty(statusMessage))
+  {
+    <div class="alert alert-info">@statusMessage</div>
+  }
+  @RenderBody()
+</div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/admin-forms.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

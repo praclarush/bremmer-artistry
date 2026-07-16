@@ -1,0 +1,180 @@
+@page "/admin/pieces/edit/{id:guid?}"
+@model PotteryJournal.Web.Pages.Admin.Pieces.EditModel
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Edit Piece" : "New Piece";
+}
+
+<h1 class="h3 mb-4">
+  @(Model.Id.HasValue ? $"Edit Piece #{Model.PieceNumber:000}" : "New Piece")
+</h1>
+
+<form method="post" asp-page-handler="Save" asp-route-id="@Model.Id">
+  <div class="row mb-3">
+    <div class="col-sm-8">
+      <label class="form-label" for="title">Title</label>
+      <input type="text" class="form-control" id="title" asp-for="Piece.Title" required>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="category">Category</label>
+      <input type="text" class="form-control" id="category" asp-for="Piece.Category" list="categoryOptions">
+      <datalist id="categoryOptions">
+        @foreach (string category in Model.ExistingCategories)
+        {
+          <option value="@category"></option>
+        }
+      </datalist>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-4">
+      <label class="form-label" for="clay">Clay</label>
+      <input type="text" class="form-control" id="clay" asp-for="Piece.Clay" required>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="startedDate">Started</label>
+      <input type="date" class="form-control" id="startedDate" asp-for="Piece.StartedDate" required>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label" for="finishedDate">Finished (optional)</label>
+      <input type="date" class="form-control" id="finishedDate" asp-for="Piece.FinishedDate">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="sizeText">Size</label>
+      <input type="text" class="form-control" id="sizeText" asp-for="Piece.SizeText" placeholder="e.g. 6&quot; x 4&quot;" required>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="weightText">Weight</label>
+      <input type="text" class="form-control" id="weightText" asp-for="Piece.WeightText" required>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="glazeSummary">Glaze summary</label>
+    <input type="text" class="form-control" id="glazeSummary" asp-for="Piece.GlazeSummary" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="attachmentsText">Attachments (optional)</label>
+    <input type="text" class="form-control" id="attachmentsText" asp-for="Piece.AttachmentsText">
+  </div>
+
+  <fieldset class="mb-4">
+    <legend class="h5">Notes</legend>
+    <div id="notesRows">
+      @for (int i = 0; i < Model.Piece.Notes.Count; i++)
+      {
+        <div class="admin-repeatable-row">
+          <div class="row g-2">
+            <div class="col-sm-4">
+              <input type="text" class="form-control" name="Piece.Notes[@i].Title" value="@Model.Piece.Notes[i].Title" placeholder="Title (optional)">
+            </div>
+            <div class="col-sm-7">
+              <input type="text" class="form-control" name="Piece.Notes[@i].NoteText" value="@Model.Piece.Notes[i].NoteText" placeholder="Note text">
+            </div>
+            <div class="col-sm-1">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>&times;</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+    <template id="notesRowsTemplate">
+      <div class="admin-repeatable-row">
+        <div class="row g-2">
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="Piece.Notes[__index__].Title" placeholder="Title (optional)">
+          </div>
+          <div class="col-sm-7">
+            <input type="text" class="form-control" name="Piece.Notes[__index__].NoteText" placeholder="Note text">
+          </div>
+          <div class="col-sm-1">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>&times;</button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-add-row="notesRows">+ Add Note</button>
+  </fieldset>
+
+  <fieldset class="mb-4">
+    <legend class="h5">Glaze Applications</legend>
+    <div id="glazeRows">
+      @for (int i = 0; i < Model.Piece.GlazeApplications.Count; i++)
+      {
+        <div class="admin-repeatable-row">
+          <div class="row g-2">
+            <div class="col-sm-4">
+              <input type="text" class="form-control" name="Piece.GlazeApplications[@i].Location" value="@Model.Piece.GlazeApplications[i].Location" placeholder="Location">
+            </div>
+            <div class="col-sm-4">
+              <input type="text" class="form-control" name="Piece.GlazeApplications[@i].GlazeName" value="@Model.Piece.GlazeApplications[i].GlazeName" placeholder="Glaze name">
+            </div>
+            <div class="col-sm-3">
+              <input type="number" min="1" class="form-control" name="Piece.GlazeApplications[@i].Coats" value="@Model.Piece.GlazeApplications[i].Coats" placeholder="Coats">
+            </div>
+            <div class="col-sm-1">
+              <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>&times;</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+    <template id="glazeRowsTemplate">
+      <div class="admin-repeatable-row">
+        <div class="row g-2">
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="Piece.GlazeApplications[__index__].Location" placeholder="Location">
+          </div>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" name="Piece.GlazeApplications[__index__].GlazeName" placeholder="Glaze name">
+          </div>
+          <div class="col-sm-3">
+            <input type="number" min="1" class="form-control" name="Piece.GlazeApplications[__index__].Coats" placeholder="Coats">
+          </div>
+          <div class="col-sm-1">
+            <button type="button" class="btn btn-outline-danger btn-sm" data-remove-row>&times;</button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <button type="button" class="btn btn-outline-secondary btn-sm" data-add-row="glazeRows">+ Add Glaze Application</button>
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Save</button>
+  <a class="btn btn-link" href="/admin/pieces">Cancel</a>
+</form>
+
+@if (Model.Id.HasValue)
+{
+  <hr class="my-4">
+  <h2 class="h5 mb-3">Photos</h2>
+
+  <div class="row g-3 mb-3">
+    @foreach (PotteryJournal.Infrastructure.Models.PieceImageModel image in Model.Images)
+    {
+      <div class="col-auto text-center">
+        <img class="admin-thumb d-block mb-1" src="/uploads/pieces/@image.FileName" alt="Piece photo">
+        <form method="post" asp-page-handler="RemoveImage" asp-route-id="@Model.Id" asp-route-imageId="@image.Id"
+              onsubmit="return confirm('Remove this photo?');">
+          <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+        </form>
+      </div>
+    }
+  </div>
+
+  <form method="post" asp-page-handler="UploadImage" asp-route-id="@Model.Id" enctype="multipart/form-data" class="d-flex gap-2 align-items-end">
+    <div>
+      <label class="form-label" for="image">Upload photo</label>
+      <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+    </div>
+    <button type="submit" class="btn btn-secondary">Upload</button>
+  </form>
+}
+else
+{
+  <p class="text-muted mt-4">Save the piece first to add photos.</p>
+}

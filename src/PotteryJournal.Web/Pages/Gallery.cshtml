@@ -1,0 +1,37 @@
+@page "/gallery"
+@model PotteryJournal.Web.Pages.GalleryModel
+@{
+    ViewData["Title"] = "Gallery";
+    ViewData["ActiveNav"] = "Gallery";
+}
+
+<div class="section-heading">
+  <h2>Gallery</h2>
+</div>
+<p class="content-page" style="padding-top:0; padding-bottom:0;">
+  This gallery brings together a range of ceramic forms, organized by category. Browse by process
+  or vessel type below, or see every piece in the <a href="/pottery-journal">Pottery Journal</a>.
+</p>
+
+@if (Model.Categories.Count == 0)
+{
+  <p class="empty-state">No categories yet -- tag a piece with a category in the Pottery Journal to see it here.</p>
+}
+else
+{
+  <div class="category-grid">
+    @foreach (PotteryJournal.Infrastructure.Models.GalleryCategoryModel category in Model.Categories)
+    {
+      <a class="category-tile" href="/pottery-journal?category=@Uri.EscapeDataString(category.Category)">
+        <div class="category-photo">
+          @if (!string.IsNullOrEmpty(category.RepresentativeImageFileName))
+          {
+            <img src="/uploads/pieces/@category.RepresentativeImageFileName" alt="@category.Category" loading="lazy">
+          }
+        </div>
+        <span class="category-name">@category.Category</span>
+        <span class="category-count">@category.PieceCount piece@(category.PieceCount == 1 ? "" : "s")</span>
+      </a>
+    }
+  </div>
+}

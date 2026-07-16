@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PotteryJournal.Infrastructure/PotteryJournal.Infrastructure.csproj" />
+    <Project Path="src/PotteryJournal.SharedKernel/PotteryJournal.SharedKernel.csproj" />
+    <Project Path="src/PotteryJournal.Web/PotteryJournal.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PotteryJournal.Infrastructure.Tests/PotteryJournal.Infrastructure.Tests.csproj" />
+    <Project Path="tests/PotteryJournal.Web.Tests/PotteryJournal.Web.Tests.csproj" />
+  </Folder>
+</Solution>

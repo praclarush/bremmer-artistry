@@ -1,0 +1,42 @@
+@page "/admin/pieces"
+@model PotteryJournal.Web.Pages.Admin.Pieces.IndexModel
+@{
+    ViewData["Title"] = "Pieces";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 m-0">Pottery Journal Pieces</h1>
+  <a class="btn btn-primary" href="/admin/pieces/edit">New Piece</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Title</th>
+      <th>Clay</th>
+      <th>Category</th>
+      <th>Started</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (PotteryJournal.Infrastructure.Models.PieceSummaryModel piece in Model.Pieces)
+    {
+      <tr>
+        <td>#@piece.PieceNumber.ToString("000")</td>
+        <td>@piece.Title</td>
+        <td>@piece.Clay</td>
+        <td>@piece.Category</td>
+        <td>@piece.StartedDate.ToString("yyyy-MM-dd")</td>
+        <td class="text-end">
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/pieces/edit/@piece.Id">Edit</a>
+          <form method="post" asp-page-handler="Delete" asp-route-id="@piece.Id" class="d-inline"
+                onsubmit="return confirm('Delete &quot;@piece.Title&quot;?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

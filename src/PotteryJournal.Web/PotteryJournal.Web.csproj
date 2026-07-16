@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\PotteryJournal.Infrastructure\PotteryJournal.Infrastructure.csproj" />
+    <ProjectReference Include="..\PotteryJournal.SharedKernel\PotteryJournal.SharedKernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.11">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Dev machine only has the .NET 10 ASP.NET Core shared runtime installed; Docker uses the real
+         aspnet:8.0 image, so this only affects `dotnet run` on this box, not what ships. -->
+    <RollForward>LatestMajor</RollForward>
+  </PropertyGroup>
+
+</Project>

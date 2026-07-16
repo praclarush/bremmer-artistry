@@ -1,0 +1,43 @@
+@page "/pottery-journal"
+@{
+    ViewData["Title"] = "Pottery Journal";
+    ViewData["ActiveNav"] = "PotteryJournal";
+}
+
+@section Styles {
+  <link rel="stylesheet" href="~/css/pottery-journal.css" asp-append-version="true">
+}
+
+<header class="journal-header">
+  <h1>Pottery Journal</h1>
+  <div class="header-tools">
+    <span><span id="pieceCount">0</span> pieces on the shelf</span>
+    <input id="searchInput" type="search" placeholder="Search title or clay&hellip;" aria-label="Search pieces">
+  </div>
+</header>
+
+<div class="filter-bar">
+  <div class="filter-group" data-group="clay">
+    <span class="filter-label">CLAY</span>
+    <div class="chip-row" id="clayChips"></div>
+  </div>
+  <div class="filter-group" data-group="glaze">
+    <span class="filter-label">GLAZE</span>
+    <div class="chip-row" id="glazeChips"></div>
+  </div>
+</div>
+
+<main id="galleryView" class="gallery" aria-live="polite"></main>
+
+<p id="emptyState" class="empty-state hidden">Nothing matches that search. Try another name or clay body.</p>
+
+<section id="detailView" class="detail-view hidden">
+  <div class="detail-inner">
+    <button id="backBtn" class="back-btn">&larr; back to the shelf</button>
+    <article class="worksheet" id="worksheet"></article>
+  </div>
+</section>
+
+@section Scripts {
+  <script src="~/js/pottery-journal.js" asp-append-version="true"></script>
+}

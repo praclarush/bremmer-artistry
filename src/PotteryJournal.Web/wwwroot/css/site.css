@@ -1,0 +1,312 @@
+:root {
+  /* Palette carried over from the original Pottery Journal site (bremmer-artistry.art): navy, gold, off-white */
+  --kiln-char: #072638;
+  --shelf: #1b3748;
+  --shelf-line: #344d5c;
+  --bisque: #f1f0ef;
+  --bisque-dark: #88959d;
+  --copper-glaze: #af8958;
+  --copper-glaze-dim: #806d4f;
+  --paper: #f1f0ef;
+  --paper-line: #d0d4d5;
+  --ink: #072638;
+  --ink-soft: #697b85;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--kiln-char);
+  color: var(--bisque);
+  font-family: var(--font-body);
+  min-height: 100%;
+}
+
+a { color: var(--copper-glaze); }
+
+.site-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.site-main { flex: 1; }
+
+/* ---------- site nav ---------- */
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 2rem;
+  padding: 1.75rem clamp(1rem, 4vw, 3rem) 1.25rem;
+  border-bottom: 1px solid var(--shelf-line);
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  text-decoration: none;
+}
+
+.wordmark span {
+  color: var(--copper-glaze);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav-links a {
+  color: var(--bisque-dark);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus-visible {
+  color: var(--paper);
+}
+
+.nav-links a[aria-current="page"] {
+  color: var(--copper-glaze);
+  border-bottom-color: var(--copper-glaze);
+}
+
+/* ---------- footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--shelf-line);
+  padding: 1.75rem clamp(1rem, 4vw, 3rem);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bisque-dark);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  justify-content: space-between;
+}
+
+.site-footer a { color: var(--bisque-dark); }
+.site-footer a:hover { color: var(--copper-glaze); }
+
+/* ---------- hero (Home) ---------- */
+
+.hero {
+  padding: 4rem clamp(1rem, 4vw, 3rem) 3rem;
+  max-width: 780px;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper-glaze);
+}
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  color: var(--paper);
+  margin: 0.5rem 0 1rem;
+}
+
+.hero p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--bisque-dark);
+}
+
+.btn {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--paper);
+  border: 1px solid var(--copper-glaze);
+  padding: 0.65rem 1.2rem;
+  border-radius: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background: var(--copper-glaze);
+  color: var(--kiln-char);
+}
+
+/* ---------- section heading, shared across pages ---------- */
+
+.section-heading {
+  padding: 0 clamp(1rem, 4vw, 3rem);
+  margin: 3rem 0 1.5rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--paper);
+  margin: 0;
+}
+
+.section-heading a {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+/* ---------- Gallery category tiles ---------- */
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem 1.6rem;
+  padding: 1rem clamp(1rem, 4vw, 3rem) 4rem;
+}
+
+.category-tile {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.category-photo {
+  aspect-ratio: 1 / 1;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+  overflow: hidden;
+}
+
+.category-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.category-tile:hover .category-photo img,
+.category-tile:focus-visible .category-photo img {
+  transform: scale(1.045);
+}
+
+.category-name {
+  display: block;
+  margin-top: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.92rem;
+  color: var(--paper);
+}
+
+.category-count {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--bisque-dark);
+  margin-top: 0.15rem;
+}
+
+.empty-state {
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--bisque-dark);
+  padding: 4rem 1rem;
+}
+
+/* ---------- static content pages (FAQ / About) ---------- */
+
+.content-page {
+  max-width: 720px;
+  padding: 3rem clamp(1rem, 4vw, 3rem) 5rem;
+}
+
+.content-page h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  color: var(--paper);
+  margin-bottom: 1.5rem;
+}
+
+.content-page p {
+  line-height: 1.8;
+  color: var(--bisque-dark);
+}
+
+.faq-item {
+  border-top: 1px solid var(--shelf-line);
+  padding: 1.5rem 0;
+}
+.faq-item:last-child { border-bottom: 1px solid var(--shelf-line); }
+
+.faq-question {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.faq-answer {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--bisque-dark);
+}
+
+.about-photo {
+  width: 100%;
+  max-width: 360px;
+  border: 1px solid var(--shelf-line);
+  margin: 1.5rem 0;
+}
+
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.contact-list li { margin-bottom: 0.4rem; }
+
+.hidden { display: none !important; }

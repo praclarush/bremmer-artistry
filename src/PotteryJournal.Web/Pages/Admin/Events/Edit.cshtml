@@ -1,0 +1,62 @@
+@page "/admin/events/edit/{id:guid?}"
+@model PotteryJournal.Web.Pages.Admin.Events.EditModel
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Edit Event" : "New Event";
+}
+
+<h1 class="h3 mb-4">@(Model.Id.HasValue ? "Edit Event" : "New Event")</h1>
+
+<form method="post" asp-page-handler="Save" asp-route-id="@Model.Id" enctype="multipart/form-data">
+  <div class="mb-3">
+    <label class="form-label" for="title">Title</label>
+    <input type="text" class="form-control" id="title" asp-for="Event.Title" required>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="description">Description</label>
+    <textarea class="form-control" id="description" rows="4" asp-for="Event.Description" required></textarea>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="startDateTime">Starts</label>
+      <input type="datetime-local" class="form-control" id="startDateTime" name="Event.StartDateTime"
+             value="@Model.Event.StartDateTime.ToString("yyyy-MM-ddTHH:mm")" required>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="endDateTime">Ends (optional)</label>
+      <input type="datetime-local" class="form-control" id="endDateTime" name="Event.EndDateTime"
+             value="@(Model.Event.EndDateTime?.ToString("yyyy-MM-ddTHH:mm"))">
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="venueName">Venue name</label>
+      <input type="text" class="form-control" id="venueName" asp-for="Event.VenueName">
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="venueAddress">Venue address</label>
+      <input type="text" class="form-control" id="venueAddress" asp-for="Event.VenueAddress">
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="externalLinkUrl">External link (optional)</label>
+    <input type="url" class="form-control" id="externalLinkUrl" asp-for="Event.ExternalLinkUrl">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="image">Banner photo</label>
+    @if (!string.IsNullOrEmpty(Model.ImageFileName))
+    {
+      <div class="mb-2">
+        <img class="admin-thumb" src="/uploads/events/@Model.ImageFileName" alt="Current banner photo">
+      </div>
+    }
+    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Save</button>
+  <a class="btn btn-link" href="/admin/events">Cancel</a>
+</form>

@@ -1,0 +1,55 @@
+@page "/admin/allowed-admins"
+@model PotteryJournal.Web.Pages.Admin.AllowedAdmins.IndexModel
+@{
+    ViewData["Title"] = "Allowed Admins";
+}
+
+<h1 class="h3 mb-4">Allowed Admins</h1>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h2 class="h5">Add an admin</h2>
+    <form method="post" asp-page-handler="Add" class="row g-2 align-items-end">
+      <div class="col-sm-5">
+        <label class="form-label" for="newEmail">Google account email</label>
+        <input type="email" class="form-control" id="newEmail" asp-for="NewEmail" required>
+      </div>
+      <div class="col-sm-5">
+        <label class="form-label" for="newDisplayName">Display name (optional)</label>
+        <input type="text" class="form-control" id="newDisplayName" asp-for="NewDisplayName">
+      </div>
+      <div class="col-sm-2">
+        <button type="submit" class="btn btn-primary w-100">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Display Name</th>
+      <th>Added</th>
+      <th>Added By</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (PotteryJournal.Infrastructure.Models.AllowedAdminModel admin in Model.Admins)
+    {
+      <tr>
+        <td>@admin.Email</td>
+        <td>@admin.DisplayName</td>
+        <td>@admin.AddedDate.ToString("yyyy-MM-dd")</td>
+        <td>@admin.AddedByEmail</td>
+        <td class="text-end">
+          <form method="post" asp-page-handler="Remove" asp-route-id="@admin.Id"
+                onsubmit="return confirm('Remove @admin.Email from the allow-list?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+          </form>
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
