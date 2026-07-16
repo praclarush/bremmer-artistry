@@ -11,14 +11,19 @@
 <link rel="icon" href="~/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="site-body">
 
 <header class="site-nav">
-  <a class="wordmark" href="/">Bremmer <span>Artistry</span></a>
+  <a class="wordmark" href="/">
+    <svg class="wordmark-mark" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+      <path d="m 7.7131336,28.121134 0.6204401,-1.616841 v -0.418212 -0.418213 h 2.0000003 2 V 17.102127 8.5363856 L 13.368758,6.602127 14.403942,4.6678685 h 0.964816 0.964816 l -0.0018,7.2499995 -0.0018,7.25 h 6.251777 6.251823 v 5 5 L 17.963134,29.452921 7.0926936,29.737975 Z M 25.333574,24.167868 v -1.5 h -4.5 -4.5 v 1.5 1.5 h 4.5 4.5 z m -4.809629,-14.2499995 0.337019,-1.75 h 1.47261 1.47261 l 0.337019,1.75 0.337019,1.7499995 h -2.146648 -2.146648 z" />
+    </svg>
+    Bremmer <span>Artistry</span>
+  </a>
   <ul class="nav-links">
     <li><a href="/" aria-current="@(activeNav == "Home" ? "page" : null)">Home</a></li>
     <li><a href="/gallery" aria-current="@(activeNav == "Gallery" ? "page" : null)">Gallery</a></li>

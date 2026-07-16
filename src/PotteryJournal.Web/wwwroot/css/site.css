@@ -1,16 +1,16 @@
 :root {
-  /* Palette carried over from the original Pottery Journal site (bremmer-artistry.art): navy, gold, off-white */
-  --kiln-char: #072638;
-  --shelf: #1b3748;
-  --shelf-line: #344d5c;
-  --bisque: #f1f0ef;
-  --bisque-dark: #88959d;
-  --copper-glaze: #af8958;
-  --copper-glaze-dim: #806d4f;
-  --paper: #f1f0ef;
+  /* Brand palette (bremmer-artistry.art): navy, gold, white */
+  --kiln-char: #0c2435;
+  --shelf: #122c39;
+  --shelf-line: #2c4b5c;
+  --bisque: #ffffff;
+  --bisque-dark: #9aabb3;
+  --copper-glaze: #a6885c;
+  --copper-glaze-dim: #7d6845;
+  --paper: #ffffff;
   --paper-line: #d0d4d5;
-  --ink: #072638;
-  --ink-soft: #697b85;
+  --ink: #0c2435;
+  --ink-soft: #9aabb3;
 
   --font-display: "Fraunces", serif;
   --font-body: "Inter", system-ui, sans-serif;
@@ -55,14 +55,24 @@ a { color: var(--copper-glaze); }
 }
 
 .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   margin: 0;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(1.5rem, 3vw, 2rem);
   letter-spacing: -0.01em;
   color: var(--paper);
   text-decoration: none;
+}
+
+.wordmark-mark {
+  width: 1.6rem;
+  height: 1.6rem;
+  flex-shrink: 0;
+  fill: var(--copper-glaze);
 }
 
 .wordmark span {
@@ -280,7 +290,7 @@ a { color: var(--copper-glaze); }
 
 .faq-question {
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   color: var(--paper);
   margin: 0 0 0.5rem;
