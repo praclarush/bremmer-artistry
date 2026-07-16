@@ -9,6 +9,13 @@ The Bremmer Artistry site -- ASP.NET Core (net8.0) + EF Core + Postgres. Success
 and expanded into a full site (Home, Gallery, Pottery Journal, Events, FAQ, About) with an
 internally-authenticated admin area. See [README.md](README.md) for the directory layout and setup.
 
+## Design Context
+
+`PRODUCT.md` and `DESIGN.md` at the repo root capture the strategic and visual design system
+(register: brand-led public site with a utility admin area; North Star "The Kiln-Lit Ledger" --
+dark navy/copper palette, Fraunces/Inter/IBM Plex Mono, the piece "worksheet" as the signature
+component). Read them before any `/impeccable` design work or UI changes to the public site.
+
 ## Architecture Notes
 
 - **No separate API project.** `PotteryJournal.Web` hosts both the Razor Pages (public site +

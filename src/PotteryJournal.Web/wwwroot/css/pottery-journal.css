@@ -12,7 +12,7 @@
 
 .journal-header h1 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   font-size: clamp(1.6rem, 3vw, 2.2rem);
   color: var(--paper);
   margin: 0;
@@ -384,7 +384,7 @@
 }
 
 .ws-notes-box .note-title {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .ws-notes-box .empty,

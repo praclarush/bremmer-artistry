@@ -4,3 +4,4 @@ uploads/
 *.user
 .vs/
 .env
+.impeccable/
