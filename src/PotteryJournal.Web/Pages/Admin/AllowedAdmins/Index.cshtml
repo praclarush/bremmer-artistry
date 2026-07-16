@@ -9,12 +9,17 @@
 <div class="card mb-4">
   <div class="card-body">
     <h2 class="h5">Add an admin</h2>
+    <p class="text-muted">Sets this person's initial password directly -- there's no invite-email flow. They can change it themselves from "Change Password" once signed in.</p>
     <form method="post" asp-page-handler="Add" class="row g-2 align-items-end">
-      <div class="col-sm-5">
-        <label class="form-label" for="newEmail">Google account email</label>
+      <div class="col-sm-4">
+        <label class="form-label" for="newEmail">Email</label>
         <input type="email" class="form-control" id="newEmail" asp-for="NewEmail" required>
       </div>
-      <div class="col-sm-5">
+      <div class="col-sm-3">
+        <label class="form-label" for="newPassword">Initial password</label>
+        <input type="text" class="form-control" id="newPassword" asp-for="NewPassword" required>
+      </div>
+      <div class="col-sm-3">
         <label class="form-label" for="newDisplayName">Display name (optional)</label>
         <input type="text" class="form-control" id="newDisplayName" asp-for="NewDisplayName">
       </div>

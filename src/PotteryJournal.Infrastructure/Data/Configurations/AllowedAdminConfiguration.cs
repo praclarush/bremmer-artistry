@@ -15,7 +15,7 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
         /// <param name="builder">The entity type builder supplied by EF Core.</param>
         public void Configure(EntityTypeBuilder<AllowedAdmin> builder)
         {
-            builder.ToTable("AllowedAdmins", tb => tb.HasComment("A Google account email permitted to sign in to the admin area."));
+            builder.ToTable("AllowedAdmins", tb => tb.HasComment("An admin account permitted to sign in to the admin area."));
 
             builder.HasKey(a => a.Id).HasName("PK_AllowedAdmins_Id");
 
@@ -28,7 +28,12 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
             builder.Property(a => a.Email)
                 .IsRequired()
                 .HasMaxLength(320)
-                .HasComment("The allow-listed Google account email.");
+                .HasComment("The admin's sign-in email.");
+
+            builder.Property(a => a.PasswordHash)
+                .IsRequired()
+                .HasMaxLength(500)
+                .HasComment("PBKDF2 password hash produced by ASP.NET Core's PasswordHasher.");
 
             builder.Property(a => a.DisplayName)
                 .HasMaxLength(200)

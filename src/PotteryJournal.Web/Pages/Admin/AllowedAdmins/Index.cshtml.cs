@@ -25,6 +25,9 @@ namespace PotteryJournal.Web.Pages.Admin.AllowedAdmins
         public string NewEmail { get; set; } = string.Empty;
 
         [BindProperty]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [BindProperty]
         public string? NewDisplayName { get; set; }
 
         public async Task OnGetAsync()
@@ -34,17 +37,17 @@ namespace PotteryJournal.Web.Pages.Admin.AllowedAdmins
 
         public async Task<IActionResult> OnPostAddAsync()
         {
-            if (string.IsNullOrWhiteSpace(NewEmail))
+            if (string.IsNullOrWhiteSpace(NewEmail) || string.IsNullOrWhiteSpace(NewPassword))
             {
-                TempData["StatusMessage"] = "An email address is required.";
+                TempData["StatusMessage"] = "An email address and password are required.";
                 return RedirectToPage();
             }
 
             string addedByEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
-            DataHandlerResponse<Guid> response = await _allowedAdminsHandler.AddAsync(NewEmail, NewDisplayName, addedByEmail);
+            DataHandlerResponse<Guid> response = await _allowedAdminsHandler.AddAsync(NewEmail, NewPassword, NewDisplayName, addedByEmail);
 
             TempData["StatusMessage"] = response.IsSuccess
-                ? $"{NewEmail} was added to the allow-list."
+                ? $"{NewEmail} was added as an admin."
                 : string.Join(" ", response.Errors);
 
             return RedirectToPage();

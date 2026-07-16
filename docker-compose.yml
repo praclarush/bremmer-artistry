@@ -8,9 +8,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__PotteryJournal: "Host=db;Port=5432;Database=potteryjournal;Username=potteryjournal;Password=${POSTGRES_PASSWORD}"
-      Authentication__Google__ClientId: "${GOOGLE_CLIENT_ID}"
-      Authentication__Google__ClientSecret: "${GOOGLE_CLIENT_SECRET}"
       POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL: "${BOOTSTRAP_ADMIN_EMAIL}"
+      POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD: "${BOOTSTRAP_ADMIN_PASSWORD}"
       Uploads__RootPath: /app/uploads
     volumes:
       - uploads:/app/uploads

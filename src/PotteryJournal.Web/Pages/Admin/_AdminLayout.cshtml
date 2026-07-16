@@ -20,6 +20,7 @@
         <li class="nav-item"><a class="nav-link" href="/admin/allowed-admins">Allowed Admins</a></li>
       </ul>
       <span class="navbar-text me-3">@(User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value)</span>
+      <a class="btn btn-outline-light btn-sm me-2" href="/admin/change-password">Change Password</a>
       <form method="post" asp-page="/Admin/Logout">
         <button type="submit" class="btn btn-outline-light btn-sm">Sign out</button>
       </form>

@@ -1,17 +1,18 @@
-using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using PotteryJournal.Infrastructure.Data;
+using PotteryJournal.Infrastructure.Data.Entities;
 using PotteryJournal.Infrastructure.Handlers;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.Infrastructure.Options;
 using PotteryJournal.Infrastructure.Services;
 using PotteryJournal.SharedKernel.Core;
+using PotteryJournal.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,63 +34,31 @@ builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
+builder.Services.AddSingleton<IPasswordHasher<AllowedAdmin>, PasswordHasher<AllowedAdmin>>();
 
 builder.Services
-    .AddAuthentication(options =>
-    {
-        // Deliberately leave DefaultChallengeScheme unset (falls back to DefaultScheme, Cookie).
-        // An [Authorize] failure must land on the Cookie handler's LoginPath -- our own
-        // /Admin/Login page -- not challenge Google directly. Google is only ever challenged
-        // explicitly, from Login.cshtml's "Sign in with Google" button.
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    })
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Admin/Login";
         options.AccessDeniedPath = "/Admin/AccessDenied";
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
-
-        // Reject the sign-in outright unless the authenticated Google email is on the
-        // AllowedAdmins list -- there is no open signup for this app.
-        options.Events.OnCreatingTicket = async context =>
-        {
-            string? email = context.Principal?.FindFirstValue(ClaimTypes.Email);
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                context.Fail("Google did not return an email address.");
-                return;
-            }
-
-            IAllowedAdminsHandler allowedAdminsHandler = context.HttpContext.RequestServices.GetRequiredService<IAllowedAdminsHandler>();
-            DataHandlerResponse<bool> response = await allowedAdminsHandler.IsAllowedAsync(email);
-            if (!response.IsSuccess || !response.Data)
-            {
-                context.Fail($"{email} is not on the admin allow-list.");
-            }
-        };
-
-        options.Events.OnRemoteFailure = context =>
-        {
-            context.Response.Redirect("/Admin/AccessDenied");
-            context.HandleResponse();
-            return Task.CompletedTask;
-        };
     });
 
 builder.Services.AddAuthorization();
 
-const string DataEndpointsRateLimiterPolicy = "DataEndpoints";
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter(DataEndpointsRateLimiterPolicy, limiterOptions =>
+    options.AddFixedWindowLimiter(RateLimiterPolicies.DataEndpoints, limiterOptions =>
     {
         limiterOptions.PermitLimit = 120;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+    // Blunts password-guessing against /admin/login now that Google is no longer fronting sign-in.
+    options.AddFixedWindowLimiter(RateLimiterPolicies.LoginAttempts, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
         limiterOptions.Window = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit = 0;
     });
@@ -107,15 +76,16 @@ using (IServiceScope startupScope = app.Services.CreateScope())
     }
 
     string? bootstrapAdminEmail = builder.Configuration["POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL"];
-    if (string.IsNullOrWhiteSpace(bootstrapAdminEmail))
+    string? bootstrapAdminPassword = builder.Configuration["POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD"];
+    if (string.IsNullOrWhiteSpace(bootstrapAdminEmail) || string.IsNullOrWhiteSpace(bootstrapAdminPassword))
     {
         app.Logger.LogWarning(
-            "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL is not set -- if the AllowedAdmins list is empty, no one will be able to sign in.");
+            "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL and/or POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD are not set -- if the AllowedAdmins list is empty, no one will be able to sign in.");
     }
     else
     {
         IAllowedAdminsHandler allowedAdminsHandler = startupScope.ServiceProvider.GetRequiredService<IAllowedAdminsHandler>();
-        await allowedAdminsHandler.EnsureBootstrapAdminAsync(bootstrapAdminEmail);
+        await allowedAdminsHandler.EnsureBootstrapAdminAsync(bootstrapAdminEmail, bootstrapAdminPassword);
     }
 }
 
@@ -158,13 +128,13 @@ app.MapGet("/pottery-journal/data", async (string? category, IPieceHandler piece
 {
     DataHandlerResponse<List<PieceDetailModel>> response = await pieceHandler.GetAllDetailsAsync(category);
     return JsonResult(response.Data ?? new List<PieceDetailModel>());
-}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
 app.MapGet("/events/data", async (IEventsHandler eventsHandler) =>
 {
     DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetUpcomingAsync();
     return JsonResult(response.Data ?? new List<EventModel>());
-}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
 app.MapGet("/events/{id:guid}/ics", async (Guid id, IEventsHandler eventsHandler, IIcsGenerator icsGenerator) =>
 {
@@ -181,7 +151,7 @@ app.MapGet("/events/{id:guid}/ics", async (Guid id, IEventsHandler eventsHandler
     }
 
     return Results.File(icsResponse.Data, "text/calendar", $"{eventResponse.Data.Title}.ics");
-}).RequireRateLimiting(DataEndpointsRateLimiterPolicy);
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
 app.Run();
 

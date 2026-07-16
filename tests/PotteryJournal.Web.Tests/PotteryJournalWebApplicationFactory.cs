@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using PotteryJournal.Infrastructure.Data;
@@ -30,20 +28,6 @@ namespace PotteryJournal.Web.Tests
         /// <inheritdoc />
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            // ASP.NET Core's remote authentication handlers (Google) validate their options on
-            // every request, not just authenticated ones, to check whether the request matches
-            // their OAuth callback path. Without a non-empty ClientId/ClientSecret, even anonymous
-            // requests throw -- so tests need placeholder values, though the OAuth flow itself is
-            // never exercised here.
-            builder.ConfigureAppConfiguration((_, config) =>
-            {
-                config.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Authentication:Google:ClientId"] = "test-client-id",
-                    ["Authentication:Google:ClientSecret"] = "test-client-secret",
-                });
-            });
-
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<DbContextOptions<AppDbContext>>();

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PotteryJournal.Infrastructure.Data;
 using PotteryJournal.Infrastructure.Data.Entities;
@@ -11,19 +12,22 @@ using PotteryJournal.SharedKernel.Core;
 namespace PotteryJournal.Infrastructure.Handlers
 {
     /// <summary>
-    /// Business logic for the admin sign-in allow-list.
+    /// Business logic for admin accounts and sign-in.
     /// </summary>
     public class AllowedAdminsHandler : IAllowedAdminsHandler
     {
         private readonly AppDbContext _context;
+        private readonly IPasswordHasher<AllowedAdmin> _passwordHasher;
 
         /// <summary>
         /// Initializes a new instance of <see cref="AllowedAdminsHandler"/>.
         /// </summary>
         /// <param name="context">The application database context.</param>
-        public AllowedAdminsHandler(AppDbContext context)
+        /// <param name="passwordHasher">Hashes and verifies admin account passwords.</param>
+        public AllowedAdminsHandler(AppDbContext context, IPasswordHasher<AllowedAdmin> passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         /// <inheritdoc />
@@ -42,20 +46,42 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
-        public async Task<DataHandlerResponse<bool>> IsAllowedAsync(string email)
+        public async Task<DataHandlerResponse<AllowedAdminModel>> ValidateCredentialsAsync(string email, string password)
         {
-            DataHandlerResponse<bool> response = new DataHandlerResponse<bool>();
+            DataHandlerResponse<AllowedAdminModel> response = new DataHandlerResponse<AllowedAdminModel>();
 
             string normalizedEmail = NormalizeEmail(email);
-            response.Data = await _context.AllowedAdmins
-                .AsNoTracking()
-                .AnyAsync(a => a.Email == normalizedEmail && a.IsActive);
+            AllowedAdmin? admin = await _context.AllowedAdmins
+                .FirstOrDefaultAsync(a => a.Email == normalizedEmail && a.IsActive);
+
+            if (admin is null)
+            {
+                response.AddError("Invalid email or password.");
+                response.IsSuccess = false;
+                return response;
+            }
+
+            PasswordVerificationResult verificationResult = _passwordHasher.VerifyHashedPassword(admin, admin.PasswordHash, password);
+            if (verificationResult == PasswordVerificationResult.Failed)
+            {
+                response.AddError("Invalid email or password.");
+                response.IsSuccess = false;
+                return response;
+            }
+
+            if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
+            {
+                admin.PasswordHash = _passwordHasher.HashPassword(admin, password);
+                await _context.SaveChangesAsync();
+            }
+
+            response.Data = ToModel(admin);
             response.IsSuccess = true;
             return response;
         }
 
         /// <inheritdoc />
-        public async Task<DataHandlerResponse<Guid>> AddAsync(string email, string? displayName, string? addedByEmail)
+        public async Task<DataHandlerResponse<Guid>> AddAsync(string email, string password, string? displayName, string? addedByEmail)
         {
             DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
 
@@ -63,7 +89,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             bool alreadyExists = await _context.AllowedAdmins.AnyAsync(a => a.Email == normalizedEmail);
             if (alreadyExists)
             {
-                response.AddError($"{normalizedEmail} is already on the allow-list.");
+                response.AddError($"{normalizedEmail} already has an admin account.");
                 response.IsSuccess = false;
                 return response;
             }
@@ -76,6 +102,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 AddedByEmail = addedByEmail,
                 IsActive = true,
             };
+            admin.PasswordHash = _passwordHasher.HashPassword(admin, password);
 
             _context.AllowedAdmins.Add(admin);
             await _context.SaveChangesAsync();
@@ -93,7 +120,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             AllowedAdmin? admin = await _context.AllowedAdmins.FirstOrDefaultAsync(a => a.Id == id);
             if (admin is null)
             {
-                response.AddError($"No allow-list entry was found with id {id}.");
+                response.AddError($"No admin account was found with id {id}.");
                 response.IsSuccess = false;
                 return response;
             }
@@ -106,7 +133,27 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
-        public async Task<HandlerResponse> EnsureBootstrapAdminAsync(string bootstrapEmail)
+        public async Task<HandlerResponse> ChangePasswordAsync(Guid id, string newPassword)
+        {
+            HandlerResponse response = new HandlerResponse();
+
+            AllowedAdmin? admin = await _context.AllowedAdmins.FirstOrDefaultAsync(a => a.Id == id);
+            if (admin is null)
+            {
+                response.AddError($"No admin account was found with id {id}.");
+                response.IsSuccess = false;
+                return response;
+            }
+
+            admin.PasswordHash = _passwordHasher.HashPassword(admin, newPassword);
+            await _context.SaveChangesAsync();
+
+            response.IsSuccess = true;
+            return response;
+        }
+
+        /// <inheritdoc />
+        public async Task<HandlerResponse> EnsureBootstrapAdminAsync(string bootstrapEmail, string bootstrapPassword)
         {
             HandlerResponse response = new HandlerResponse();
 
@@ -123,6 +170,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 AddedDate = DateTimeOffset.UtcNow,
                 IsActive = true,
             };
+            admin.PasswordHash = _passwordHasher.HashPassword(admin, bootstrapPassword);
 
             _context.AllowedAdmins.Add(admin);
             await _context.SaveChangesAsync();
