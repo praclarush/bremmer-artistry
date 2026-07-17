@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+    <File Path="docker/Dockerfile" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/PotteryJournal.Infrastructure/PotteryJournal.Infrastructure.csproj" />
     <Project Path="src/PotteryJournal.SharedKernel/PotteryJournal.SharedKernel.csproj" />
