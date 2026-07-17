@@ -12,8 +12,8 @@
 
 .journal-header h1 {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 600;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
   color: var(--paper);
   margin: 0;
 }
@@ -333,7 +333,7 @@
   max-height: 420px;
   object-fit: contain;
   border: 1px solid var(--paper-line);
-  background: #fff;
+  background: var(--paper);
 }
 
 .ws-photo-nav {
@@ -353,10 +353,20 @@
   border: 1px solid var(--ink);
   background: transparent;
   cursor: pointer;
+  transition: border-color 0.15s ease;
 }
 
 .ws-photo-nav button[aria-current="true"] {
   background: var(--ink);
+}
+
+.ws-photo-nav button:hover {
+  border-color: var(--copper-glaze);
+}
+
+.ws-photo-nav button:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
 }
 
 .ws-photo-arrow {
@@ -370,8 +380,13 @@
   cursor: pointer;
   color: var(--ink-soft);
   padding: 0.3rem 0.6rem;
+  transition: color 0.15s ease;
 }
 .ws-photo-arrow:hover { color: var(--ink); }
+.ws-photo-arrow:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
 .ws-photo-arrow.prev { left: 0.2rem; }
 .ws-photo-arrow.next { right: 0.2rem; }
 
