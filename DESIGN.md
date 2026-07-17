@@ -2,17 +2,17 @@
 name: Bremmer Artistry
 description: A working potter's journal and events site — pieces logged like kiln-side ledger entries, not shelved like a catalog.
 colors:
-  kiln-char: "#072638"
-  shelf: "#1b3748"
-  shelf-line: "#344d5c"
-  bisque: "#f1f0ef"
-  bisque-dark: "#88959d"
-  copper-glaze: "#af8958"
-  copper-glaze-dim: "#806d4f"
-  paper: "#f1f0ef"
+  kiln-char: "#0c2435"
+  shelf: "#122c39"
+  shelf-line: "#2c4b5c"
+  bisque: "#ffffff"
+  bisque-dark: "#9aabb3"
+  copper-glaze: "#a6885c"
+  copper-glaze-dim: "#7d6845"
+  paper: "#ffffff"
   paper-line: "#d0d4d5"
-  ink: "#072638"
-  ink-soft: "#697b85"
+  ink: "#0c2435"
+  ink-soft: "#5b6b73"
 typography:
   display:
     fontFamily: "Fraunces, serif"
@@ -106,29 +106,31 @@ A dark, warm-neutral studio palette with one saturated accent; a separate light 
 exists only for the worksheet detail view.
 
 ### Primary
-- **Copper Glaze** (`#af8958`): The single accent. Marks active/selected state, links, focus, and
+- **Copper Glaze** (`#a6885c`): The single accent. Marks active/selected state, links, focus, and
   hover fills. Used sparingly — outlines and borders at rest, solid fill only on interaction.
-- **Copper Glaze Dim** (`#806d4f`): The same accent desaturated/darkened for "already active" states
+- **Copper Glaze Dim** (`#7d6845`): The same accent desaturated/darkened for "already active" states
   (selected filter chips, current calendar view toggle) so the brighter Copper Glaze stays reserved
   for hover/focus.
 
 ### Neutral
-- **Kiln Char** (`#072638`): The page background across the entire dark register — deep
-  navy-charcoal, not black. Also doubles as **Ink** (`#072638`), the body text color on the light
+- **Kiln Char** (`#0c2435`): The page background across the entire dark register — deep
+  navy-charcoal, not black. Also doubles as **Ink** (`#0c2435`), the body text color on the light
   paper register — same value, opposite role: page-dark in one context, text-dark in the other.
-- **Shelf** (`#1b3748`): Raised surface on the dark register — card backgrounds, input fields,
+- **Shelf** (`#122c39`): Raised surface on the dark register — card backgrounds, input fields,
   photo placeholders before an image loads.
-- **Shelf Line** (`#344d5c`): Borders and dividers on the dark register — nav underline, filter bar
+- **Shelf Line** (`#2c4b5c`): Borders and dividers on the dark register — nav underline, filter bar
   rule, card outlines.
-- **Bisque** (`#f1f0ef`): Primary text color on the dark register (headings, wordmark) and,
+- **Bisque** (`#ffffff`): Primary text color on the dark register (headings, wordmark) and,
   identically, the worksheet's paper background — same hex, deliberately dual-purpose: light text
   on dark surfaces, and the light surface itself when the register flips.
-- **Bisque Dark** (`#88959d`): Secondary/muted text on the dark register — body copy, captions,
+- **Bisque Dark** (`#9aabb3`): Secondary/muted text on the dark register — body copy, captions,
   nav links at rest.
 - **Paper Line** (`#d0d4d5`): Borders and dividers on the light paper register (worksheet field
   rules), the light-register counterpart to Shelf Line.
-- **Ink Soft** (`#697b85`): Secondary/muted text on the light paper register — the worksheet's
-  counterpart to Bisque Dark.
+- **Ink Soft** (`#5b6b73`): Secondary/muted text on the light paper register — the worksheet's
+  counterpart to Bisque Dark. Deliberately darker than Bisque Dark's value despite both being
+  "muted secondary text," since Ink Soft sits on a white/paper background and needs to clear
+  WCAG AA's 4.5:1 contrast floor there, not the dark register's.
 
 ### Named Rules
 **The One Accent Rule.** Copper Glaze is the only saturated color in the system. It never appears
@@ -242,7 +244,7 @@ the system stays quiet so this one can read as the object worth stopping for.
 ## 6. Do's and Don'ts
 
 ### Do:
-- **Do** keep Copper Glaze (`#af8958`) as the only saturated color in the system — outline/link/hover
+- **Do** keep Copper Glaze (`#a6885c`) as the only saturated color in the system — outline/link/hover
   only, never a background at rest.
 - **Do** reserve the light paper register (Bisque background, Ink text, Paper Line borders) for the
   worksheet detail view alone; every list/grid/nav surface stays on the dark register.
