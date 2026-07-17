@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      target: dev
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    volumes:
+      - ./src:/src/src
+      - web-bin:/src/src/PotteryJournal.Web/bin
+      - web-obj:/src/src/PotteryJournal.Web/obj
+      - infrastructure-bin:/src/src/PotteryJournal.Infrastructure/bin
+      - infrastructure-obj:/src/src/PotteryJournal.Infrastructure/obj
+      - sharedkernel-bin:/src/src/PotteryJournal.SharedKernel/bin
+      - sharedkernel-obj:/src/src/PotteryJournal.SharedKernel/obj
+
+volumes:
+  web-bin:
+  web-obj:
+  infrastructure-bin:
+  infrastructure-obj:
+  sharedkernel-bin:
+  sharedkernel-obj:
