@@ -145,6 +145,8 @@ namespace PotteryJournal.Infrastructure.Handlers
                 CreatedByEmail = createdByEmail,
             };
             ApplySaveModel(piece, model);
+            piece.Notes = BuildNotes(model.Notes);
+            piece.GlazeApplications = BuildGlazeApplications(model.GlazeApplications);
 
             _context.Pieces.Add(piece);
             await _context.SaveChangesAsync();
