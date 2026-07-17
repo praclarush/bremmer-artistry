@@ -158,6 +158,27 @@ a { color: var(--copper-glaze); }
   color: var(--bisque-dark);
 }
 
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hero-secondary-link {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.hero-secondary-link:hover,
+.hero-secondary-link:focus-visible {
+  color: var(--paper);
+}
+
 .btn {
   display: inline-block;
   font-family: var(--font-mono);
@@ -260,6 +281,15 @@ a { color: var(--copper-glaze); }
   font-family: var(--font-mono);
   color: var(--bisque-dark);
   padding: 4rem 1rem;
+}
+
+.home-events-empty {
+  text-align: center;
+  padding: 1rem 1rem 4rem;
+}
+
+.home-events-empty .empty-state {
+  padding: 0 0 1rem;
 }
 
 /* ---------- static content pages (FAQ / About) ---------- */
