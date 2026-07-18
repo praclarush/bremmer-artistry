@@ -261,7 +261,18 @@ function closeLightbox(opts) {
   }
 
   lightbox.classList.remove("open");
-  lightbox.addEventListener("transitionend", () => lightbox.classList.add("hidden"), { once: true });
+  lightbox.addEventListener(
+    "transitionend",
+    () => {
+      // Closing strips the photo index from the hash, which triggers a second route() pass
+      // that calls closeLightbox() again -- if a photo is reopened before this listener fires,
+      // only hide if the lightbox is still meant to be closed, not whatever got reopened since.
+      if (!lightbox.classList.contains("open")) {
+        lightbox.classList.add("hidden");
+      }
+    },
+    { once: true }
+  );
   activeCategory = null;
   setBackgroundInert(false);
 
