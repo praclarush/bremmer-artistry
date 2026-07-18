@@ -75,7 +75,11 @@ function buildCategories(pieces) {
       name,
       pieces: categoryPieces,
       photos: categoryPieces.flatMap((piece) =>
-        piece.imageFileNames.map((fileName) => ({ pieceTitle: piece.title, url: imageUrl(fileName) }))
+        piece.imageFileNames.map((fileName) => ({
+          pieceTitle: piece.title,
+          url: imageUrl(fileName),
+          startedDate: piece.startedDate,
+        }))
       ),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -139,6 +143,11 @@ function renderCategoryGrid(category) {
     img.alt = photo.pieceTitle;
     photoDiv.appendChild(img);
 
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = monthYear(photo.startedDate);
+    photoDiv.appendChild(tag);
+
     const title = document.createElement("span");
     title.className = "tile-title";
     title.textContent = photo.pieceTitle;
@@ -152,6 +161,10 @@ function renderCategoryGrid(category) {
 
 function imageUrl(fileName) {
   return PIECE_IMAGE_BASE + fileName;
+}
+
+function monthYear(isoDate) {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString(undefined, { month: "short", year: "numeric" });
 }
 
 function route() {

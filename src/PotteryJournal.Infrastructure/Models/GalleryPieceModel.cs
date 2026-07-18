@@ -15,6 +15,8 @@ namespace PotteryJournal.Infrastructure.Models
 
         public string Category { get; set; } = string.Empty;
 
+        public DateOnly StartedDate { get; set; }
+
         public List<string> ImageFileNames { get; set; } = new List<string>();
     }
 }

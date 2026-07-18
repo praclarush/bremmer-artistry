@@ -118,6 +118,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                     Id = p.Id,
                     Title = p.Title,
                     Category = p.Category!.Name,
+                    StartedDate = p.StartedDate,
                     ImageFileNames = p.Images
                         .OrderBy(i => i.SortOrder)
                         .Select(i => i.FileName)
