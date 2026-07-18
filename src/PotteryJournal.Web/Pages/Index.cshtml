@@ -35,7 +35,7 @@
         {
           PotteryJournal.Infrastructure.Models.FeaturedCollectionPieceModel piece = Model.FeaturedCollection.Pieces[i];
           <figure class="featured-collection-slide@(i == 0 ? " is-active" : string.Empty)" data-featured-slide>
-            <img src="/uploads/pieces/@piece.ImageFileName" alt="@piece.Title" loading="@(i == 0 ? "eager" : "lazy")">
+            <img src="/uploads/pieces/@piece.ImageFileName" alt="@piece.Title" loading="eager">
           </figure>
         }
       </div>
