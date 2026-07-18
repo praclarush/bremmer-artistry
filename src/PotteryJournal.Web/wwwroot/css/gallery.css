@@ -130,3 +130,22 @@
 .lightbox-arrow.next {
   right: clamp(0.5rem, 3vw, 2rem);
 }
+
+@media (max-width: 480px) {
+  .lightbox-arrow {
+    top: auto;
+    bottom: clamp(0.75rem, 4vw, 1.5rem);
+    transform: none;
+  }
+
+  .lightbox-arrow.prev {
+    left: 50%;
+    transform: translateX(calc(-100% - 0.5rem));
+  }
+
+  .lightbox-arrow.next {
+    right: 50%;
+    left: auto;
+    transform: translateX(calc(100% + 0.5rem));
+  }
+}
