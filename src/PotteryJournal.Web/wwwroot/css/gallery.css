@@ -16,6 +16,13 @@
   padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
 }
 
+/* Reveal on first render only -- reuses site.css's tile-reveal keyframes, scoped here so it
+   doesn't leak onto the Pottery Journal's own use of the shared .tile component. */
+#categoryGrid .tile {
+  animation: tile-reveal 0.4s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
 .gallery-category-title {
   font-family: var(--font-display);
   font-weight: 600;
@@ -69,6 +76,11 @@
   max-height: calc(100vh - 10rem);
   object-fit: contain;
   border: 1px solid var(--shelf-line);
+  transition: opacity 0.13s ease;
+}
+
+.lightbox-figure img.is-swapping {
+  opacity: 0;
 }
 
 .lightbox-figure figcaption {

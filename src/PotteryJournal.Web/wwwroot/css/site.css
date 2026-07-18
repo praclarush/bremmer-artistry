@@ -21,7 +21,11 @@
 * { box-sizing: border-box; }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 html, body {
@@ -323,6 +327,17 @@ a { color: var(--copper-glaze); }
 
 /* ---------- Gallery category tiles ---------- */
 
+@keyframes tile-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .category-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -334,6 +349,8 @@ a { color: var(--copper-glaze); }
   display: block;
   text-decoration: none;
   color: inherit;
+  animation: tile-reveal 0.4s cubic-bezier(0.25, 1, 0.5, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
 }
 
 .category-photo {

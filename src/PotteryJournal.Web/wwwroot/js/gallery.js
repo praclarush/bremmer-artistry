@@ -1,10 +1,14 @@
 const PIECE_IMAGE_BASE = "/uploads/pieces/";
+const PHOTO_SWAP_MS = 130;
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const STAGGER_CAP = 15;
 
 let CATEGORIES = [];
 let activeCategory = null;
 let activeIndex = 0;
 let lastFocusedElement = null;
 let renderedCategoryName = null;
+let pendingSwapTimeout = null;
 
 const galleryIntro = document.getElementById("galleryIntro");
 const categoriesView = document.getElementById("categoriesView");
@@ -90,9 +94,10 @@ function renderCategoryTiles() {
   categoriesEmpty.classList.toggle("hidden", CATEGORIES.length > 0);
 
   const frag = document.createDocumentFragment();
-  CATEGORIES.forEach((category) => {
+  CATEGORIES.forEach((category, index) => {
     const a = document.createElement("a");
     a.className = "category-tile";
+    a.style.setProperty("--i", Math.min(index, STAGGER_CAP));
     a.href = `#category/${encodeURIComponent(category.name)}`;
 
     const photo = document.createElement("div");
@@ -130,6 +135,7 @@ function renderCategoryGrid(category) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "tile";
+    btn.style.setProperty("--i", Math.min(index, STAGGER_CAP));
     btn.setAttribute("aria-label", `View larger photo of ${photo.pieceTitle}`);
     btn.addEventListener("click", () => {
       location.hash = `#category/${encodeURIComponent(category.name)}/${index}`;
@@ -206,11 +212,12 @@ function route() {
 }
 
 function openLightbox(category, index) {
+  const isFirstOpen = !lightbox.classList.contains("open");
   activeCategory = category;
   activeIndex = index;
-  showLightboxPhoto();
+  showLightboxPhoto(isFirstOpen);
 
-  if (!lightbox.classList.contains("open")) {
+  if (isFirstOpen) {
     lastFocusedElement = document.activeElement;
     lightbox.classList.remove("hidden");
     void lightbox.offsetWidth; // force a reflow so the "hidden" -> visible state is committed before "open" triggers the transition
@@ -238,11 +245,31 @@ function setBackgroundInert(isInert) {
   });
 }
 
-function showLightboxPhoto() {
+function showLightboxPhoto(skipFade) {
   const photo = activeCategory.photos[activeIndex];
-  lightboxImage.src = photo.url;
-  lightboxImage.alt = photo.pieceTitle;
   lightboxCaption.textContent = `${photo.pieceTitle} — ${activeIndex + 1} of ${activeCategory.photos.length}`;
+
+  if (pendingSwapTimeout) {
+    window.clearTimeout(pendingSwapTimeout);
+    pendingSwapTimeout = null;
+  }
+
+  if (skipFade || REDUCED_MOTION) {
+    lightboxImage.alt = photo.pieceTitle;
+    lightboxImage.src = photo.url;
+    return;
+  }
+
+  // Briefly fade the current photo out before swapping src, so stepping between photos reads
+  // as paging through the work rather than an instant pop. The lightbox's own open transition
+  // already handles the first-appearance reveal, so this only runs for Next/Prev steps.
+  lightboxImage.classList.add("is-swapping");
+  pendingSwapTimeout = window.setTimeout(() => {
+    lightboxImage.alt = photo.pieceTitle;
+    lightboxImage.src = photo.url;
+    lightboxImage.classList.remove("is-swapping");
+    pendingSwapTimeout = null;
+  }, PHOTO_SWAP_MS);
 }
 
 function stepLightbox(delta) {
