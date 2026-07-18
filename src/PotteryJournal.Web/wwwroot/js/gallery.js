@@ -4,6 +4,7 @@ let CATEGORIES = [];
 let activeCategory = null;
 let activeIndex = 0;
 let lastFocusedElement = null;
+let renderedCategoryName = null;
 
 const galleryIntro = document.getElementById("galleryIntro");
 const categoriesView = document.getElementById("categoriesView");
@@ -147,6 +148,7 @@ function route() {
     categoriesView.classList.remove("hidden");
     galleryIntro.classList.remove("hidden");
     categoriesEmpty.classList.toggle("hidden", CATEGORIES.length > 0);
+    renderedCategoryName = null;
     window.scrollTo(0, 0);
     return;
   }
@@ -162,7 +164,10 @@ function route() {
   galleryIntro.classList.add("hidden");
   categoriesEmpty.classList.add("hidden");
   categoryView.classList.remove("hidden");
-  renderCategoryGrid(category);
+  if (renderedCategoryName !== category.name) {
+    renderCategoryGrid(category);
+    renderedCategoryName = category.name;
+  }
 
   const photoIndex = match[2] !== undefined ? Number(match[2]) : null;
   if (photoIndex !== null && category.photos[photoIndex]) {
@@ -183,7 +188,26 @@ function openLightbox(category, index) {
     lightbox.classList.remove("hidden");
     requestAnimationFrame(() => lightbox.classList.add("open"));
     lightboxClose.focus();
+    setBackgroundInert(true);
   }
+}
+
+function setBackgroundInert(isInert) {
+  const targets = [
+    document.querySelector(".site-nav"),
+    ...Array.from(document.querySelector(".site-main").children).filter((el) => el !== lightbox),
+    document.querySelector(".site-footer"),
+  ];
+  targets.forEach((el) => {
+    if (!el) {
+      return;
+    }
+    if (isInert) {
+      el.setAttribute("inert", "");
+    } else {
+      el.removeAttribute("inert");
+    }
+  });
 }
 
 function showLightboxPhoto() {
@@ -211,6 +235,7 @@ function closeLightbox(opts) {
   lightbox.classList.remove("open");
   lightbox.addEventListener("transitionend", () => lightbox.classList.add("hidden"), { once: true });
   activeCategory = null;
+  setBackgroundInert(false);
 
   if (lastFocusedElement) {
     lastFocusedElement.focus();
@@ -235,5 +260,16 @@ function onKeydown(e) {
     stepLightbox(-1);
   } else if (e.key === "ArrowRight") {
     stepLightbox(1);
+  } else if (e.key === "Tab") {
+    trapLightboxFocus(e);
   }
+}
+
+function trapLightboxFocus(e) {
+  const focusable = [lightboxClose, lightboxPrev, lightboxNext];
+  const currentIndex = focusable.indexOf(document.activeElement);
+  const delta = e.shiftKey ? -1 : 1;
+  const nextIndex = currentIndex === -1 ? 0 : (currentIndex + delta + focusable.length) % focusable.length;
+  e.preventDefault();
+  focusable[nextIndex].focus();
 }
