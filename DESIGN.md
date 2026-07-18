@@ -9,6 +9,7 @@ colors:
   bisque-dark: "#9aabb3"
   copper-glaze: "#a6885c"
   copper-glaze-dim: "#7d6845"
+  copper-glaze-bright: "#aa8e64"
   paper: "#ffffff"
   paper-line: "#d0d4d5"
   ink: "#0c2435"
@@ -111,6 +112,11 @@ exists only for the worksheet detail view.
 - **Copper Glaze Dim** (`#7d6845`): The same accent desaturated/darkened for "already active" states
   (selected filter chips, current calendar view toggle) so the brighter Copper Glaze stays reserved
   for hover/focus.
+- **Copper Glaze Bright** (`#aa8e64`): The same accent lightened just enough to clear WCAG AA's
+  4.5:1 text-contrast floor on Shelf backgrounds at small label sizes (e.g. `.event-date`'s
+  0.72rem mono label) — base Copper Glaze only reaches 4.36:1 there. Use in place of base Copper
+  Glaze for small procedural/label text sitting directly on Shelf; base Copper Glaze remains
+  correct everywhere else (links, larger text, Kiln Char backgrounds, hover/focus fills).
 
 ### Neutral
 - **Kiln Char** (`#0c2435`): The page background across the entire dark register — deep

@@ -7,6 +7,7 @@
   --bisque-dark: #9aabb3;
   --copper-glaze: #a6885c;
   --copper-glaze-dim: #7d6845;
+  --copper-glaze-bright: #aa8e64;
   --paper: #ffffff;
   --paper-line: #d0d4d5;
   --ink: #0c2435;
@@ -41,6 +42,29 @@ a { color: var(--copper-glaze); }
 }
 
 .site-main { flex: 1; }
+
+/* ---------- skip link ---------- */
+
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: 1rem;
+  z-index: 100;
+  background: var(--shelf);
+  color: var(--paper);
+  border: 1px solid var(--copper-glaze);
+  padding: 0.65rem 1.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
 
 /* ---------- site nav ---------- */
 
