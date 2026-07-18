@@ -34,33 +34,49 @@ namespace PotteryJournal.Infrastructure.Services
         {
             DataHandlerResponse<string> response = new DataHandlerResponse<string>();
 
-            using Image image = await Image.LoadAsync(imageStream);
-
-            int longEdge = Math.Max(image.Width, image.Height);
-            if (longEdge > MaxLongEdgePixels)
+            Image image;
+            try
             {
-                image.Mutate(x => x.Resize(new ResizeOptions
-                {
-                    Mode = ResizeMode.Max,
-                    Size = new Size(MaxLongEdgePixels, MaxLongEdgePixels),
-                }));
+                image = await Image.LoadAsync(imageStream);
+            }
+            catch (ImageFormatException)
+            {
+                response.AddError(
+                    "That file isn't a supported image format. JPEG, PNG, GIF, WebP, BMP, and TIFF work -- " +
+                    "HEIC photos (the iPhone camera default) don't. Switch to Settings > Camera > Formats > " +
+                    "\"Most Compatible\" on iPhone, or convert the file to JPEG before uploading.");
+                response.IsSuccess = false;
+                return response;
             }
 
-            string directory = Path.Combine(_uploadsOptions.RootPath, subfolder);
-            Directory.CreateDirectory(directory);
-
-            string fileName = $"{Guid.NewGuid():N}.jpg";
-            string fullPath = Path.Combine(directory, fileName);
-
-            JpegEncoder encoder = new JpegEncoder
+            using (image)
             {
-                Quality = JpegQuality,
-            };
-            await image.SaveAsJpegAsync(fullPath, encoder);
+                int longEdge = Math.Max(image.Width, image.Height);
+                if (longEdge > MaxLongEdgePixels)
+                {
+                    image.Mutate(x => x.Resize(new ResizeOptions
+                    {
+                        Mode = ResizeMode.Max,
+                        Size = new Size(MaxLongEdgePixels, MaxLongEdgePixels),
+                    }));
+                }
 
-            response.Data = fileName;
-            response.IsSuccess = true;
-            return response;
+                string directory = Path.Combine(_uploadsOptions.RootPath, subfolder);
+                Directory.CreateDirectory(directory);
+
+                string fileName = $"{Guid.NewGuid():N}.jpg";
+                string fullPath = Path.Combine(directory, fileName);
+
+                JpegEncoder encoder = new JpegEncoder
+                {
+                    Quality = JpegQuality,
+                };
+                await image.SaveAsJpegAsync(fullPath, encoder);
+
+                response.Data = fileName;
+                response.IsSuccess = true;
+                return response;
+            }
         }
 
         /// <inheritdoc />

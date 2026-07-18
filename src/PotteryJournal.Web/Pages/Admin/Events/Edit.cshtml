@@ -2,11 +2,23 @@
 @model PotteryJournal.Web.Pages.Admin.Events.EditModel
 @{
     ViewData["Title"] = Model.Id.HasValue ? "Edit Event" : "New Event";
+
+    // asp-route-id with a null Guid? adds an explicit null route value instead of omitting the
+    // "id" segment, which breaks Form Tag Helper URL generation for the New Event page (the form
+    // silently renders action="" -- see CLAUDE.md). asp-all-route-data with a dictionary that only
+    // contains "id" when Model.Id has a value sidesteps that, while keeping the Form Tag Helper
+    // active (a plain action="@Url.Page(...)" form has no asp-* attributes, so the tag helper never
+    // runs and never injects the antiforgery token -- see CLAUDE.md).
+    Dictionary<string, string> saveRouteValues = new Dictionary<string, string>();
+    if (Model.Id.HasValue)
+    {
+        saveRouteValues["id"] = Model.Id.Value.ToString();
+    }
 }
 
 <h1 class="h3 mb-4">@(Model.Id.HasValue ? "Edit Event" : "New Event")</h1>
 
-<form method="post" asp-page-handler="Save" asp-route-id="@Model.Id" enctype="multipart/form-data">
+<form method="post" asp-page-handler="Save" asp-all-route-data="saveRouteValues" enctype="multipart/form-data">
   <div class="mb-3">
     <label class="form-label" for="title">Title</label>
     <input type="text" class="form-control" id="title" asp-for="Event.Title" required>

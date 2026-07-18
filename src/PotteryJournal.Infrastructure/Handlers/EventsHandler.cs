@@ -161,8 +161,13 @@ namespace PotteryJournal.Infrastructure.Handlers
         {
             eventEntity.Title = model.Title;
             eventEntity.Description = model.Description;
-            eventEntity.StartDateTime = model.StartDateTime;
-            eventEntity.EndDateTime = model.EndDateTime;
+            // Npgsql only accepts Offset=0 for "timestamp with time zone" columns. The submitted
+            // DateTimeOffset carries whatever offset the app process's local system clock has when
+            // the datetime-local input (no offset of its own) gets parsed -- UTC in Docker, but
+            // non-zero when running locally (e.g. from Visual Studio). ToUniversalTime() normalizes
+            // to Offset=0 without changing the point in time.
+            eventEntity.StartDateTime = model.StartDateTime.ToUniversalTime();
+            eventEntity.EndDateTime = model.EndDateTime?.ToUniversalTime();
             eventEntity.VenueName = model.VenueName;
             eventEntity.VenueAddress = model.VenueAddress;
             eventEntity.ExternalLinkUrl = model.ExternalLinkUrl;

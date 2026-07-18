@@ -132,6 +132,10 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
                 {
                     await _pieceHandler.AddImageAsync(Id.Value, saveResult.Data);
                 }
+                else
+                {
+                    TempData["StatusMessage"] = $"The photo couldn't be processed: {string.Join(" ", saveResult.Errors)}";
+                }
             }
 
             return RedirectToPage("Edit", new { id = Id });

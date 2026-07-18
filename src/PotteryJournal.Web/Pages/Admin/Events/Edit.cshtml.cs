@@ -93,6 +93,11 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                         _imageStorageService.Delete(UploadsSubfolders.Events, setResult.Data);
                     }
                 }
+                else
+                {
+                    TempData["StatusMessage"] = $"Event saved, but the banner photo couldn't be processed: {string.Join(" ", saveResult.Errors)}";
+                    return RedirectToPage("Edit", new { id = eventId });
+                }
             }
 
             TempData["StatusMessage"] = "Event saved.";
