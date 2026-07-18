@@ -213,7 +213,8 @@ function openLightbox(category, index) {
   if (!lightbox.classList.contains("open")) {
     lastFocusedElement = document.activeElement;
     lightbox.classList.remove("hidden");
-    requestAnimationFrame(() => lightbox.classList.add("open"));
+    void lightbox.offsetWidth; // force a reflow so the "hidden" -> visible state is committed before "open" triggers the transition
+    lightbox.classList.add("open");
     lightboxClose.focus();
     setBackgroundInert(true);
   }
