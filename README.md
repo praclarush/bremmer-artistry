@@ -43,6 +43,12 @@ pottery pieces (including photo upload, resized to a 1600px long edge and re-enc
 82), manage events, manage who else is allowed to sign in, and change their own password from
 `/admin/change-password`.
 
+**Event banner photos**: the Home page and Events page card lists both display the banner in a
+16:9 crop (`object-fit: cover`), so upload an image already close to a 16:9 aspect ratio (e.g.
+1600x900) -- a portrait or square photo will have most of its height cropped out of view. Uploads
+are resized to a 1600px long edge (never upscaled) and re-encoded as JPEG quality 82, so 1600x900
+is also the effective ceiling for a landscape banner.
+
 ### First-time setup
 
 1. **Bootstrap admin**: set `BOOTSTRAP_ADMIN_EMAIL` and `BOOTSTRAP_ADMIN_PASSWORD` to the first

@@ -54,6 +54,29 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task GetUpcomingAsync_EventStartedEarlierToday_StillReturned()
+        {
+            await _sut.CreateAsync(BuildSaveModel("Morning Show", DateTimeOffset.UtcNow.AddHours(-3)), "admin@example.com");
+
+            DataHandlerResponse<List<EventModel>> response = await _sut.GetUpcomingAsync();
+
+            Assert.That(response.Data, Has.Count.EqualTo(1));
+            Assert.That(response.Data![0].Title, Is.EqualTo("Morning Show"));
+        }
+
+        [Test]
+        public async Task GetUpcomingAsync_EventEndedEarlierToday_NotReturned()
+        {
+            EventSaveModel model = BuildSaveModel("Overnight Show", DateTimeOffset.UtcNow.AddDays(-1));
+            model.EndDateTime = DateTimeOffset.UtcNow.AddHours(-3);
+            await _sut.CreateAsync(model, "admin@example.com");
+
+            DataHandlerResponse<List<EventModel>> response = await _sut.GetUpcomingAsync();
+
+            Assert.That(response.Data, Is.Empty);
+        }
+
+        [Test]
         public async Task CreateAsync_SetsCreatedByEmail()
         {
             DataHandlerResponse<Guid> createResponse = await _sut.CreateAsync(BuildSaveModel("Show", DateTimeOffset.UtcNow.AddDays(1)), "owner@example.com");

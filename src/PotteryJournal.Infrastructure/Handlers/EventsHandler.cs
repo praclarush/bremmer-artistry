@@ -32,9 +32,10 @@ namespace PotteryJournal.Infrastructure.Handlers
             DataHandlerResponse<List<EventModel>> response = new DataHandlerResponse<List<EventModel>>();
 
             DateTimeOffset now = DateTimeOffset.UtcNow;
+            DateTimeOffset startOfToday = new DateTimeOffset(now.Date, TimeSpan.Zero);
             List<Event> events = await _context.Events
                 .AsNoTracking()
-                .Where(e => e.StartDateTime >= now)
+                .Where(e => e.EndDateTime.HasValue ? e.EndDateTime.Value >= now : e.StartDateTime >= startOfToday)
                 .OrderBy(e => e.StartDateTime)
                 .ToListAsync();
 

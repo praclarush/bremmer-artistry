@@ -1,6 +1,7 @@
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 let EVENTS = [];
+let ALL_EVENTS = [];
 let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
 const eventCardsEl = document.getElementById("eventCards");
@@ -16,6 +17,9 @@ init();
 async function init() {
   const response = await fetch("/events/data");
   EVENTS = await response.json();
+
+  const allResponse = await fetch("/events/data/all");
+  ALL_EVENTS = await allResponse.json();
 
   renderCards();
   renderCalendar();
@@ -85,15 +89,19 @@ function buildCard(evt) {
   if (evt.venueName || evt.venueAddress) {
     const venue = document.createElement("p");
     venue.className = "event-venue";
+    if (evt.venueName) {
+      venue.appendChild(document.createTextNode(evt.venueName));
+    }
     if (evt.venueAddress) {
+      if (evt.venueName) {
+        venue.appendChild(document.createElement("br"));
+      }
       const link = document.createElement("a");
       link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(evt.venueAddress)}`;
       link.target = "_blank";
       link.rel = "noopener";
-      link.textContent = evt.venueName || evt.venueAddress;
+      link.textContent = evt.venueAddress;
       venue.appendChild(link);
-    } else {
-      venue.textContent = evt.venueName;
     }
     body.appendChild(venue);
   }
@@ -213,7 +221,7 @@ function renderCalendar() {
 
 function groupEventsByDay() {
   const map = new Map();
-  EVENTS.forEach((evt) => {
+  ALL_EVENTS.forEach((evt) => {
     const key = dayKey(new Date(evt.startDateTime));
     if (!map.has(key)) {
       map.set(key, []);

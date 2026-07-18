@@ -30,6 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.Configure<UploadsOptions>(builder.Configuration.GetSection("Uploads"));
 
 builder.Services.AddScoped<IPieceHandler, PieceHandler>();
+builder.Services.AddScoped<IReferenceDataHandler, ReferenceDataHandler>();
 builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
@@ -130,9 +131,21 @@ app.MapGet("/pottery-journal/data", async (string? category, IPieceHandler piece
     return JsonResult(response.Data ?? new List<PieceDetailModel>());
 }).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
+app.MapGet("/gallery/data", async (IPieceHandler pieceHandler) =>
+{
+    DataHandlerResponse<List<GalleryPieceModel>> response = await pieceHandler.GetGalleryPiecesAsync();
+    return JsonResult(response.Data ?? new List<GalleryPieceModel>());
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
+
 app.MapGet("/events/data", async (IEventsHandler eventsHandler) =>
 {
     DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetUpcomingAsync();
+    return JsonResult(response.Data ?? new List<EventModel>());
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
+
+app.MapGet("/events/data/all", async (IEventsHandler eventsHandler) =>
+{
+    DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetAllAsync();
     return JsonResult(response.Data ?? new List<EventModel>());
 }).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 

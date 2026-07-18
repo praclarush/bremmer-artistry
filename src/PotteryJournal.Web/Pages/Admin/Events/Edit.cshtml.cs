@@ -101,7 +101,7 @@ namespace PotteryJournal.Web.Pages.Admin.Events
             }
 
             TempData["StatusMessage"] = "Event saved.";
-            return RedirectToPage("Edit", new { id = eventId });
+            return RedirectToPage("Index");
         }
     }
 }
