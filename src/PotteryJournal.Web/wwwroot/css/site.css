@@ -235,8 +235,9 @@ a { color: var(--copper-glaze); }
   display: block;
 }
 
-@media (max-width: 640px) {
-  .featured-collection {
+@media (max-width: 800px) {
+  .home-intro .featured-collection {
+    order: -1;
     padding-right: clamp(1rem, 4vw, 3rem);
   }
 }
