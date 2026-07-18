@@ -67,10 +67,37 @@ docker compose up --build
 App on `http://localhost:8080`, Postgres on the `db` service (not published to the host by
 default). EF Core migrations run automatically on startup.
 
-Without Docker: `dotnet run --project src/PotteryJournal.Web`, with a `PotteryJournal` connection
-string in `appsettings.Development.json` or user-secrets pointing at a local Postgres instance, and
-`POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL`/`POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD` environment
-variables set for the bootstrap admin.
+### Debugging without Docker (e.g. from Visual Studio)
+
+`appsettings.json` ships with an empty `ConnectionStrings:PotteryJournal` on purpose -- the real
+value is normally injected by `docker-compose.yml`'s `ConnectionStrings__PotteryJournal` env var,
+which only applies inside the `app` container. Running the project directly (`dotnet run` or
+Visual Studio F5) skips that entirely, so `dbContext.Database.MigrateAsync()` fails with `Host
+can't be null` unless you supply a connection string yourself. Also note the `db` service's 5432
+isn't published to the host by default, so even with a connection string there's nothing to
+connect to.
+
+To debug against the same Postgres the Docker dev stack uses:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+```
+
+This publishes Postgres to `localhost:55432` (not 5432 -- pick a free port if that one's already
+taken by something else on your machine). Then set the connection string and bootstrap admin vars
+via [user-secrets](https://learn.microsoft.com/aspnet/core/security/app-secrets) (never commit
+these to `appsettings.Development.json`):
+
+```bash
+cd src/PotteryJournal.Web
+dotnet user-secrets set "ConnectionStrings:PotteryJournal" "Host=localhost;Port=55432;Database=potteryjournal;Username=potteryjournal;Password=<POSTGRES_PASSWORD from .env>"
+dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL" "<BOOTSTRAP_ADMIN_EMAIL from .env>"
+dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD" "<BOOTSTRAP_ADMIN_PASSWORD from .env>"
+```
+
+User secrets only load when `ASPNETCORE_ENVIRONMENT=Development`, which the `http`/`https` launch
+profiles already set -- run/debug via one of those profiles (Visual Studio's default), not
+`--no-launch-profile`.
 
 The dev machine used to build this only has the .NET 10 SDK/runtime installed, not .NET 8 -- the
 projects target `net8.0` (per house style) but set `<RollForward>LatestMajor</RollForward>` so

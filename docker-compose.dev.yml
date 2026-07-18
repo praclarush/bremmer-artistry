@@ -13,6 +13,18 @@ services:
       - infrastructure-obj:/src/src/PotteryJournal.Infrastructure/obj
       - sharedkernel-bin:/src/src/PotteryJournal.SharedKernel/bin
       - sharedkernel-obj:/src/src/PotteryJournal.SharedKernel/obj
+      # Bind-mounted to the host (dev only) instead of the base compose file's named "uploads"
+      # volume, so uploaded photos are reachable at ./uploads when debugging PotteryJournal.Web
+      # directly from Visual Studio -- same reasoning as the db port publish above.
+      - ./uploads:/app/uploads
+
+  # Published to the host (dev only) so Postgres is reachable at localhost:55432 -- lets you debug
+  # PotteryJournal.Web directly from Visual Studio against the same database the dev container
+  # uses. Host port 55432, not 5432 -- this dev machine already has a native Postgres listening on
+  # 5432, unrelated to this project.
+  db:
+    ports:
+      - "55432:5432"
 
 volumes:
   web-bin:

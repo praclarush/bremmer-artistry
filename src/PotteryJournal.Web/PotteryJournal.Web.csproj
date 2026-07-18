@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\PotteryJournal.Infrastructure\PotteryJournal.Infrastructure.csproj" />
@@ -19,6 +19,7 @@
     <!-- Dev machine only has the .NET 10 ASP.NET Core shared runtime installed; Docker uses the real
          aspnet:8.0 image, so this only affects `dotnet run` on this box, not what ships. -->
     <RollForward>LatestMajor</RollForward>
+    <UserSecretsId>6d505bbe-eef3-4078-9e78-2e1160c7a626</UserSecretsId>
   </PropertyGroup>
 
 </Project>
