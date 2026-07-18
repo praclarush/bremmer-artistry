@@ -259,6 +259,11 @@ a { color: var(--copper-glaze); }
   display: block;
 }
 
+.featured-collection .hero-secondary-link {
+  display: inline-block;
+  margin-top: 0.9rem;
+}
+
 @media (max-width: 800px) {
   .home-intro .featured-collection {
     order: -1;
