@@ -9,6 +9,9 @@ let renderedCategoryName = null;
 const galleryIntro = document.getElementById("galleryIntro");
 const categoriesView = document.getElementById("categoriesView");
 const categoriesEmpty = document.getElementById("categoriesEmpty");
+const categoriesLoading = document.getElementById("categoriesLoading");
+const categoriesError = document.getElementById("categoriesError");
+const categoriesRetryBtn = document.getElementById("categoriesRetryBtn");
 const categoryView = document.getElementById("categoryView");
 const categoryTitle = document.getElementById("categoryTitle");
 const categoryGrid = document.getElementById("categoryGrid");
@@ -21,30 +24,41 @@ const lightboxClose = document.getElementById("lightboxClose");
 const lightboxPrev = document.getElementById("lightboxPrev");
 const lightboxNext = document.getElementById("lightboxNext");
 
+categoryBackBtn.addEventListener("click", () => {
+  location.hash = "";
+});
+lightboxClose.addEventListener("click", () => closeLightbox());
+lightboxPrev.addEventListener("click", () => stepLightbox(-1));
+lightboxNext.addEventListener("click", () => stepLightbox(1));
+lightbox.addEventListener("click", (e) => {
+  if (e.target === lightbox) {
+    closeLightbox();
+  }
+});
+document.addEventListener("keydown", onKeydown);
+window.addEventListener("hashchange", route);
+categoriesRetryBtn.addEventListener("click", () => init());
+
 init();
 
 async function init() {
-  const response = await fetch("/gallery/data");
-  const pieces = await response.json();
-
-  CATEGORIES = buildCategories(pieces);
-  renderCategoryTiles();
-
-  categoryBackBtn.addEventListener("click", () => {
-    location.hash = "";
-  });
-  lightboxClose.addEventListener("click", () => closeLightbox());
-  lightboxPrev.addEventListener("click", () => stepLightbox(-1));
-  lightboxNext.addEventListener("click", () => stepLightbox(1));
-  lightbox.addEventListener("click", (e) => {
-    if (e.target === lightbox) {
-      closeLightbox();
+  categoriesLoading.classList.remove("hidden");
+  categoriesError.classList.add("hidden");
+  try {
+    const response = await fetch("/gallery/data");
+    if (!response.ok) {
+      throw new Error(`Unexpected response: ${response.status}`);
     }
-  });
-  document.addEventListener("keydown", onKeydown);
-  window.addEventListener("hashchange", route);
+    const pieces = await response.json();
 
-  route();
+    CATEGORIES = buildCategories(pieces);
+    renderCategoryTiles();
+    route();
+  } catch (err) {
+    categoriesError.classList.remove("hidden");
+  } finally {
+    categoriesLoading.classList.add("hidden");
+  }
 }
 
 function buildCategories(pieces) {

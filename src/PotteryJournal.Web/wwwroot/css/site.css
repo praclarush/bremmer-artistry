@@ -190,11 +190,16 @@ a { color: var(--copper-glaze); }
 }
 
 .hero-secondary-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--copper-glaze);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
+  cursor: pointer;
   transition: color 0.15s ease;
 }
 
