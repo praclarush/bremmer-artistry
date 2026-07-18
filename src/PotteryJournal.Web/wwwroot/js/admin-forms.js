@@ -37,4 +37,7 @@ function removeRow(removeButton) {
   row.querySelectorAll("input, textarea").forEach((el) => {
     el.value = "";
   });
+  row.querySelectorAll("select").forEach((el) => {
+    el.value = "";
+  });
 }

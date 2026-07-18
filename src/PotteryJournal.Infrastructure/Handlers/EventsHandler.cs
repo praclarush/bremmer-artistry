@@ -62,19 +62,17 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <inheritdoc />
         public async Task<DataHandlerResponse<EventModel>> GetByIdAsync(Guid id)
         {
-            DataHandlerResponse<EventModel> response = new DataHandlerResponse<EventModel>();
-
             Event? eventEntity = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
             if (eventEntity is null)
             {
-                response.AddError($"No event was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return DataHandlerResponse<EventModel>.NotFound("event", id);
             }
 
-            response.Data = ToModel(eventEntity);
-            response.IsSuccess = true;
-            return response;
+            return new DataHandlerResponse<EventModel>
+            {
+                Data = ToModel(eventEntity),
+                IsSuccess = true,
+            };
         }
 
         /// <inheritdoc />
@@ -100,62 +98,51 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <inheritdoc />
         public async Task<HandlerResponse> UpdateAsync(Guid id, EventSaveModel model)
         {
-            HandlerResponse response = new HandlerResponse();
-
             Event? eventEntity = await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (eventEntity is null)
             {
-                response.AddError($"No event was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return HandlerResponse.NotFound("event", id);
             }
 
             ApplySaveModel(eventEntity, model);
             await _context.SaveChangesAsync();
 
-            response.IsSuccess = true;
-            return response;
+            return new HandlerResponse { IsSuccess = true };
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> DeleteAsync(Guid id)
         {
-            HandlerResponse response = new HandlerResponse();
-
             Event? eventEntity = await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (eventEntity is null)
             {
-                response.AddError($"No event was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return HandlerResponse.NotFound("event", id);
             }
 
             _context.Events.Remove(eventEntity);
             await _context.SaveChangesAsync();
 
-            response.IsSuccess = true;
-            return response;
+            return new HandlerResponse { IsSuccess = true };
         }
 
         /// <inheritdoc />
         public async Task<DataHandlerResponse<string?>> SetImageAsync(Guid id, string fileName)
         {
-            DataHandlerResponse<string?> response = new DataHandlerResponse<string?>();
-
             Event? eventEntity = await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
             if (eventEntity is null)
             {
-                response.AddError($"No event was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return DataHandlerResponse<string?>.NotFound("event", id);
             }
 
-            response.Data = eventEntity.ImageFileName;
+            string? previousFileName = eventEntity.ImageFileName;
             eventEntity.ImageFileName = fileName;
             await _context.SaveChangesAsync();
 
-            response.IsSuccess = true;
-            return response;
+            return new DataHandlerResponse<string?>
+            {
+                Data = previousFileName,
+                IsSuccess = true,
+            };
         }
 
         private static void ApplySaveModel(Event eventEntity, EventSaveModel model)

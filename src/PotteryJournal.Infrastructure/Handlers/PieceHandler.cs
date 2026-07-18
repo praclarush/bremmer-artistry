@@ -81,6 +81,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .Include(p => p.GlazeApplications).ThenInclude(g => g.Glaze)
                 .Include(p => p.ClayBody)
                 .Include(p => p.Category)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .Where(p => p.GlazeApplications.Any());
 
@@ -94,36 +95,6 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .ToListAsync();
 
             response.Data = pieces.Select(ToDetailModel).ToList();
-            response.IsSuccess = true;
-            return response;
-        }
-
-        /// <inheritdoc />
-        public async Task<DataHandlerResponse<List<GalleryCategoryModel>>> GetGalleryCategoriesAsync()
-        {
-            DataHandlerResponse<List<GalleryCategoryModel>> response = new DataHandlerResponse<List<GalleryCategoryModel>>();
-
-            List<Piece> pieces = await _context.Pieces
-                .Include(p => p.Images)
-                .Include(p => p.Category)
-                .AsNoTracking()
-                .Where(p => p.ShowInGallery && p.Category != null)
-                .OrderByDescending(p => p.StartedDate)
-                .ToListAsync();
-
-            response.Data = pieces
-                .GroupBy(p => p.Category!.Name)
-                .Select(group => new GalleryCategoryModel
-                {
-                    Category = group.Key,
-                    PieceCount = group.Count(),
-                    RepresentativeImageFileName = group.First().Images
-                        .OrderBy(i => i.SortOrder)
-                        .Select(i => i.FileName)
-                        .FirstOrDefault(),
-                })
-                .OrderBy(c => c.Category)
-                .ToList();
             response.IsSuccess = true;
             return response;
         }
@@ -167,6 +138,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .Include(p => p.ClayBody)
                 .Include(p => p.Category)
                 .Include(p => p.Collection)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.PieceNumber == pieceNumber);
 
@@ -183,6 +155,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .Include(p => p.ClayBody)
                 .Include(p => p.Category)
                 .Include(p => p.Collection)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id);
 
@@ -257,18 +230,15 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <inheritdoc />
         public async Task<HandlerResponse> UpdateAsync(Guid id, PieceSaveModel model)
         {
-            HandlerResponse response = new HandlerResponse();
-
             Piece? piece = await _context.Pieces
                 .Include(p => p.Notes)
                 .Include(p => p.GlazeApplications)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (piece is null)
             {
-                response.AddError($"No piece was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return HandlerResponse.NotFound("piece", id);
             }
 
             ApplySaveModel(piece, model);
@@ -280,34 +250,34 @@ namespace PotteryJournal.Infrastructure.Handlers
 
             await _context.SaveChangesAsync();
 
-            response.IsSuccess = true;
-            return response;
+            return new HandlerResponse { IsSuccess = true };
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> DeleteAsync(Guid id)
         {
-            HandlerResponse response = new HandlerResponse();
-
             Piece? piece = await _context.Pieces.FirstOrDefaultAsync(p => p.Id == id);
             if (piece is null)
             {
-                response.AddError($"No piece was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return HandlerResponse.NotFound("piece", id);
             }
 
             _context.Pieces.Remove(piece);
             await _context.SaveChangesAsync();
 
-            response.IsSuccess = true;
-            return response;
+            return new HandlerResponse { IsSuccess = true };
         }
 
         /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddImageAsync(Guid pieceId, string fileName)
         {
             DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
+
+            bool pieceExists = await _context.Pieces.AnyAsync(p => p.Id == pieceId);
+            if (!pieceExists)
+            {
+                return DataHandlerResponse<Guid>.NotFound("piece", pieceId);
+            }
 
             int nextSortOrder = await _context.PieceImages
                 .Where(i => i.PieceId == pieceId)
@@ -339,9 +309,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             PieceImage? image = await _context.PieceImages.FirstOrDefaultAsync(i => i.Id == imageId);
             if (image is null)
             {
-                response.AddError($"No photo was found with id {imageId}.");
-                response.IsSuccess = false;
-                return response;
+                return DataHandlerResponse<string>.NotFound("photo", imageId);
             }
 
             _context.PieceImages.Remove(image);

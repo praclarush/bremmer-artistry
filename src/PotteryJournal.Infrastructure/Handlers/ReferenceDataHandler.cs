@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using PotteryJournal.Infrastructure.Data;
@@ -85,166 +86,81 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddClayBodyAsync(string name)
         {
-            DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
-            if (!TryNormalizeName(name, out string normalized, response))
-            {
-                return response;
-            }
-
-            if (await _context.ClayBodies.AsNoTracking().AnyAsync(c => c.Name == normalized))
-            {
-                response.AddError($"\"{normalized}\" already exists.");
-                response.IsSuccess = false;
-                return response;
-            }
-
-            ClayBody clayBody = new ClayBody { Name = normalized };
-            _context.ClayBodies.Add(clayBody);
-            await _context.SaveChangesAsync();
-
-            response.Data = clayBody.Id;
-            response.IsSuccess = true;
-            return response;
+            return await AddLookupAsync(
+                _context.ClayBodies,
+                name,
+                normalized => _context.ClayBodies.AsNoTracking().AnyAsync(c => c.Name == normalized),
+                normalized => new ClayBody { Name = normalized },
+                c => c.Id);
         }
 
         /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddGlazeAsync(string name)
         {
-            DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
-            if (!TryNormalizeName(name, out string normalized, response))
-            {
-                return response;
-            }
-
-            if (await _context.Glazes.AsNoTracking().AnyAsync(g => g.Name == normalized))
-            {
-                response.AddError($"\"{normalized}\" already exists.");
-                response.IsSuccess = false;
-                return response;
-            }
-
-            Glaze glaze = new Glaze { Name = normalized };
-            _context.Glazes.Add(glaze);
-            await _context.SaveChangesAsync();
-
-            response.Data = glaze.Id;
-            response.IsSuccess = true;
-            return response;
+            return await AddLookupAsync(
+                _context.Glazes,
+                name,
+                normalized => _context.Glazes.AsNoTracking().AnyAsync(g => g.Name == normalized),
+                normalized => new Glaze { Name = normalized },
+                g => g.Id);
         }
 
         /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddCategoryAsync(string name)
         {
-            DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
-            if (!TryNormalizeName(name, out string normalized, response))
-            {
-                return response;
-            }
-
-            if (await _context.Categories.AsNoTracking().AnyAsync(c => c.Name == normalized))
-            {
-                response.AddError($"\"{normalized}\" already exists.");
-                response.IsSuccess = false;
-                return response;
-            }
-
-            Category category = new Category { Name = normalized };
-            _context.Categories.Add(category);
-            await _context.SaveChangesAsync();
-
-            response.Data = category.Id;
-            response.IsSuccess = true;
-            return response;
+            return await AddLookupAsync(
+                _context.Categories,
+                name,
+                normalized => _context.Categories.AsNoTracking().AnyAsync(c => c.Name == normalized),
+                normalized => new Category { Name = normalized },
+                c => c.Id);
         }
 
         /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddCollectionAsync(string name)
         {
-            DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
-            if (!TryNormalizeName(name, out string normalized, response))
-            {
-                return response;
-            }
-
-            if (await _context.Collections.AsNoTracking().AnyAsync(c => c.Name == normalized))
-            {
-                response.AddError($"\"{normalized}\" already exists.");
-                response.IsSuccess = false;
-                return response;
-            }
-
-            Collection collection = new Collection { Name = normalized };
-            _context.Collections.Add(collection);
-            await _context.SaveChangesAsync();
-
-            response.Data = collection.Id;
-            response.IsSuccess = true;
-            return response;
+            return await AddLookupAsync(
+                _context.Collections,
+                name,
+                normalized => _context.Collections.AsNoTracking().AnyAsync(c => c.Name == normalized),
+                normalized => new Collection { Name = normalized },
+                c => c.Id);
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> RemoveClayBodyAsync(Guid id)
         {
-            ClayBody? clayBody = await _context.ClayBodies.FirstOrDefaultAsync(c => c.Id == id);
-            if (clayBody is null)
-            {
-                return NotFoundResponse("clay body", id);
-            }
-
-            _context.ClayBodies.Remove(clayBody);
-            await _context.SaveChangesAsync();
-            return new HandlerResponse { IsSuccess = true };
+            return await RemoveLookupAsync(_context.ClayBodies, "clay body", id, c => c.Id == id);
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> RemoveGlazeAsync(Guid id)
         {
-            Glaze? glaze = await _context.Glazes.FirstOrDefaultAsync(g => g.Id == id);
-            if (glaze is null)
+            return await RemoveLookupAsync(_context.Glazes, "glaze", id, g => g.Id == id, async glaze =>
             {
-                return NotFoundResponse("glaze", id);
-            }
+                int usageCount = await _context.GlazeApplications.CountAsync(g => g.GlazeId == glaze.Id);
+                if (usageCount == 0)
+                {
+                    return null;
+                }
 
-            int usageCount = await _context.GlazeApplications.CountAsync(g => g.GlazeId == id);
-            if (usageCount > 0)
-            {
                 HandlerResponse inUseResponse = new HandlerResponse();
                 inUseResponse.AddError($"\"{glaze.Name}\" is still used by {usageCount} glaze application{(usageCount == 1 ? "" : "s")} and can't be deleted.");
                 inUseResponse.IsSuccess = false;
                 return inUseResponse;
-            }
-
-            _context.Glazes.Remove(glaze);
-            await _context.SaveChangesAsync();
-            return new HandlerResponse { IsSuccess = true };
+            });
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> RemoveCategoryAsync(Guid id)
         {
-            Category? category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
-            if (category is null)
-            {
-                return NotFoundResponse("category", id);
-            }
-
-            _context.Categories.Remove(category);
-            await _context.SaveChangesAsync();
-            return new HandlerResponse { IsSuccess = true };
+            return await RemoveLookupAsync(_context.Categories, "category", id, c => c.Id == id);
         }
 
         /// <inheritdoc />
         public async Task<HandlerResponse> RemoveCollectionAsync(Guid id)
         {
-            Collection? collection = await _context.Collections.FirstOrDefaultAsync(c => c.Id == id);
-            if (collection is null)
-            {
-                return NotFoundResponse("collection", id);
-            }
-
-            _context.Collections.Remove(collection);
-            await _context.SaveChangesAsync();
-            return new HandlerResponse { IsSuccess = true };
+            return await RemoveLookupAsync(_context.Collections, "collection", id, c => c.Id == id);
         }
 
         /// <inheritdoc />
@@ -253,7 +169,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             Collection? collection = await _context.Collections.FirstOrDefaultAsync(c => c.Id == id);
             if (collection is null)
             {
-                return NotFoundResponse("collection", id);
+                return HandlerResponse.NotFound("collection", id);
             }
 
             if (isFeatured)
@@ -285,12 +201,80 @@ namespace PotteryJournal.Infrastructure.Handlers
             return true;
         }
 
-        private static HandlerResponse NotFoundResponse(string kind, Guid id)
+        /// <summary>
+        /// Shared implementation behind the Add*Async methods: normalizes the name, rejects a
+        /// duplicate, then adds and saves the new entity.
+        /// </summary>
+        /// <param name="dbSet">The DbSet the new entity is added to.</param>
+        /// <param name="name">The raw, unnormalized name submitted by the caller.</param>
+        /// <param name="existsByNameAsync">Checks whether an entity with the normalized name already exists.</param>
+        /// <param name="factory">Builds the new entity from the normalized name.</param>
+        /// <param name="idSelector">Reads the new entity's id after it has been saved.</param>
+        private async Task<DataHandlerResponse<Guid>> AddLookupAsync<TEntity>(
+            DbSet<TEntity> dbSet,
+            string name,
+            Func<string, Task<bool>> existsByNameAsync,
+            Func<string, TEntity> factory,
+            Func<TEntity, Guid> idSelector)
+            where TEntity : class
         {
-            HandlerResponse response = new HandlerResponse();
-            response.AddError($"No {kind} was found with id {id}.");
-            response.IsSuccess = false;
+            DataHandlerResponse<Guid> response = new DataHandlerResponse<Guid>();
+            if (!TryNormalizeName(name, out string normalized, response))
+            {
+                return response;
+            }
+
+            if (await existsByNameAsync(normalized))
+            {
+                response.AddError($"\"{normalized}\" already exists.");
+                response.IsSuccess = false;
+                return response;
+            }
+
+            TEntity entity = factory(normalized);
+            dbSet.Add(entity);
+            await _context.SaveChangesAsync();
+
+            response.Data = idSelector(entity);
+            response.IsSuccess = true;
             return response;
+        }
+
+        /// <summary>
+        /// Shared implementation behind the Remove*Async methods: finds the entity, optionally
+        /// blocks removal when it's still in use, then removes and saves.
+        /// </summary>
+        /// <param name="dbSet">The DbSet the entity is removed from.</param>
+        /// <param name="kind">A human-readable name for the entity type, used in the not-found error.</param>
+        /// <param name="id">The id of the entity to remove.</param>
+        /// <param name="idPredicate">Matches the entity with the given id.</param>
+        /// <param name="inUseCheckAsync">When supplied, returns a failure response if the entity can't be removed yet (e.g. still referenced elsewhere), or null if removal may proceed.</param>
+        private async Task<HandlerResponse> RemoveLookupAsync<TEntity>(
+            DbSet<TEntity> dbSet,
+            string kind,
+            Guid id,
+            Expression<Func<TEntity, bool>> idPredicate,
+            Func<TEntity, Task<HandlerResponse?>>? inUseCheckAsync = null)
+            where TEntity : class
+        {
+            TEntity? entity = await dbSet.FirstOrDefaultAsync(idPredicate);
+            if (entity is null)
+            {
+                return HandlerResponse.NotFound(kind, id);
+            }
+
+            if (inUseCheckAsync is not null)
+            {
+                HandlerResponse? inUseResponse = await inUseCheckAsync(entity);
+                if (inUseResponse is not null)
+                {
+                    return inUseResponse;
+                }
+            }
+
+            dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+            return new HandlerResponse { IsSuccess = true };
         }
     }
 }

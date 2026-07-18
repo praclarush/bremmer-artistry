@@ -120,7 +120,13 @@ namespace PotteryJournal.Infrastructure.Handlers
             AllowedAdmin? admin = await _context.AllowedAdmins.FirstOrDefaultAsync(a => a.Id == id);
             if (admin is null)
             {
-                response.AddError($"No admin account was found with id {id}.");
+                return HandlerResponse.NotFound("admin account", id);
+            }
+
+            int adminCount = await _context.AllowedAdmins.CountAsync();
+            if (adminCount <= 1)
+            {
+                response.AddError("The last admin account can't be removed -- add another admin first.");
                 response.IsSuccess = false;
                 return response;
             }
@@ -140,9 +146,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             AllowedAdmin? admin = await _context.AllowedAdmins.FirstOrDefaultAsync(a => a.Id == id);
             if (admin is null)
             {
-                response.AddError($"No admin account was found with id {id}.");
-                response.IsSuccess = false;
-                return response;
+                return HandlerResponse.NotFound("admin account", id);
             }
 
             admin.PasswordHash = _passwordHasher.HashPassword(admin, newPassword);

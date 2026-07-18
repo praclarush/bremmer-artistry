@@ -108,13 +108,30 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
             Guid pieceId;
             if (Id.HasValue)
             {
-                await _pieceHandler.UpdateAsync(Id.Value, Piece);
+                HandlerResponse updateResult = await _pieceHandler.UpdateAsync(Id.Value, Piece);
+                if (!updateResult.IsSuccess)
+                {
+                    TempData["StatusMessage"] = string.Join(" ", updateResult.Errors);
+                    return RedirectToPage("Index");
+                }
+
                 pieceId = Id.Value;
             }
             else
             {
                 string createdByEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
                 DataHandlerResponse<Guid> createResult = await _pieceHandler.CreateAsync(Piece, createdByEmail);
+                if (!createResult.IsSuccess)
+                {
+                    foreach (string error in createResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error);
+                    }
+
+                    await LoadReferenceDataAsync();
+                    return Page();
+                }
+
                 pieceId = createResult.Data;
             }
 

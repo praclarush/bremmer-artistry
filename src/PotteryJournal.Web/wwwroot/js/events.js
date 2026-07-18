@@ -203,15 +203,20 @@ function renderCalendar() {
 
     const key = dayKey(day);
     (eventsByDay.get(key) || []).forEach((evt) => {
-      const pill = document.createElement("a");
+      const hasCard = EVENTS.some((e) => e.id === evt.id);
+      const pill = document.createElement(hasCard ? "a" : "span");
       pill.className = "calendar-event";
-      pill.href = `#event-${evt.id}`;
       pill.textContent = evt.title;
-      pill.addEventListener("click", (e) => {
-        e.preventDefault();
-        showView("list");
-        document.getElementById(`event-${evt.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-      });
+      if (hasCard) {
+        pill.href = `#event-${evt.id}`;
+        pill.addEventListener("click", (e) => {
+          e.preventDefault();
+          showView("list");
+          document.getElementById(`event-${evt.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      } else {
+        pill.classList.add("calendar-event-past");
+      }
       cell.appendChild(pill);
     });
 

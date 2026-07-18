@@ -236,3 +236,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.calendar-event-past {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -49,5 +49,18 @@ namespace PotteryJournal.SharedKernel.Core
             Errors.AddRange(childResponse.Errors);
             Warnings.AddRange(childResponse.Warnings);
         }
+
+        /// <summary>
+        /// Builds a failed response with a standard "no {kind} was found with id {id}" error.
+        /// </summary>
+        /// <param name="kind">A human-readable name for the entity type (e.g. "event", "piece").</param>
+        /// <param name="id">The identifier that was not found.</param>
+        public static HandlerResponse NotFound(string kind, object id)
+        {
+            HandlerResponse response = new HandlerResponse();
+            response.AddError($"No {kind} was found with id {id}.");
+            response.IsSuccess = false;
+            return response;
+        }
     }
 }

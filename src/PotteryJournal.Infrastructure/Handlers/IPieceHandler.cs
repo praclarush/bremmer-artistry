@@ -29,13 +29,6 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<PieceDetailModel>>> GetAllDetailsAsync(string? category);
 
         /// <summary>
-        /// Gets one Gallery tile per distinct category present on any piece curated for the
-        /// Gallery (<see cref="Models.PieceSaveModel.ShowInGallery"/>), each with a representative
-        /// image from the most recently started piece in that category.
-        /// </summary>
-        Task<DataHandlerResponse<List<GalleryCategoryModel>>> GetGalleryCategoriesAsync();
-
-        /// <summary>
         /// Gets every piece curated for the Gallery, with all of its photos, for the Gallery page's
         /// category drill-down grid and lightbox. Independent of the Pottery Journal's own data --
         /// only pieces with <see cref="Models.PieceSaveModel.ShowInGallery"/> set are included.

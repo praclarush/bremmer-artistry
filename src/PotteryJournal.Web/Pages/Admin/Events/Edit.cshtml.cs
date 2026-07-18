@@ -65,19 +65,41 @@ namespace PotteryJournal.Web.Pages.Admin.Events
         {
             if (!ModelState.IsValid)
             {
+                if (Id.HasValue)
+                {
+                    DataHandlerResponse<EventModel> existingResponse = await _eventsHandler.GetByIdAsync(Id.Value);
+                    ImageFileName = existingResponse.Data?.ImageFileName;
+                }
+
                 return Page();
             }
 
             Guid eventId;
             if (Id.HasValue)
             {
-                await _eventsHandler.UpdateAsync(Id.Value, Event);
+                HandlerResponse updateResult = await _eventsHandler.UpdateAsync(Id.Value, Event);
+                if (!updateResult.IsSuccess)
+                {
+                    TempData["StatusMessage"] = string.Join(" ", updateResult.Errors);
+                    return RedirectToPage("Index");
+                }
+
                 eventId = Id.Value;
             }
             else
             {
                 string createdByEmail = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
                 DataHandlerResponse<Guid> createResult = await _eventsHandler.CreateAsync(Event, createdByEmail);
+                if (!createResult.IsSuccess)
+                {
+                    foreach (string error in createResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error);
+                    }
+
+                    return Page();
+                }
+
                 eventId = createResult.Data;
             }
 
