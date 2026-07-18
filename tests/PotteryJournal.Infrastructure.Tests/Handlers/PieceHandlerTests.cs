@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using PotteryJournal.Infrastructure.Data;
+using PotteryJournal.Infrastructure.Data.Entities;
 using PotteryJournal.Infrastructure.Handlers;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.SharedKernel.Core;
@@ -15,6 +16,8 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
     {
         private AppDbContext _context = null!;
         private PieceHandler _sut = null!;
+        private Guid _clayBodyId;
+        private Guid _glazeId;
 
         [SetUp]
         public void SetUp()
@@ -26,6 +29,14 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
 
             _context = new AppDbContext(options);
             _sut = new PieceHandler(_context);
+
+            ClayBody clayBody = new ClayBody { Id = Guid.NewGuid(), Name = "Stoneware" };
+            Glaze glaze = new Glaze { Id = Guid.NewGuid(), Name = "Ironfall Blue" };
+            _context.ClayBodies.Add(clayBody);
+            _context.Glazes.Add(glaze);
+            _context.SaveChanges();
+            _clayBodyId = clayBody.Id;
+            _glazeId = glaze.Id;
         }
 
         [TearDown]
@@ -62,16 +73,23 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
-        public async Task GetSummariesAsync_FilteredByCategory_ReturnsOnlyMatchingPieces()
+        public async Task GetAllDetailsAsync_FilteredByCategory_ReturnsOnlyMatchingPieces()
         {
+            Category bowlsCategory = new Category { Id = Guid.NewGuid(), Name = "Bowls" };
+            Category vasesCategory = new Category { Id = Guid.NewGuid(), Name = "Vases" };
+            _context.Categories.AddRange(bowlsCategory, vasesCategory);
+            await _context.SaveChangesAsync();
+
             PieceSaveModel bowl = BuildSaveModel("Bowl One");
-            bowl.Category = "Bowls";
+            bowl.CategoryId = bowlsCategory.Id;
+            bowl.GlazeApplications.Add(new GlazeApplicationModel { Location = "Interior", GlazeId = _glazeId, Coats = 2 });
             PieceSaveModel vase = BuildSaveModel("Vase One");
-            vase.Category = "Vases";
+            vase.CategoryId = vasesCategory.Id;
+            vase.GlazeApplications.Add(new GlazeApplicationModel { Location = "Interior", GlazeId = _glazeId, Coats = 2 });
             await _sut.CreateAsync(bowl, "admin@example.com");
             await _sut.CreateAsync(vase, "admin@example.com");
 
-            DataHandlerResponse<List<PieceSummaryModel>> response = await _sut.GetSummariesAsync("Bowls");
+            DataHandlerResponse<List<PieceDetailModel>> response = await _sut.GetAllDetailsAsync("Bowls");
 
             Assert.That(response.Data, Has.Count.EqualTo(1));
             Assert.That(response.Data![0].Title, Is.EqualTo("Bowl One"));
@@ -84,7 +102,7 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
 
             PieceSaveModel updateModel = BuildSaveModel("Mug");
             updateModel.Notes.Add(new PieceNoteModel { Title = "Firing", NoteText = "Cone 6" });
-            updateModel.GlazeApplications.Add(new GlazeApplicationModel { Location = "Interior", GlazeName = "Ironfall Blue", Coats = 2 });
+            updateModel.GlazeApplications.Add(new GlazeApplicationModel { Location = "Interior", GlazeId = _glazeId, Coats = 2 });
 
             await _sut.UpdateAsync(createResponse.Data, updateModel);
 
@@ -102,12 +120,12 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             Assert.That(response.IsSuccess, Is.False);
         }
 
-        private static PieceSaveModel BuildSaveModel(string title)
+        private PieceSaveModel BuildSaveModel(string title)
         {
             return new PieceSaveModel
             {
                 Title = title,
-                Clay = "Stoneware",
+                ClayBodyId = _clayBodyId,
                 StartedDate = new DateOnly(2026, 1, 1),
                 SizeText = "6\" x 4\"",
                 WeightText = "1.2 lb",

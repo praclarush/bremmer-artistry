@@ -1,3 +1,5 @@
+using System;
+
 namespace PotteryJournal.Infrastructure.Models
 {
     /// <summary>
@@ -6,6 +8,8 @@ namespace PotteryJournal.Infrastructure.Models
     public class GlazeApplicationModel
     {
         public string Location { get; set; } = string.Empty;
+
+        public Guid? GlazeId { get; set; }
 
         public string GlazeName { get; set; } = string.Empty;
 

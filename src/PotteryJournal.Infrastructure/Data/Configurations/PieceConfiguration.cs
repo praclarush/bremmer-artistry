@@ -34,14 +34,37 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .HasMaxLength(200)
                 .HasComment("Display title of the piece.");
 
-            builder.Property(p => p.Category)
-                .HasMaxLength(100)
-                .HasComment("Free-text category tag used to build the Gallery page's category tiles.");
+            builder.Property(p => p.CategoryId)
+                .HasComment("Managed category assigned to this piece, used to group it on the Gallery page when ShowInGallery is set.");
 
-            builder.Property(p => p.Clay)
+            builder.Property(p => p.ShowInGallery)
                 .IsRequired()
-                .HasMaxLength(100)
-                .HasComment("Clay body used for the piece.");
+                .HasDefaultValue(false)
+                .HasComment("Whether this piece is curated for public display on the Gallery page. The Gallery is independent of the Pottery Journal -- a piece can be logged for record-keeping without ever appearing here.");
+
+            builder.Property(p => p.ClayBodyId)
+                .HasComment("Managed clay body assigned to this piece, if known.");
+
+            builder.HasOne(p => p.Category)
+                .WithMany()
+                .HasForeignKey(p => p.CategoryId)
+                .HasConstraintName("FK_Pieces_Categories_CategoryId")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasOne(p => p.ClayBody)
+                .WithMany()
+                .HasForeignKey(p => p.ClayBodyId)
+                .HasConstraintName("FK_Pieces_ClayBodies_ClayBodyId")
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Property(p => p.CollectionId)
+                .HasComment("Managed collection this piece belongs to, if any. Independent of Category.");
+
+            builder.HasOne(p => p.Collection)
+                .WithMany()
+                .HasForeignKey(p => p.CollectionId)
+                .HasConstraintName("FK_Pieces_Collections_CollectionId")
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Property(p => p.StartedDate)
                 .IsRequired()

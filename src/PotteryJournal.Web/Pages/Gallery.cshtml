@@ -1,37 +1,41 @@
 @page "/gallery"
-@model PotteryJournal.Web.Pages.GalleryModel
 @{
     ViewData["Title"] = "Gallery";
     ViewData["ActiveNav"] = "Gallery";
 }
 
+@section Styles {
+  <link rel="stylesheet" href="~/css/gallery.css" asp-append-version="true">
+  <link rel="stylesheet" href="~/css/pottery-journal.css" asp-append-version="true">
+}
+
 <div class="section-heading">
   <h2>Gallery</h2>
 </div>
-<p class="content-page" style="padding-top:0; padding-bottom:0;">
-  This gallery brings together a range of ceramic forms, organized by category. Browse by process
-  or vessel type below, or see every piece in the <a href="/pottery-journal">Pottery Journal</a>.
+<p id="galleryIntro" class="gallery-intro">
+  A showcase of finished work, organized by category. For the full record behind every piece --
+  glazes, clay, notes -- see the <a href="/pottery-journal">Pottery Journal</a>.
 </p>
 
-@if (Model.Categories.Count == 0)
-{
-  <p class="empty-state">No categories yet -- tag a piece with a category in the Pottery Journal to see it here.</p>
-}
-else
-{
-  <div class="category-grid">
-    @foreach (PotteryJournal.Infrastructure.Models.GalleryCategoryModel category in Model.Categories)
-    {
-      <a class="category-tile" href="/pottery-journal?category=@Uri.EscapeDataString(category.Category)">
-        <div class="category-photo">
-          @if (!string.IsNullOrEmpty(category.RepresentativeImageFileName))
-          {
-            <img src="/uploads/pieces/@category.RepresentativeImageFileName" alt="@category.Category" loading="lazy">
-          }
-        </div>
-        <span class="category-name">@category.Category</span>
-        <span class="category-count">@category.PieceCount piece@(category.PieceCount == 1 ? "" : "s")</span>
-      </a>
-    }
-  </div>
+<div id="categoriesView" class="category-grid"></div>
+<p id="categoriesEmpty" class="empty-state hidden">No finished pieces have been added to the Gallery yet.</p>
+
+<section id="categoryView" class="gallery-category-view hidden">
+  <button id="categoryBackBtn" class="back-btn">&larr; back to categories</button>
+  <h2 id="categoryTitle" class="gallery-category-title"></h2>
+  <div id="categoryGrid" class="gallery" aria-live="polite"></div>
+</section>
+
+<div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <button id="lightboxClose" class="lightbox-close" aria-label="Close">&times;</button>
+  <button id="lightboxPrev" class="lightbox-arrow prev" aria-label="Previous photo">&lsaquo;</button>
+  <button id="lightboxNext" class="lightbox-arrow next" aria-label="Next photo">&rsaquo;</button>
+  <figure class="lightbox-figure">
+    <img id="lightboxImage" alt="">
+    <figcaption id="lightboxCaption"></figcaption>
+  </figure>
+</div>
+
+@section Scripts {
+  <script src="~/js/gallery.js" asp-append-version="true"></script>
 }

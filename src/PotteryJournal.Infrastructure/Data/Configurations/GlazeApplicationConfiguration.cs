@@ -34,10 +34,15 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .HasMaxLength(100)
                 .HasComment("Where on the piece the glaze was applied, e.g. Interior.");
 
-            builder.Property(g => g.GlazeName)
+            builder.Property(g => g.GlazeId)
                 .IsRequired()
-                .HasMaxLength(100)
-                .HasComment("Name of the glaze used.");
+                .HasComment("The managed glaze used for this application.");
+
+            builder.HasOne(g => g.Glaze)
+                .WithMany()
+                .HasForeignKey(g => g.GlazeId)
+                .HasConstraintName("FK_GlazeApplications_Glazes_GlazeId")
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.Property(g => g.Coats)
                 .IsRequired()

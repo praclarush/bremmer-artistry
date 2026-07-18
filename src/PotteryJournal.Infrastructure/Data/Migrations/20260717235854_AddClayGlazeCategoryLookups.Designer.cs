@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PotteryJournal.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PotteryJournal.Infrastructure.Data;
 namespace PotteryJournal.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717235854_AddClayGlazeCategoryLookups")]
+    partial class AddClayGlazeCategoryLookups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,38 +129,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                     b.ToTable("ClayBodies", "potteryjournal", t =>
                         {
                             t.HasComment("Managed list of clay body options assignable to a piece.");
-                        });
-                });
-
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Collection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()")
-                        .HasComment("Surrogate primary key.");
-
-                    b.Property<bool>("IsFeaturedOnHomepage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasComment("Whether this collection's pieces are shown in the homepage's rotating display. At most one collection is featured at a time.");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasComment("Display name of the collection, e.g. Lightning-Cracked Collection.");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Collections_Id");
-
-                    b.HasAlternateKey("Name")
-                        .HasName("UK_Collections_Name");
-
-                    b.ToTable("Collections", "potteryjournal", t =>
-                        {
-                            t.HasComment("A named grouping of pieces, independent of Category. At most one is featured on the homepage.");
                         });
                 });
 
@@ -319,10 +290,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasComment("Managed clay body assigned to this piece, if known.");
 
-                    b.Property<Guid?>("CollectionId")
-                        .HasColumnType("uuid")
-                        .HasComment("Managed collection this piece belongs to, if any. Independent of Category.");
-
                     b.Property<string>("CreatedByEmail")
                         .IsRequired()
                         .HasMaxLength(320)
@@ -386,8 +353,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                     b.HasIndex("CategoryId");
 
                     b.HasIndex("ClayBodyId");
-
-                    b.HasIndex("CollectionId");
 
                     b.ToTable("Pieces", "potteryjournal", t =>
                         {
@@ -508,17 +473,9 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("FK_Pieces_ClayBodies_ClayBodyId");
 
-                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.Collection", "Collection")
-                        .WithMany()
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_Pieces_Collections_CollectionId");
-
                     b.Navigation("Category");
 
                     b.Navigation("ClayBody");
-
-                    b.Navigation("Collection");
                 });
 
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.PieceImage", b =>

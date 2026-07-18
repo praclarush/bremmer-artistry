@@ -27,26 +27,44 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
-        public async Task<DataHandlerResponse<List<PieceSummaryModel>>> GetSummariesAsync(string? category)
+        public async Task<PagedHandlerResponse<PieceSummaryModel>> GetSummariesPagedAsync(string? sortColumn, bool sortDescending, int pageNumber, int pageSize)
         {
-            DataHandlerResponse<List<PieceSummaryModel>> response = new DataHandlerResponse<List<PieceSummaryModel>>();
-
             IQueryable<Piece> query = _context.Pieces
                 .Include(p => p.Images)
+                .Include(p => p.ClayBody)
+                .Include(p => p.Category)
                 .AsNoTracking();
 
-            if (!string.IsNullOrWhiteSpace(category))
-            {
-                query = query.Where(p => p.Category == category);
-            }
+            query = ApplySort(query, sortColumn, sortDescending);
 
+            int totalRecords = await query.CountAsync();
             List<Piece> pieces = await query
-                .OrderByDescending(p => p.PieceNumber)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            response.Data = pieces.Select(ToSummaryModel).ToList();
-            response.IsSuccess = true;
-            return response;
+            List<PieceSummaryModel> summaries = pieces.Select(ToSummaryModel).ToList();
+            return new PagedHandlerResponse<PieceSummaryModel>(summaries, totalRecords, pageSize, pageNumber);
+        }
+
+        private static IQueryable<Piece> ApplySort(IQueryable<Piece> query, string? sortColumn, bool sortDescending)
+        {
+            switch (sortColumn)
+            {
+                case "title":
+                    return sortDescending ? query.OrderByDescending(p => p.Title) : query.OrderBy(p => p.Title);
+                case "clay":
+                    return sortDescending ? query.OrderByDescending(p => p.ClayBody!.Name) : query.OrderBy(p => p.ClayBody!.Name);
+                case "category":
+                    return sortDescending ? query.OrderByDescending(p => p.Category!.Name) : query.OrderBy(p => p.Category!.Name);
+                case "gallery":
+                    return sortDescending ? query.OrderByDescending(p => p.ShowInGallery) : query.OrderBy(p => p.ShowInGallery);
+                case "started":
+                    return sortDescending ? query.OrderByDescending(p => p.StartedDate) : query.OrderBy(p => p.StartedDate);
+                case "number":
+                default:
+                    return sortDescending ? query.OrderByDescending(p => p.PieceNumber) : query.OrderBy(p => p.PieceNumber);
+            }
         }
 
         /// <inheritdoc />
@@ -54,15 +72,21 @@ namespace PotteryJournal.Infrastructure.Handlers
         {
             DataHandlerResponse<List<PieceDetailModel>> response = new DataHandlerResponse<List<PieceDetailModel>>();
 
+            // Public Pottery Journal endpoint only -- pieces with no glaze recorded yet aren't
+            // shown outside the admin portal. Admin screens use GetByIdAsync/GetSummariesAsync
+            // instead, which are unfiltered.
             IQueryable<Piece> query = _context.Pieces
                 .Include(p => p.Notes)
                 .Include(p => p.Images)
-                .Include(p => p.GlazeApplications)
-                .AsNoTracking();
+                .Include(p => p.GlazeApplications).ThenInclude(g => g.Glaze)
+                .Include(p => p.ClayBody)
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .Where(p => p.GlazeApplications.Any());
 
             if (!string.IsNullOrWhiteSpace(category))
             {
-                query = query.Where(p => p.Category == category);
+                query = query.Where(p => p.Category != null && p.Category.Name == category);
             }
 
             List<Piece> pieces = await query
@@ -81,13 +105,14 @@ namespace PotteryJournal.Infrastructure.Handlers
 
             List<Piece> pieces = await _context.Pieces
                 .Include(p => p.Images)
+                .Include(p => p.Category)
                 .AsNoTracking()
-                .Where(p => p.Category != null && p.Category != string.Empty)
+                .Where(p => p.ShowInGallery && p.Category != null)
                 .OrderByDescending(p => p.StartedDate)
                 .ToListAsync();
 
             response.Data = pieces
-                .GroupBy(p => p.Category!)
+                .GroupBy(p => p.Category!.Name)
                 .Select(group => new GalleryCategoryModel
                 {
                     Category = group.Key,
@@ -104,12 +129,44 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<List<GalleryPieceModel>>> GetGalleryPiecesAsync()
+        {
+            DataHandlerResponse<List<GalleryPieceModel>> response = new DataHandlerResponse<List<GalleryPieceModel>>();
+
+            List<Piece> pieces = await _context.Pieces
+                .Include(p => p.Images)
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .Where(p => p.ShowInGallery && p.Category != null)
+                .OrderByDescending(p => p.StartedDate)
+                .ToListAsync();
+
+            response.Data = pieces
+                .Select(p => new GalleryPieceModel
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                    Category = p.Category!.Name,
+                    ImageFileNames = p.Images
+                        .OrderBy(i => i.SortOrder)
+                        .Select(i => i.FileName)
+                        .ToList(),
+                })
+                .ToList();
+            response.IsSuccess = true;
+            return response;
+        }
+
+        /// <inheritdoc />
         public async Task<DataHandlerResponse<PieceDetailModel>> GetByNumberAsync(int pieceNumber)
         {
             Piece? piece = await _context.Pieces
                 .Include(p => p.Notes)
                 .Include(p => p.Images)
-                .Include(p => p.GlazeApplications)
+                .Include(p => p.GlazeApplications).ThenInclude(g => g.Glaze)
+                .Include(p => p.ClayBody)
+                .Include(p => p.Category)
+                .Include(p => p.Collection)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.PieceNumber == pieceNumber);
 
@@ -122,11 +179,52 @@ namespace PotteryJournal.Infrastructure.Handlers
             Piece? piece = await _context.Pieces
                 .Include(p => p.Notes)
                 .Include(p => p.Images)
-                .Include(p => p.GlazeApplications)
+                .Include(p => p.GlazeApplications).ThenInclude(g => g.Glaze)
+                .Include(p => p.ClayBody)
+                .Include(p => p.Category)
+                .Include(p => p.Collection)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             return BuildDetailResponse(piece);
+        }
+
+        /// <inheritdoc />
+        public async Task<DataHandlerResponse<FeaturedCollectionModel?>> GetFeaturedCollectionAsync()
+        {
+            DataHandlerResponse<FeaturedCollectionModel?> response = new DataHandlerResponse<FeaturedCollectionModel?>();
+
+            Collection? featured = await _context.Collections.AsNoTracking().FirstOrDefaultAsync(c => c.IsFeaturedOnHomepage);
+            if (featured is null)
+            {
+                response.IsSuccess = true;
+                return response;
+            }
+
+            List<Piece> pieces = await _context.Pieces
+                .Include(p => p.Images)
+                .AsNoTracking()
+                .Where(p => p.CollectionId == featured.Id && p.Images.Any())
+                .OrderBy(p => p.PieceNumber)
+                .ToListAsync();
+
+            if (pieces.Count == 0)
+            {
+                response.IsSuccess = true;
+                return response;
+            }
+
+            response.Data = new FeaturedCollectionModel
+            {
+                CollectionName = featured.Name,
+                Pieces = pieces.Select(p => new FeaturedCollectionPieceModel
+                {
+                    Title = p.Title,
+                    ImageFileName = p.Images.OrderBy(i => i.SortOrder).Select(i => i.FileName).First(),
+                }).ToList(),
+            };
+            response.IsSuccess = true;
+            return response;
         }
 
         /// <inheritdoc />
@@ -281,8 +379,10 @@ namespace PotteryJournal.Infrastructure.Handlers
         private static void ApplySaveModel(Piece piece, PieceSaveModel model)
         {
             piece.Title = model.Title;
-            piece.Category = model.Category;
-            piece.Clay = model.Clay;
+            piece.CategoryId = model.CategoryId;
+            piece.ShowInGallery = model.ShowInGallery;
+            piece.ClayBodyId = model.ClayBodyId;
+            piece.CollectionId = model.CollectionId;
             piece.StartedDate = model.StartedDate;
             piece.FinishedDate = model.FinishedDate;
             piece.SizeText = model.SizeText;
@@ -309,12 +409,14 @@ namespace PotteryJournal.Infrastructure.Handlers
 
         private static List<GlazeApplication> BuildGlazeApplications(List<GlazeApplicationModel> glazeApplications)
         {
-            return glazeApplications.Select(g => new GlazeApplication
-            {
-                Location = g.Location,
-                GlazeName = g.GlazeName,
-                Coats = g.Coats,
-            }).ToList();
+            return glazeApplications
+                .Where(g => g.GlazeId.HasValue)
+                .Select(g => new GlazeApplication
+                {
+                    Location = g.Location,
+                    GlazeId = g.GlazeId!.Value,
+                    Coats = g.Coats,
+                }).ToList();
         }
 
         private static DataHandlerResponse<PieceDetailModel> BuildDetailResponse(Piece? piece)
@@ -340,8 +442,9 @@ namespace PotteryJournal.Infrastructure.Handlers
                 Id = piece.Id,
                 PieceNumber = piece.PieceNumber,
                 Title = piece.Title,
-                Clay = piece.Clay,
-                Category = piece.Category,
+                Clay = piece.ClayBody?.Name ?? "—",
+                Category = piece.Category?.Name,
+                ShowInGallery = piece.ShowInGallery,
                 StartedDate = piece.StartedDate,
                 PrimaryImageFileName = piece.Images.OrderBy(i => i.SortOrder).Select(i => i.FileName).FirstOrDefault(),
             };
@@ -354,8 +457,13 @@ namespace PotteryJournal.Infrastructure.Handlers
                 Id = piece.Id,
                 PieceNumber = piece.PieceNumber,
                 Title = piece.Title,
-                Category = piece.Category,
-                Clay = piece.Clay,
+                CategoryId = piece.CategoryId,
+                Category = piece.Category?.Name,
+                ShowInGallery = piece.ShowInGallery,
+                ClayBodyId = piece.ClayBodyId,
+                Clay = piece.ClayBody?.Name ?? "—",
+                CollectionId = piece.CollectionId,
+                Collection = piece.Collection?.Name,
                 StartedDate = piece.StartedDate,
                 FinishedDate = piece.FinishedDate,
                 SizeText = piece.SizeText,
@@ -367,7 +475,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                     .Select(n => new PieceNoteModel { Title = n.Title, NoteText = n.NoteText })
                     .ToList(),
                 GlazeApplications = piece.GlazeApplications
-                    .Select(g => new GlazeApplicationModel { Location = g.Location, GlazeName = g.GlazeName, Coats = g.Coats })
+                    .Select(g => new GlazeApplicationModel { Location = g.Location, GlazeId = g.GlazeId, GlazeName = g.Glaze?.Name ?? string.Empty, Coats = g.Coats })
                     .ToList(),
                 Images = piece.Images
                     .OrderBy(i => i.SortOrder)

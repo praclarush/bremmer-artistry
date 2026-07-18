@@ -31,6 +31,14 @@ namespace PotteryJournal.Infrastructure.Data
 
         public DbSet<GlazeApplication> GlazeApplications => Set<GlazeApplication>();
 
+        public DbSet<ClayBody> ClayBodies => Set<ClayBody>();
+
+        public DbSet<Glaze> Glazes => Set<Glaze>();
+
+        public DbSet<Category> Categories => Set<Category>();
+
+        public DbSet<Collection> Collections => Set<Collection>();
+
         public DbSet<Event> Events => Set<Event>();
 
         public DbSet<AllowedAdmin> AllowedAdmins => Set<AllowedAdmin>();

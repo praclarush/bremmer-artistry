@@ -14,9 +14,19 @@ namespace PotteryJournal.Infrastructure.Models
 
         public string Title { get; set; } = string.Empty;
 
+        public Guid? CategoryId { get; set; }
+
         public string? Category { get; set; }
 
+        public bool ShowInGallery { get; set; }
+
+        public Guid? ClayBodyId { get; set; }
+
         public string Clay { get; set; } = string.Empty;
+
+        public Guid? CollectionId { get; set; }
+
+        public string? Collection { get; set; }
 
         public DateOnly StartedDate { get; set; }
 

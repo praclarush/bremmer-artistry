@@ -14,9 +14,19 @@ namespace PotteryJournal.Infrastructure.Data.Entities
 
         public string Title { get; set; } = string.Empty;
 
-        public string? Category { get; set; }
+        public Guid? CategoryId { get; set; }
 
-        public string Clay { get; set; } = string.Empty;
+        public Category? Category { get; set; }
+
+        public bool ShowInGallery { get; set; }
+
+        public Guid? ClayBodyId { get; set; }
+
+        public ClayBody? ClayBody { get; set; }
+
+        public Guid? CollectionId { get; set; }
+
+        public Collection? Collection { get; set; }
 
         public DateOnly StartedDate { get; set; }
 

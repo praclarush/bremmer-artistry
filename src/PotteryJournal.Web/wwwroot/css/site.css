@@ -179,6 +179,68 @@ a { color: var(--copper-glaze); }
   color: var(--paper);
 }
 
+/* ---------- home intro layout (hero + featured collection) ---------- */
+
+.home-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem 3rem;
+}
+
+.home-intro .hero {
+  flex: 1 1 420px;
+}
+
+.featured-collection {
+  flex: 1 1 320px;
+  min-width: 0;
+  padding: 4rem clamp(1rem, 4vw, 3rem) 3rem 0;
+}
+
+.featured-collection h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  color: var(--paper);
+  margin: 0.5rem 0 1.25rem;
+}
+
+.featured-collection-stage {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  max-width: 420px;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+  overflow: hidden;
+}
+
+.featured-collection-slide {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  transition: opacity 1.2s ease-out;
+}
+
+.featured-collection-slide.is-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.featured-collection-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .featured-collection {
+    padding-right: clamp(1rem, 4vw, 3rem);
+  }
+}
+
 .btn {
   display: inline-block;
   font-family: var(--font-mono);

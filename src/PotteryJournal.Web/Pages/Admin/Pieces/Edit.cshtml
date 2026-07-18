@@ -4,9 +4,12 @@
     ViewData["Title"] = Model.Id.HasValue ? "Edit Piece" : "New Piece";
 }
 
-<h1 class="h3 mb-4">
-  @(Model.Id.HasValue ? $"Edit Piece #{Model.PieceNumber:000}" : "New Piece")
-</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 m-0">
+    @(Model.Id.HasValue ? $"Edit Piece #{Model.PieceNumber:000}" : "New Piece")
+  </h1>
+  <a class="btn btn-outline-secondary btn-sm" href="/admin/reference-data">Manage Clays / Glazes / Categories</a>
+</div>
 
 <form method="post" asp-page-handler="Save" asp-route-id="@Model.Id">
   <div class="row mb-3">
@@ -16,20 +19,54 @@
     </div>
     <div class="col-sm-4">
       <label class="form-label" for="category">Category</label>
-      <input type="text" class="form-control" id="category" asp-for="Piece.Category" list="categoryOptions">
-      <datalist id="categoryOptions">
-        @foreach (string category in Model.ExistingCategories)
+      <select class="form-select" id="category" asp-for="Piece.CategoryId">
+        <option value="">&mdash; None &mdash;</option>
+        @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel category in Model.Categories)
         {
-          <option value="@category"></option>
+          <option value="@category.Id">@category.Name</option>
         }
-      </datalist>
+      </select>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="showInGallery" asp-for="Piece.ShowInGallery">
+        <label class="form-check-label" for="showInGallery">Show in Gallery</label>
+        <div class="form-text">
+          The Pottery Journal and Gallery are independent -- every piece is logged here for
+          record-keeping, but only pieces checked here (with a Category set above) appear as
+          finished work on the public Gallery page.
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="row mb-3">
     <div class="col-sm-4">
-      <label class="form-label" for="clay">Clay</label>
-      <input type="text" class="form-control" id="clay" asp-for="Piece.Clay" required>
+      <label class="form-label" for="collection">Collection</label>
+      <select class="form-select" id="collection" asp-for="Piece.CollectionId">
+        <option value="">&mdash; None &mdash;</option>
+        @foreach (PotteryJournal.Infrastructure.Models.CollectionModel collection in Model.Collections)
+        {
+          <option value="@collection.Id">@collection.Name</option>
+        }
+      </select>
+      <div class="form-text">Independent of Category -- groups pieces for the homepage rotating display.</div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-4">
+      <label class="form-label" for="clayBody">Clay</label>
+      <select class="form-select" id="clayBody" asp-for="Piece.ClayBodyId">
+        <option value="">&mdash; Unspecified &mdash;</option>
+        @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel clayBody in Model.ClayBodies)
+        {
+          <option value="@clayBody.Id">@clayBody.Name</option>
+        }
+      </select>
     </div>
     <div class="col-sm-4">
       <label class="form-label" for="startedDate">Started</label>
@@ -107,11 +144,17 @@
       {
         <div class="admin-repeatable-row">
           <div class="row g-2">
-            <div class="col-sm-4">
+            <div class="col-sm-3">
               <input type="text" class="form-control" name="Piece.GlazeApplications[@i].Location" value="@Model.Piece.GlazeApplications[i].Location" placeholder="Location">
             </div>
-            <div class="col-sm-4">
-              <input type="text" class="form-control" name="Piece.GlazeApplications[@i].GlazeName" value="@Model.Piece.GlazeApplications[i].GlazeName" placeholder="Glaze name">
+            <div class="col-sm-5">
+              <select class="form-select" name="Piece.GlazeApplications[@i].GlazeId">
+                <option value="">&mdash; Choose a glaze &mdash;</option>
+                @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel glaze in Model.Glazes)
+                {
+                  <option value="@glaze.Id" selected="@(Model.Piece.GlazeApplications[i].GlazeId == glaze.Id)">@glaze.Name</option>
+                }
+              </select>
             </div>
             <div class="col-sm-3">
               <input type="number" min="1" class="form-control" name="Piece.GlazeApplications[@i].Coats" value="@Model.Piece.GlazeApplications[i].Coats" placeholder="Coats">
@@ -126,11 +169,17 @@
     <template id="glazeRowsTemplate">
       <div class="admin-repeatable-row">
         <div class="row g-2">
-          <div class="col-sm-4">
+          <div class="col-sm-3">
             <input type="text" class="form-control" name="Piece.GlazeApplications[__index__].Location" placeholder="Location">
           </div>
-          <div class="col-sm-4">
-            <input type="text" class="form-control" name="Piece.GlazeApplications[__index__].GlazeName" placeholder="Glaze name">
+          <div class="col-sm-5">
+            <select class="form-select" name="Piece.GlazeApplications[__index__].GlazeId">
+              <option value="">&mdash; Choose a glaze &mdash;</option>
+              @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel glaze in Model.Glazes)
+              {
+                <option value="@glaze.Id">@glaze.Name</option>
+              }
+            </select>
           </div>
           <div class="col-sm-3">
             <input type="number" min="1" class="form-control" name="Piece.GlazeApplications[__index__].Coats" placeholder="Coats">

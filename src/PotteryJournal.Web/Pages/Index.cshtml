@@ -9,20 +9,39 @@
   <link rel="stylesheet" href="~/css/events.css" asp-append-version="true">
 }
 
-<section class="hero">
-  <p class="hero-eyebrow">Handmade Pottery</p>
-  <h1>Capturing a sense of flow and intensity within still forms.</h1>
-  <p>
-    Bremmer Artistry is a ceramic studio creating handmade pottery, from functional pieces like
-    teapots, cups, and bowls to artistic forms. The work is defined by ongoing experiments in
-    shape, surface, and firing, often drawing inspiration from dynamic natural patterns like
-    lightning and rivers.
-  </p>
-  <div class="hero-actions">
-    <a class="btn" href="/events">See Upcoming Events</a>
-    <a class="hero-secondary-link" href="/gallery">View Gallery &rarr;</a>
-  </div>
-</section>
+<div class="home-intro">
+  <section class="hero">
+    <p class="hero-eyebrow">Handmade Pottery</p>
+    <h1>Capturing a sense of flow and intensity within still forms.</h1>
+    <p>
+      Bremmer Artistry is a ceramic studio creating handmade pottery, from functional pieces like
+      teapots, cups, and bowls to artistic forms. The work is defined by ongoing experiments in
+      shape, surface, and firing, often drawing inspiration from dynamic natural patterns like
+      lightning and rivers.
+    </p>
+    <div class="hero-actions">
+      <a class="btn" href="/events">See Upcoming Events</a>
+      <a class="hero-secondary-link" href="/gallery">View Gallery &rarr;</a>
+    </div>
+  </section>
+
+  @if (Model.FeaturedCollection is not null)
+  {
+    <section class="featured-collection" data-featured-collection aria-label="Featured collection: @Model.FeaturedCollection.CollectionName">
+      <p class="hero-eyebrow">Featured Collection</p>
+      <h2>@Model.FeaturedCollection.CollectionName</h2>
+      <div class="featured-collection-stage">
+        @for (int i = 0; i < Model.FeaturedCollection.Pieces.Count; i++)
+        {
+          PotteryJournal.Infrastructure.Models.FeaturedCollectionPieceModel piece = Model.FeaturedCollection.Pieces[i];
+          <figure class="featured-collection-slide@(i == 0 ? " is-active" : string.Empty)" data-featured-slide>
+            <img src="/uploads/pieces/@piece.ImageFileName" alt="@piece.Title" loading="@(i == 0 ? "eager" : "lazy")">
+          </figure>
+        }
+      </div>
+    </section>
+  }
+</div>
 
 <div class="section-heading">
   <h2>Upcoming Events</h2>
@@ -59,4 +78,8 @@ else
       </a>
     }
   </div>
+}
+
+@section Scripts {
+  <script src="~/js/featured-collection.js" asp-append-version="true"></script>
 }

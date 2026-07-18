@@ -1,0 +1,166 @@
+@page "/admin/reference-data"
+@model PotteryJournal.Web.Pages.Admin.ReferenceData.IndexModel
+@{
+    ViewData["Title"] = "Reference Data";
+}
+
+<h1 class="h3 mb-4">Clays, Glazes, Categories &amp; Collections</h1>
+<p class="text-muted">
+  These lists back the dropdowns on the piece edit form. Removing a Clay, Category, or Collection
+  just clears it from any pieces using it (they revert to unspecified). A Glaze can't be removed
+  while a piece's glaze application still references it.
+</p>
+
+<div class="row">
+  <div class="col-md-4 mb-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5">Clay Bodies</h2>
+        <form method="post" asp-page-handler="AddClayBody" class="d-flex gap-2 mb-3">
+          <input type="text" class="form-control form-control-sm" asp-for="NewClayBodyName" placeholder="New clay body" required>
+          <button type="submit" class="btn btn-primary btn-sm text-nowrap">Add</button>
+        </form>
+        <ul class="list-group list-group-flush">
+          @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel clayBody in Model.ClayBodies)
+          {
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>@clayBody.Name</span>
+              <form method="post" asp-page-handler="RemoveClayBody" asp-route-id="@clayBody.Id"
+                    onsubmit="return confirm('Remove &quot;@clayBody.Name&quot;?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+              </form>
+            </li>
+          }
+          @if (Model.ClayBodies.Count == 0)
+          {
+            <li class="list-group-item px-0 text-muted">None yet.</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5">Glazes</h2>
+        <form method="post" asp-page-handler="AddGlaze" class="d-flex gap-2 mb-3">
+          <input type="text" class="form-control form-control-sm" asp-for="NewGlazeName" placeholder="New glaze" required>
+          <button type="submit" class="btn btn-primary btn-sm text-nowrap">Add</button>
+        </form>
+        <ul class="list-group list-group-flush">
+          @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel glaze in Model.Glazes)
+          {
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>@glaze.Name</span>
+              <form method="post" asp-page-handler="RemoveGlaze" asp-route-id="@glaze.Id"
+                    onsubmit="return confirm('Remove &quot;@glaze.Name&quot;?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+              </form>
+            </li>
+          }
+          @if (Model.Glazes.Count == 0)
+          {
+            <li class="list-group-item px-0 text-muted">None yet.</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5">Categories</h2>
+        <form method="post" asp-page-handler="AddCategory" class="d-flex gap-2 mb-3">
+          <input type="text" class="form-control form-control-sm" asp-for="NewCategoryName" placeholder="New category" required>
+          <button type="submit" class="btn btn-primary btn-sm text-nowrap">Add</button>
+        </form>
+        <ul class="list-group list-group-flush">
+          @foreach (PotteryJournal.Infrastructure.Models.LookupItemModel category in Model.Categories)
+          {
+            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+              <span>@category.Name</span>
+              <form method="post" asp-page-handler="RemoveCategory" asp-route-id="@category.Id"
+                    onsubmit="return confirm('Remove &quot;@category.Name&quot;?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+              </form>
+            </li>
+          }
+          @if (Model.Categories.Count == 0)
+          {
+            <li class="list-group-item px-0 text-muted">None yet.</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Collections</h2>
+        <p class="text-muted small">
+          Independent of Category -- a way to group pieces (e.g. "Lightning-Cracked Collection") and
+          feature one of them on the homepage as a rotating display. Only one collection can be
+          featured at a time; featuring a new one un-features the last.
+        </p>
+        <form method="post" asp-page-handler="AddCollection" class="d-flex gap-2 mb-3" style="max-width: 24rem;">
+          <input type="text" class="form-control form-control-sm" asp-for="NewCollectionName" placeholder="New collection" required>
+          <button type="submit" class="btn btn-primary btn-sm text-nowrap">Add</button>
+        </form>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Pieces</th>
+              <th>Homepage</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach (PotteryJournal.Infrastructure.Models.CollectionModel collection in Model.Collections)
+            {
+              <tr>
+                <td>@collection.Name</td>
+                <td>@collection.PieceCount</td>
+                <td>
+                  @if (collection.IsFeaturedOnHomepage)
+                  {
+                    <span class="badge text-bg-success">Featured</span>
+                  }
+                </td>
+                <td class="text-end">
+                  @if (collection.IsFeaturedOnHomepage)
+                  {
+                    <form method="post" asp-page-handler="UnfeatureCollection" asp-route-id="@collection.Id" class="d-inline">
+                      <button type="submit" class="btn btn-outline-secondary btn-sm">Unfeature</button>
+                    </form>
+                  }
+                  else
+                  {
+                    <form method="post" asp-page-handler="FeatureCollection" asp-route-id="@collection.Id" class="d-inline">
+                      <button type="submit" class="btn btn-outline-primary btn-sm">Feature on Homepage</button>
+                    </form>
+                  }
+                  <form method="post" asp-page-handler="RemoveCollection" asp-route-id="@collection.Id" class="d-inline"
+                        onsubmit="return confirm('Remove &quot;@collection.Name&quot;?');">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            }
+            @if (Model.Collections.Count == 0)
+            {
+              <tr>
+                <td colspan="4" class="text-muted">None yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

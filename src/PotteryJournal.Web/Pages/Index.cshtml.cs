@@ -13,20 +13,30 @@ namespace PotteryJournal.Web.Pages
         private const int TeaserEventCount = 3;
 
         private readonly IEventsHandler _eventsHandler;
+        private readonly IPieceHandler _pieceHandler;
 
-        public IndexModel(IEventsHandler eventsHandler)
+        public IndexModel(IEventsHandler eventsHandler, IPieceHandler pieceHandler)
         {
             _eventsHandler = eventsHandler;
+            _pieceHandler = pieceHandler;
         }
 
         public List<EventModel> UpcomingEvents { get; private set; } = new List<EventModel>();
 
+        public FeaturedCollectionModel? FeaturedCollection { get; private set; }
+
         public async Task OnGetAsync()
         {
-            DataHandlerResponse<List<EventModel>> response = await _eventsHandler.GetUpcomingAsync();
-            if (response.IsSuccess && response.Data is not null)
+            DataHandlerResponse<List<EventModel>> eventsResponse = await _eventsHandler.GetUpcomingAsync();
+            if (eventsResponse.IsSuccess && eventsResponse.Data is not null)
             {
-                UpcomingEvents = response.Data.Take(TeaserEventCount).ToList();
+                UpcomingEvents = eventsResponse.Data.Take(TeaserEventCount).ToList();
+            }
+
+            DataHandlerResponse<FeaturedCollectionModel?> featuredResponse = await _pieceHandler.GetFeaturedCollectionAsync();
+            if (featuredResponse.IsSuccess)
+            {
+                FeaturedCollection = featuredResponse.Data;
             }
         }
     }

@@ -13,6 +13,8 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
 {
     public class IndexModel : PageModel
     {
+        private const int PageSize = 25;
+
         private readonly IPieceHandler _pieceHandler;
         private readonly IImageStorageService _imageStorageService;
 
@@ -22,15 +24,32 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
             _imageStorageService = imageStorageService;
         }
 
-        public List<PieceSummaryModel> Pieces { get; private set; } = new List<PieceSummaryModel>();
+        [BindProperty(SupportsGet = true)]
+        public string? Sort { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public bool Desc { get; set; }
+
+        [BindProperty(SupportsGet = true, Name = "page")]
+        public int PageNumber { get; set; } = 1;
+
+        public IReadOnlyList<PieceSummaryModel> Pieces { get; private set; } = new List<PieceSummaryModel>();
+
+        public int TotalPages { get; private set; }
+
+        public int TotalRecords { get; private set; }
 
         public async Task OnGetAsync()
         {
-            DataHandlerResponse<List<PieceSummaryModel>> response = await _pieceHandler.GetSummariesAsync(null);
-            if (response.IsSuccess && response.Data is not null)
+            if (PageNumber < 1)
             {
-                Pieces = response.Data;
+                PageNumber = 1;
             }
+
+            PagedHandlerResponse<PieceSummaryModel> response = await _pieceHandler.GetSummariesPagedAsync(Sort, Desc, PageNumber, PageSize);
+            Pieces = response.Data;
+            TotalPages = response.TotalPages;
+            TotalRecords = response.TotalRecords;
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(Guid id)

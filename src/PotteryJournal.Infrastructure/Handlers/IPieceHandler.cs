@@ -12,11 +12,13 @@ namespace PotteryJournal.Infrastructure.Handlers
     public interface IPieceHandler
     {
         /// <summary>
-        /// Gets gallery-tile summaries for every piece, newest first, optionally filtered to a
-        /// single category.
+        /// Gets one page of piece summaries for the admin piece list, sorted by the given column.
         /// </summary>
-        /// <param name="category">When supplied, only pieces tagged with this category are returned.</param>
-        Task<DataHandlerResponse<List<PieceSummaryModel>>> GetSummariesAsync(string? category);
+        /// <param name="sortColumn">One of "number", "title", "clay", "category", "gallery", "started". Unrecognized or null sorts by piece number.</param>
+        /// <param name="sortDescending">Whether to sort descending instead of ascending.</param>
+        /// <param name="pageNumber">The 1-based page number to return.</param>
+        /// <param name="pageSize">The number of pieces per page.</param>
+        Task<PagedHandlerResponse<PieceSummaryModel>> GetSummariesPagedAsync(string? sortColumn, bool sortDescending, int pageNumber, int pageSize);
 
         /// <summary>
         /// Gets the full worksheet detail for every piece, newest first, optionally filtered to a
@@ -27,10 +29,25 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<PieceDetailModel>>> GetAllDetailsAsync(string? category);
 
         /// <summary>
-        /// Gets one Gallery tile per distinct category present on any piece, each with a
-        /// representative image from the most recently started piece in that category.
+        /// Gets one Gallery tile per distinct category present on any piece curated for the
+        /// Gallery (<see cref="Models.PieceSaveModel.ShowInGallery"/>), each with a representative
+        /// image from the most recently started piece in that category.
         /// </summary>
         Task<DataHandlerResponse<List<GalleryCategoryModel>>> GetGalleryCategoriesAsync();
+
+        /// <summary>
+        /// Gets every piece curated for the Gallery, with all of its photos, for the Gallery page's
+        /// category drill-down grid and lightbox. Independent of the Pottery Journal's own data --
+        /// only pieces with <see cref="Models.PieceSaveModel.ShowInGallery"/> set are included.
+        /// </summary>
+        Task<DataHandlerResponse<List<GalleryPieceModel>>> GetGalleryPiecesAsync();
+
+        /// <summary>
+        /// Gets the collection currently featured on the homepage and one representative photo per
+        /// piece in it, for the rotating display next to the hero. Returns a null <c>Data</c> when
+        /// no collection is featured, or the featured collection has no pieces with a photo.
+        /// </summary>
+        Task<DataHandlerResponse<FeaturedCollectionModel?>> GetFeaturedCollectionAsync();
 
         /// <summary>
         /// Gets the full worksheet detail for a piece by its human-facing project number.

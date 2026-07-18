@@ -13,7 +13,9 @@ namespace PotteryJournal.Infrastructure.Data.Entities
 
         public string Location { get; set; } = string.Empty;
 
-        public string GlazeName { get; set; } = string.Empty;
+        public Guid GlazeId { get; set; }
+
+        public Glaze? Glaze { get; set; }
 
         public int Coats { get; set; }
 

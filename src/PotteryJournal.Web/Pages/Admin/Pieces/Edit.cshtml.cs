@@ -17,11 +17,13 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
     public class EditModel : PageModel
     {
         private readonly IPieceHandler _pieceHandler;
+        private readonly IReferenceDataHandler _referenceDataHandler;
         private readonly IImageStorageService _imageStorageService;
 
-        public EditModel(IPieceHandler pieceHandler, IImageStorageService imageStorageService)
+        public EditModel(IPieceHandler pieceHandler, IReferenceDataHandler referenceDataHandler, IImageStorageService imageStorageService)
         {
             _pieceHandler = pieceHandler;
+            _referenceDataHandler = referenceDataHandler;
             _imageStorageService = imageStorageService;
         }
 
@@ -35,11 +37,17 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
 
         public List<PieceImageModel> Images { get; private set; } = new List<PieceImageModel>();
 
-        public List<string> ExistingCategories { get; private set; } = new List<string>();
+        public List<LookupItemModel> ClayBodies { get; private set; } = new List<LookupItemModel>();
+
+        public List<LookupItemModel> Glazes { get; private set; } = new List<LookupItemModel>();
+
+        public List<LookupItemModel> Categories { get; private set; } = new List<LookupItemModel>();
+
+        public List<CollectionModel> Collections { get; private set; } = new List<CollectionModel>();
 
         public async Task<IActionResult> OnGetAsync()
         {
-            await LoadExistingCategoriesAsync();
+            await LoadReferenceDataAsync();
 
             if (!Id.HasValue)
             {
@@ -57,8 +65,10 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
             Piece = new PieceSaveModel
             {
                 Title = existing.Title,
-                Category = existing.Category,
-                Clay = existing.Clay,
+                CategoryId = existing.CategoryId,
+                ShowInGallery = existing.ShowInGallery,
+                ClayBodyId = existing.ClayBodyId,
+                CollectionId = existing.CollectionId,
                 StartedDate = existing.StartedDate,
                 FinishedDate = existing.FinishedDate,
                 SizeText = existing.SizeText,
@@ -77,11 +87,11 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
         public async Task<IActionResult> OnPostSaveAsync()
         {
             Piece.Notes = Piece.Notes.Where(n => !string.IsNullOrWhiteSpace(n.NoteText)).ToList();
-            Piece.GlazeApplications = Piece.GlazeApplications.Where(g => !string.IsNullOrWhiteSpace(g.GlazeName)).ToList();
+            Piece.GlazeApplications = Piece.GlazeApplications.Where(g => g.GlazeId.HasValue).ToList();
 
             if (!ModelState.IsValid)
             {
-                await LoadExistingCategoriesAsync();
+                await LoadReferenceDataAsync();
                 if (Id.HasValue)
                 {
                     DataHandlerResponse<PieceDetailModel> existingResponse = await _pieceHandler.GetByIdAsync(Id.Value);
@@ -138,12 +148,30 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
             return RedirectToPage("Edit", new { id = Id });
         }
 
-        private async Task LoadExistingCategoriesAsync()
+        private async Task LoadReferenceDataAsync()
         {
-            DataHandlerResponse<List<GalleryCategoryModel>> response = await _pieceHandler.GetGalleryCategoriesAsync();
-            if (response.IsSuccess && response.Data is not null)
+            DataHandlerResponse<List<LookupItemModel>> clayBodiesResponse = await _referenceDataHandler.GetClayBodiesAsync();
+            if (clayBodiesResponse.IsSuccess && clayBodiesResponse.Data is not null)
             {
-                ExistingCategories = response.Data.Select(c => c.Category).ToList();
+                ClayBodies = clayBodiesResponse.Data;
+            }
+
+            DataHandlerResponse<List<LookupItemModel>> glazesResponse = await _referenceDataHandler.GetGlazesAsync();
+            if (glazesResponse.IsSuccess && glazesResponse.Data is not null)
+            {
+                Glazes = glazesResponse.Data;
+            }
+
+            DataHandlerResponse<List<LookupItemModel>> categoriesResponse = await _referenceDataHandler.GetCategoriesAsync();
+            if (categoriesResponse.IsSuccess && categoriesResponse.Data is not null)
+            {
+                Categories = categoriesResponse.Data;
+            }
+
+            DataHandlerResponse<List<CollectionModel>> collectionsResponse = await _referenceDataHandler.GetCollectionsAsync();
+            if (collectionsResponse.IsSuccess && collectionsResponse.Data is not null)
+            {
+                Collections = collectionsResponse.Data;
             }
         }
     }

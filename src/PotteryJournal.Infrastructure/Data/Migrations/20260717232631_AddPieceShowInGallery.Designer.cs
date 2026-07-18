@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PotteryJournal.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PotteryJournal.Infrastructure.Data;
 namespace PotteryJournal.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717232631_AddPieceShowInGallery")]
+    partial class AddPieceShowInGallery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,90 +77,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                     b.ToTable("AllowedAdmins", "potteryjournal", t =>
                         {
                             t.HasComment("An admin account permitted to sign in to the admin area.");
-                        });
-                });
-
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Category", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()")
-                        .HasComment("Surrogate primary key.");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasComment("Display name of the category, e.g. Bowls.");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Categories_Id");
-
-                    b.HasAlternateKey("Name")
-                        .HasName("UK_Categories_Name");
-
-                    b.ToTable("Categories", "potteryjournal", t =>
-                        {
-                            t.HasComment("Managed list of category options assignable to a piece, used to group it on the Gallery page.");
-                        });
-                });
-
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClayBody", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()")
-                        .HasComment("Surrogate primary key.");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasComment("Display name of the clay body, e.g. Reclaim.");
-
-                    b.HasKey("Id")
-                        .HasName("PK_ClayBodies_Id");
-
-                    b.HasAlternateKey("Name")
-                        .HasName("UK_ClayBodies_Name");
-
-                    b.ToTable("ClayBodies", "potteryjournal", t =>
-                        {
-                            t.HasComment("Managed list of clay body options assignable to a piece.");
-                        });
-                });
-
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Collection", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()")
-                        .HasComment("Surrogate primary key.");
-
-                    b.Property<bool>("IsFeaturedOnHomepage")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasComment("Whether this collection's pieces are shown in the homepage's rotating display. At most one collection is featured at a time.");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasComment("Display name of the collection, e.g. Lightning-Cracked Collection.");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Collections_Id");
-
-                    b.HasAlternateKey("Name")
-                        .HasName("UK_Collections_Name");
-
-                    b.ToTable("Collections", "potteryjournal", t =>
-                        {
-                            t.HasComment("A named grouping of pieces, independent of Category. At most one is featured on the homepage.");
                         });
                 });
 
@@ -232,32 +151,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         });
                 });
 
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Glaze", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()")
-                        .HasComment("Surrogate primary key.");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasComment("Display name of the glaze, e.g. Waterfall.");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Glazes_Id");
-
-                    b.HasAlternateKey("Name")
-                        .HasName("UK_Glazes_Name");
-
-                    b.ToTable("Glazes", "potteryjournal", t =>
-                        {
-                            t.HasComment("Managed list of glaze options assignable to a glaze application.");
-                        });
-                });
-
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.GlazeApplication", b =>
                 {
                     b.Property<Guid>("Id")
@@ -270,9 +163,11 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasComment("Number of coats applied.");
 
-                    b.Property<Guid>("GlazeId")
-                        .HasColumnType("uuid")
-                        .HasComment("The managed glaze used for this application.");
+                    b.Property<string>("GlazeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Name of the glaze used.");
 
                     b.Property<string>("Location")
                         .IsRequired()
@@ -286,8 +181,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("PK_GlazeApplications_Id");
-
-                    b.HasIndex("GlazeId");
 
                     b.HasIndex("PieceId")
                         .HasDatabaseName("IX_GlazeApplications_PieceId");
@@ -311,17 +204,16 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(500)")
                         .HasComment("Free-text note of any physical attachments recorded for the piece.");
 
-                    b.Property<Guid?>("CategoryId")
-                        .HasColumnType("uuid")
-                        .HasComment("Managed category assigned to this piece, used to group it on the Gallery page when ShowInGallery is set.");
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Free-text category tag used to group this piece on the Gallery page, when ShowInGallery is set.");
 
-                    b.Property<Guid?>("ClayBodyId")
-                        .HasColumnType("uuid")
-                        .HasComment("Managed clay body assigned to this piece, if known.");
-
-                    b.Property<Guid?>("CollectionId")
-                        .HasColumnType("uuid")
-                        .HasComment("Managed collection this piece belongs to, if any. Independent of Category.");
+                    b.Property<string>("Clay")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Clay body used for the piece.");
 
                     b.Property<string>("CreatedByEmail")
                         .IsRequired()
@@ -382,12 +274,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
 
                     b.HasAlternateKey("PieceNumber")
                         .HasName("UK_Pieces_PieceNumber");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("ClayBodyId");
-
-                    b.HasIndex("CollectionId");
 
                     b.ToTable("Pieces", "potteryjournal", t =>
                         {
@@ -475,13 +361,6 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.GlazeApplication", b =>
                 {
-                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.Glaze", "Glaze")
-                        .WithMany()
-                        .HasForeignKey("GlazeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("FK_GlazeApplications_Glazes_GlazeId");
-
                     b.HasOne("PotteryJournal.Infrastructure.Data.Entities.Piece", "Piece")
                         .WithMany("GlazeApplications")
                         .HasForeignKey("PieceId")
@@ -489,36 +368,7 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_GlazeApplications_Pieces_PieceId");
 
-                    b.Navigation("Glaze");
-
                     b.Navigation("Piece");
-                });
-
-            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Piece", b =>
-                {
-                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_Pieces_Categories_CategoryId");
-
-                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.ClayBody", "ClayBody")
-                        .WithMany()
-                        .HasForeignKey("ClayBodyId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_Pieces_ClayBodies_ClayBodyId");
-
-                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.Collection", "Collection")
-                        .WithMany()
-                        .HasForeignKey("CollectionId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("FK_Pieces_Collections_CollectionId");
-
-                    b.Navigation("Category");
-
-                    b.Navigation("ClayBody");
-
-                    b.Navigation("Collection");
                 });
 
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.PieceImage", b =>
