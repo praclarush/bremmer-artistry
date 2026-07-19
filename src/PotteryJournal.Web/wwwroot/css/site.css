@@ -160,7 +160,11 @@ a { color: var(--copper-glaze); }
 /* ---------- hero (Home) ---------- */
 
 .hero {
-  padding: 4rem clamp(1rem, 4vw, 3rem) 3rem;
+  /* Right padding is 0 here, not page-x -- .home-intro's flex `gap` already provides the
+     hero-to-featured-collection gutter on wide viewports, so a matching right inset here would
+     double-count it (up to ~6rem of dead air instead of the intended ~3rem). Restored at the
+     800px stack breakpoint below, where the flex gap no longer applies. */
+  padding: 4rem 0 3rem clamp(1rem, 4vw, 3rem);
   max-width: 780px;
 }
 
@@ -280,6 +284,16 @@ a { color: var(--copper-glaze); }
 @media (max-width: 800px) {
   .home-intro .featured-collection {
     order: -1;
+    /* Base padding is 0 on the left, correct for the desktop side-by-side layout (relies on
+       .home-intro's flex gap instead) -- restored here since stacking removes that sibling gap,
+       otherwise the photo sits flush against the screen edge while the hero text above it doesn't. */
+    padding-left: clamp(1rem, 4vw, 3rem);
+    padding-right: clamp(1rem, 4vw, 3rem);
+  }
+
+  /* Stacked layout has no sibling flex gap to lean on, so the hero needs its own right inset
+     back -- restores full left+right page-x padding to match every other stacked block. */
+  .home-intro .hero {
     padding-right: clamp(1rem, 4vw, 3rem);
   }
 }
