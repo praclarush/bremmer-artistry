@@ -19,6 +19,7 @@ const classWeekLabel = document.getElementById("classWeekLabel");
 const bookingModal = document.getElementById("bookingModal");
 const bookingModalClose = document.getElementById("bookingModalClose");
 const bookingForm = document.getElementById("bookingForm");
+const bookingSubmit = document.getElementById("bookingSubmit");
 const bookingSummary = document.getElementById("bookingSummary");
 const classTypeIdInput = document.getElementById("bookingClassTypeId");
 const startDateTimeInput = document.getElementById("bookingStartDateTime");
@@ -36,6 +37,12 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   closeBookingModal();
+});
+bookingForm.addEventListener("submit", () => {
+  // The submit itself navigates the page away, so there's no need to re-enable the button on
+  // success; a failed submission gets a fresh, fully re-rendered page from the server redirect.
+  bookingSubmit.disabled = true;
+  bookingSubmit.textContent = "Submitting…";
 });
 
 init();
@@ -290,17 +297,18 @@ function closeBookingModal() {
   }
 
   bookingModal.classList.remove("open");
-  bookingModal.addEventListener(
-    "transitionend",
-    () => {
-      // Only hide if it's still meant to be closed -- guards against a stale listener from this
-      // close firing after a later reopen (see gallery.js's closeLightbox for the same fix).
-      if (!bookingModal.classList.contains("open")) {
-        bookingModal.classList.add("hidden");
-      }
-    },
-    { once: true }
-  );
+  const finishClose = () => {
+    // Only hide if it's still meant to be closed -- guards against a stale call from this close
+    // firing after a later reopen (see gallery.js's closeLightbox for the same fix).
+    if (!bookingModal.classList.contains("open")) {
+      bookingModal.classList.add("hidden");
+    }
+  };
+  // transitionend is the primary signal, but it isn't guaranteed to fire (an interrupted
+  // transition, a backgrounded tab, or a reduced-motion edge case can all skip it) -- without a
+  // fallback, a missed event leaves the modal as an invisible, click-swallowing overlay forever.
+  bookingModal.addEventListener("transitionend", finishClose, { once: true });
+  setTimeout(finishClose, 250);
   setBookingModalBackgroundInert(false);
 
   if (bookingModalLastFocusedElement) {

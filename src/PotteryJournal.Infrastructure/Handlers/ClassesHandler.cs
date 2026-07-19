@@ -20,6 +20,14 @@ namespace PotteryJournal.Infrastructure.Handlers
         // Classes are always fixed 2-hour segments -- not a per-availability-rule setting.
         private static readonly TimeSpan _classDuration = TimeSpan.FromHours(2);
 
+        // Mirrors ClassBookingConfiguration's HasMaxLength calls -- checked here too so an
+        // oversized submission fails with a clear message instead of an unhandled DbUpdateException
+        // from Postgres rejecting the value at the varchar limit.
+        private const int MAX_CUSTOMER_NAME_LENGTH = 200;
+        private const int MAX_CUSTOMER_EMAIL_LENGTH = 320;
+        private const int MAX_CUSTOMER_PHONE_LENGTH = 30;
+        private const int MAX_MESSAGE_LENGTH = 1000;
+
         private readonly AppDbContext _context;
         private readonly IEmailSender _emailSender;
         private readonly IAdminSettingsHandler _adminSettingsHandler;
@@ -407,6 +415,26 @@ namespace PotteryJournal.Infrastructure.Handlers
             if (normalizedPhone.Length == 0)
             {
                 response.AddError("The customer's phone number is required.");
+            }
+
+            if (normalizedName.Length > MAX_CUSTOMER_NAME_LENGTH)
+            {
+                response.AddError($"Name must be {MAX_CUSTOMER_NAME_LENGTH} characters or fewer.");
+            }
+
+            if (normalizedEmail.Length > MAX_CUSTOMER_EMAIL_LENGTH)
+            {
+                response.AddError($"Email must be {MAX_CUSTOMER_EMAIL_LENGTH} characters or fewer.");
+            }
+
+            if (normalizedPhone.Length > MAX_CUSTOMER_PHONE_LENGTH)
+            {
+                response.AddError($"Phone number must be {MAX_CUSTOMER_PHONE_LENGTH} characters or fewer.");
+            }
+
+            if (!string.IsNullOrEmpty(model.Message) && model.Message.Length > MAX_MESSAGE_LENGTH)
+            {
+                response.AddError($"Message must be {MAX_MESSAGE_LENGTH} characters or fewer.");
             }
 
             if (model.PartySize < 1)

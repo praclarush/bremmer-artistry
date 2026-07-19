@@ -32,7 +32,10 @@ namespace PotteryJournal.Web.Pages
             if (!response.IsSuccess)
             {
                 TempData["StatusMessage"] = string.Join(" ", response.Errors);
-                return RedirectToPage();
+                // Land back on the class type the visitor was already looking at (e.g. the slot
+                // they picked just got booked by someone else) instead of the bare picker -- losing
+                // the class-type selection on top of the failed booking is unnecessary friction.
+                return RedirectToPage(pageName: null, pageHandler: null, routeValues: null, fragment: $"type/{Booking.ClassTypeId}");
             }
 
             TempData["StatusMessage"] = response.Warnings.Count > 0

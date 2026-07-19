@@ -301,6 +301,30 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task CreateBookingAsync_NameExceedsMaxLength_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassBookingSaveModel model = BuildBookingModel(slotStart);
+            model.CustomerName = new string('a', 201);
+
+            DataHandlerResponse<Guid> response = await _sut.CreateBookingAsync(model);
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task CreateBookingAsync_MessageExceedsMaxLength_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassBookingSaveModel model = BuildBookingModel(slotStart);
+            model.Message = new string('a', 1001);
+
+            DataHandlerResponse<Guid> response = await _sut.CreateBookingAsync(model);
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
         public async Task CreateBookingAsync_InsideMinimumLeadTime_ReturnsFailure()
         {
             ClassBookingSaveModel model = BuildBookingModel(DateTimeOffset.UtcNow.AddHours(6));
