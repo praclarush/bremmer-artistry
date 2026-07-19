@@ -53,9 +53,17 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .HasMaxLength(260)
                 .HasComment("File name of the event's banner photo on the uploads volume.");
 
+            builder.Property(e => e.FlyerImageFileName)
+                .HasMaxLength(260)
+                .HasComment("File name of the event's flyer photo on the uploads volume, shown in a lightbox separately from the banner.");
+
             builder.Property(e => e.ExternalLinkUrl)
                 .HasMaxLength(500)
                 .HasComment("Optional external link, e.g. a ticketing or host page.");
+
+            builder.Property(e => e.SocialMediaUrl)
+                .HasMaxLength(500)
+                .HasComment("Optional social media link shown on the event card, between the description and the calendar actions.");
 
             builder.Property(e => e.CreatedDate)
                 .IsRequired()

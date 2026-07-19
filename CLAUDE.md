@@ -102,6 +102,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   explicitly calls `IImageStorageService.Delete(...)` first -- check both `OnPostDeleteAsync`
   methods if you add new delete paths, or you'll orphan files on the uploads volume.
   `PieceHandler.DeleteAsync`/`EventsHandler.DeleteAsync` only remove the database rows.
+- **Events have two independent photos**: `ImageFileName` (banner, shown inline on the card) and
+  `FlyerImageFileName` (shown in a lightbox, not inline) -- separate uploads, separate
+  `SetImageAsync`/`SetFlyerImageAsync` handler methods, both needing cleanup in
+  `Admin/Events/Index.cshtml.cs`'s `OnPostDeleteAsync`. On the public card
+  (`wwwroot/js/events.js`), the banner photo becomes the flyer's click target when both exist
+  (`.event-card-photo-btn`); when only a flyer exists, a "View Flyer" button in `.event-actions`
+  is the fallback trigger instead, since there's no photo to repurpose. The flyer lightbox
+  (`#flyerLightbox`) reuses the same `.lightbox`/`.lightbox-figure`/`.lightbox-close` base as
+  Gallery's photo viewer (shared in `site.css`; Gallery's paging arrows stay Gallery-only in
+  `gallery.css`) but has no prev/next -- one flyer per event, no paging needed.
 - **Local dev runtime mismatch**: this dev machine has only the .NET 10 SDK/runtime installed, not
   .NET 8. Projects target `net8.0` (per house style) with `<RollForward>LatestMajor</RollForward>`
   so `dotnet run`/`dotnet test` still work locally. Don't "fix" this by retargeting to `net10.0` --

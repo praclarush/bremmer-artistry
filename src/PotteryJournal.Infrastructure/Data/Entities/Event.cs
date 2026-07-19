@@ -23,7 +23,11 @@ namespace PotteryJournal.Infrastructure.Data.Entities
 
         public string? ImageFileName { get; set; }
 
+        public string? FlyerImageFileName { get; set; }
+
         public string? ExternalLinkUrl { get; set; }
+
+        public string? SocialMediaUrl { get; set; }
 
         public DateTimeOffset CreatedDate { get; set; }
 

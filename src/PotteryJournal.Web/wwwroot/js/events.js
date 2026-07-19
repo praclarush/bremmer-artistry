@@ -12,6 +12,31 @@ const calendarMonthLabel = document.getElementById("calendarMonthLabel");
 const listViewBtn = document.getElementById("listViewBtn");
 const calendarViewBtn = document.getElementById("calendarViewBtn");
 
+const flyerLightbox = document.getElementById("flyerLightbox");
+const flyerLightboxImage = document.getElementById("flyerLightboxImage");
+const flyerLightboxClose = document.getElementById("flyerLightboxClose");
+let flyerLastFocusedElement = null;
+
+flyerLightboxClose.addEventListener("click", () => closeFlyerLightbox());
+flyerLightbox.addEventListener("click", (e) => {
+  if (e.target === flyerLightbox) {
+    closeFlyerLightbox();
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (flyerLightbox.classList.contains("hidden")) {
+    return;
+  }
+  if (e.key === "Escape") {
+    closeFlyerLightbox();
+  } else if (e.key === "Tab") {
+    // Only the Close button is focusable inside this lightbox, so Tab/Shift+Tab both just keep
+    // focus there instead of escaping into the page behind it.
+    e.preventDefault();
+    flyerLightboxClose.focus();
+  }
+});
+
 init();
 
 async function init() {
@@ -39,6 +64,64 @@ function showView(view) {
   listViewBtn.classList.toggle("active", !showCalendar);
 }
 
+function openFlyerLightbox(fileName, title) {
+  flyerLightboxImage.src = `/uploads/events/${fileName}`;
+  flyerLightboxImage.alt = `${title} flyer`;
+
+  if (!flyerLightbox.classList.contains("open")) {
+    flyerLastFocusedElement = document.activeElement;
+    flyerLightbox.classList.remove("hidden");
+    void flyerLightbox.offsetWidth; // force a reflow so "hidden" -> visible commits before "open" triggers the transition
+    flyerLightbox.classList.add("open");
+    flyerLightboxClose.focus();
+    setFlyerBackgroundInert(true);
+  }
+}
+
+function closeFlyerLightbox() {
+  if (!flyerLightbox.classList.contains("open")) {
+    flyerLightbox.classList.add("hidden");
+    return;
+  }
+
+  flyerLightbox.classList.remove("open");
+  flyerLightbox.addEventListener(
+    "transitionend",
+    () => {
+      // Only hide if it's still meant to be closed -- guards against a stale listener from this
+      // close firing after a later reopen (see gallery.js's closeLightbox for the same fix).
+      if (!flyerLightbox.classList.contains("open")) {
+        flyerLightbox.classList.add("hidden");
+      }
+    },
+    { once: true }
+  );
+  setFlyerBackgroundInert(false);
+
+  if (flyerLastFocusedElement) {
+    flyerLastFocusedElement.focus();
+    flyerLastFocusedElement = null;
+  }
+}
+
+function setFlyerBackgroundInert(isInert) {
+  const targets = [
+    document.querySelector(".site-nav"),
+    ...Array.from(document.querySelector(".site-main").children).filter((el) => el !== flyerLightbox),
+    document.querySelector(".site-footer"),
+  ];
+  targets.forEach((el) => {
+    if (!el) {
+      return;
+    }
+    if (isInert) {
+      el.setAttribute("inert", "");
+    } else {
+      el.removeAttribute("inert");
+    }
+  });
+}
+
 function shiftMonth(delta) {
   calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + delta, 1);
   renderCalendar();
@@ -59,8 +142,15 @@ function buildCard(evt) {
   card.id = `event-${evt.id}`;
 
   if (evt.imageFileName) {
-    const photo = document.createElement("div");
-    photo.className = "event-card-photo";
+    // When a flyer also exists, the banner becomes the click target for it (same "click the
+    // photo to see more" idiom as Gallery); otherwise it's a plain, non-interactive photo box.
+    const photo = document.createElement(evt.flyerImageFileName ? "button" : "div");
+    photo.className = evt.flyerImageFileName ? "event-card-photo event-card-photo-btn" : "event-card-photo";
+    if (evt.flyerImageFileName) {
+      photo.type = "button";
+      photo.setAttribute("aria-label", `View flyer for ${evt.title}`);
+      photo.addEventListener("click", () => openFlyerLightbox(evt.flyerImageFileName, evt.title));
+    }
     const img = document.createElement("img");
     img.src = `/uploads/events/${evt.imageFileName}`;
     img.alt = evt.title;
@@ -111,6 +201,16 @@ function buildCard(evt) {
   description.textContent = evt.description;
   body.appendChild(description);
 
+  if (evt.socialMediaUrl) {
+    const social = document.createElement("a");
+    social.className = "hero-secondary-link";
+    social.href = evt.socialMediaUrl;
+    social.target = "_blank";
+    social.rel = "noopener";
+    social.textContent = "View on Social Media →";
+    body.appendChild(social);
+  }
+
   const actions = document.createElement("div");
   actions.className = "event-actions";
 
@@ -133,6 +233,15 @@ function buildCard(evt) {
     external.rel = "noopener";
     external.textContent = "View Event →";
     actions.appendChild(external);
+  }
+
+  if (evt.flyerImageFileName && !evt.imageFileName) {
+    // No banner to repurpose as the click target, so the flyer needs its own explicit trigger.
+    const flyerBtn = document.createElement("button");
+    flyerBtn.type = "button";
+    flyerBtn.textContent = "View Flyer";
+    flyerBtn.addEventListener("click", () => openFlyerLightbox(evt.flyerImageFileName, evt.title));
+    actions.appendChild(flyerBtn);
   }
 
   body.appendChild(actions);

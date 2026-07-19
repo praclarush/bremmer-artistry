@@ -394,6 +394,91 @@ a { color: var(--copper-glaze); }
   margin-top: 0.15rem;
 }
 
+/* ---------- lightbox (shared base) ----------
+   Full-viewport photo overlay: Gallery's photo viewer (with paging arrows, see gallery.css) and
+   Events' single-image flyer viewer (close button only) both build on this. */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 5vw, 4rem);
+  background: rgba(7, 38, 56, 0.92);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox.hidden {
+  display: none;
+}
+
+.lightbox.open {
+  opacity: 1;
+}
+
+.lightbox-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 100%;
+  max-height: 100%;
+  transform: scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.lightbox.open .lightbox-figure {
+  transform: scale(1);
+}
+
+.lightbox-figure img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100vh - 10rem);
+  object-fit: contain;
+  border: 1px solid var(--shelf-line);
+  transition: opacity 0.13s ease;
+}
+
+.lightbox-figure figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--bisque-dark);
+  text-align: center;
+}
+
+.lightbox-close {
+  position: fixed;
+  top: clamp(0.75rem, 3vw, 1.75rem);
+  right: clamp(0.75rem, 3vw, 1.75rem);
+  width: 2.5rem;
+  height: 2.5rem;
+  background: none;
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+  border-radius: 2px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.lightbox-close:hover,
+.lightbox-close:focus-visible {
+  border-color: var(--copper-glaze);
+  color: var(--copper-glaze);
+}
+
+.lightbox-close:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
 .empty-state {
   text-align: center;
   font-family: var(--font-mono);

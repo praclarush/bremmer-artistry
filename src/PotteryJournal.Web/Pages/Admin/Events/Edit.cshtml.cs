@@ -31,6 +31,8 @@ namespace PotteryJournal.Web.Pages.Admin.Events
 
         public string? ImageFileName { get; private set; }
 
+        public string? FlyerImageFileName { get; private set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
             if (!Id.HasValue)
@@ -55,13 +57,15 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                 VenueName = existing.VenueName,
                 VenueAddress = existing.VenueAddress,
                 ExternalLinkUrl = existing.ExternalLinkUrl,
+                SocialMediaUrl = existing.SocialMediaUrl,
             };
             ImageFileName = existing.ImageFileName;
+            FlyerImageFileName = existing.FlyerImageFileName;
 
             return Page();
         }
 
-        public async Task<IActionResult> OnPostSaveAsync(IFormFile? image)
+        public async Task<IActionResult> OnPostSaveAsync(IFormFile? image, IFormFile? flyer)
         {
             if (!ModelState.IsValid)
             {
@@ -69,6 +73,7 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                 {
                     DataHandlerResponse<EventModel> existingResponse = await _eventsHandler.GetByIdAsync(Id.Value);
                     ImageFileName = existingResponse.Data?.ImageFileName;
+                    FlyerImageFileName = existingResponse.Data?.FlyerImageFileName;
                 }
 
                 return Page();
@@ -118,6 +123,25 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                 else
                 {
                     TempData["StatusMessage"] = $"Event saved, but the banner photo couldn't be processed: {string.Join(" ", saveResult.Errors)}";
+                    return RedirectToPage("Edit", new { id = eventId });
+                }
+            }
+
+            if (flyer is not null && flyer.Length > 0)
+            {
+                await using System.IO.Stream stream = flyer.OpenReadStream();
+                DataHandlerResponse<string> saveResult = await _imageStorageService.SaveResizedJpegAsync(stream, UploadsSubfolders.Events);
+                if (saveResult.IsSuccess && saveResult.Data is not null)
+                {
+                    DataHandlerResponse<string?> setResult = await _eventsHandler.SetFlyerImageAsync(eventId, saveResult.Data);
+                    if (setResult.IsSuccess && setResult.Data is not null)
+                    {
+                        _imageStorageService.Delete(UploadsSubfolders.Events, setResult.Data);
+                    }
+                }
+                else
+                {
+                    TempData["StatusMessage"] = $"Event saved, but the flyer photo couldn't be processed: {string.Join(" ", saveResult.Errors)}";
                     return RedirectToPage("Edit", new { id = eventId });
                 }
             }

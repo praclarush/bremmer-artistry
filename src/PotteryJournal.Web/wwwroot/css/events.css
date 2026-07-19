@@ -91,6 +91,30 @@
   transform: scale(1.045);
 }
 
+/* When an event has a flyer, its photo box becomes a button that opens the flyer lightbox --
+   same tile-photo idiom used elsewhere on the site (click the photo to see more). */
+.event-card-photo-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+.event-card-photo-btn:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.event-card-photo-btn:hover img,
+.event-card-photo-btn:focus-visible img {
+  transform: scale(1.045);
+}
+
 .event-card-body {
   padding: 1.25rem 1.4rem 1.5rem;
   display: flex;
@@ -146,6 +170,25 @@
 
 .event-actions a { text-decoration: none; }
 .event-actions a:hover { text-decoration: underline; }
+
+/* "View Flyer" fallback trigger (events with a flyer but no banner photo to click) --
+   matches the other .event-actions links visually even though it's a <button>. */
+.event-actions button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--copper-glaze);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.event-actions button:hover { text-decoration: underline; }
+
+.event-actions button:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
 
 /* ---------- calendar grid ---------- */
 

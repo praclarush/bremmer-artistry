@@ -41,6 +41,11 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                 _imageStorageService.Delete(UploadsSubfolders.Events, existing.Data.ImageFileName);
             }
 
+            if (existing.IsSuccess && existing.Data?.FlyerImageFileName is not null)
+            {
+                _imageStorageService.Delete(UploadsSubfolders.Events, existing.Data.FlyerImageFileName);
+            }
+
             HandlerResponse response = await _eventsHandler.DeleteAsync(id);
             TempData["StatusMessage"] = response.IsSuccess
                 ? "The event was deleted."

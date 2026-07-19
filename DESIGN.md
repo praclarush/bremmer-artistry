@@ -248,14 +248,17 @@ section below. It is the "specimen card" the whole North Star points toward — 
 the system stays quiet so this one can read as the object worth stopping for.
 
 ### Lightbox
-The Gallery's only overlay: a fixed, full-viewport Kiln Char scrim (`rgba(7, 38, 56, 0.92)`) behind
-a large centered photo, with close/prev/next controls in the quiet-until-touched idiom (1px Shelf
-Line border, Copper Glaze on hover/focus). A mono caption below the image states the piece title and
-position (`"Bowls — 20250924_110013 — 4 of 14"`), browsing every photo in the current Gallery
-category, not just the clicked piece's own images — the Journal's per-piece worksheet photo nav is a
-separate, narrower interaction. First user of the system's z-index scale (`z-index: 100` for the
-scrim; nothing else in the system stacks yet, so no fuller scale exists until a second layer is
-needed).
+A fixed, full-viewport Kiln Char scrim (`rgba(7, 38, 56, 0.92)`) behind a large centered photo, with
+close/prev/next controls in the quiet-until-touched idiom (1px Shelf Line border, Copper Glaze on
+hover/focus). The base scrim, figure transition, and close button live in `site.css` as a shared
+component; Gallery layers its own prev/next arrows and multi-photo paging on top in `gallery.css`.
+On Gallery, a mono caption below the image states the piece title and position
+(`"Bowls — 20250924_110013 — 4 of 14"`), browsing every photo in the current Gallery category, not
+just the clicked piece's own images — the Journal's per-piece worksheet photo nav is a separate,
+narrower interaction. Events reuses the same base for a single-image flyer viewer (close button
+only, no paging, no caption) when an event has a flyer photo. First user of the system's z-index
+scale (`z-index: 100` for the scrim; nothing else in the system stacks yet, so no fuller scale
+exists until a second layer is needed).
 
 ## 6. Do's and Don'ts
 

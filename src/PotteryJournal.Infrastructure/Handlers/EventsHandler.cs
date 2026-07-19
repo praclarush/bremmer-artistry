@@ -145,6 +145,26 @@ namespace PotteryJournal.Infrastructure.Handlers
             };
         }
 
+        /// <inheritdoc />
+        public async Task<DataHandlerResponse<string?>> SetFlyerImageAsync(Guid id, string fileName)
+        {
+            Event? eventEntity = await _context.Events.FirstOrDefaultAsync(e => e.Id == id);
+            if (eventEntity is null)
+            {
+                return DataHandlerResponse<string?>.NotFound("event", id);
+            }
+
+            string? previousFileName = eventEntity.FlyerImageFileName;
+            eventEntity.FlyerImageFileName = fileName;
+            await _context.SaveChangesAsync();
+
+            return new DataHandlerResponse<string?>
+            {
+                Data = previousFileName,
+                IsSuccess = true,
+            };
+        }
+
         private static void ApplySaveModel(Event eventEntity, EventSaveModel model)
         {
             eventEntity.Title = model.Title;
@@ -159,6 +179,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             eventEntity.VenueName = model.VenueName;
             eventEntity.VenueAddress = model.VenueAddress;
             eventEntity.ExternalLinkUrl = model.ExternalLinkUrl;
+            eventEntity.SocialMediaUrl = model.SocialMediaUrl;
         }
 
         private static EventModel ToModel(Event eventEntity)
@@ -173,7 +194,9 @@ namespace PotteryJournal.Infrastructure.Handlers
                 VenueName = eventEntity.VenueName,
                 VenueAddress = eventEntity.VenueAddress,
                 ImageFileName = eventEntity.ImageFileName,
+                FlyerImageFileName = eventEntity.FlyerImageFileName,
                 ExternalLinkUrl = eventEntity.ExternalLinkUrl,
+                SocialMediaUrl = eventEntity.SocialMediaUrl,
             };
         }
     }

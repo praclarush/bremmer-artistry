@@ -42,8 +42,8 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<HandlerResponse> UpdateAsync(Guid id, EventSaveModel model);
 
         /// <summary>
-        /// Deletes an event. Does not delete its banner image file -- callers must do that via
-        /// <see cref="Services.IImageStorageService"/>.
+        /// Deletes an event. Does not delete its banner or flyer image files -- callers must do
+        /// that via <see cref="Services.IImageStorageService"/>.
         /// </summary>
         /// <param name="id">The event's primary key.</param>
         Task<HandlerResponse> DeleteAsync(Guid id);
@@ -55,5 +55,13 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <param name="fileName">The newly stored file name, as returned by <see cref="Services.IImageStorageService"/>.</param>
         /// <returns>A response whose <c>Data</c> is the previous file name, if any, for the caller to delete from disk.</returns>
         Task<DataHandlerResponse<string?>> SetImageAsync(Guid id, string fileName);
+
+        /// <summary>
+        /// Sets or replaces an event's flyer image file name.
+        /// </summary>
+        /// <param name="id">The event's primary key.</param>
+        /// <param name="fileName">The newly stored file name, as returned by <see cref="Services.IImageStorageService"/>.</param>
+        /// <returns>A response whose <c>Data</c> is the previous file name, if any, for the caller to delete from disk.</returns>
+        Task<DataHandlerResponse<string?>> SetFlyerImageAsync(Guid id, string fileName);
     }
 }

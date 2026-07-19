@@ -20,5 +20,7 @@ namespace PotteryJournal.Infrastructure.Models
         public string? VenueAddress { get; set; }
 
         public string? ExternalLinkUrl { get; set; }
+
+        public string? SocialMediaUrl { get; set; }
     }
 }
