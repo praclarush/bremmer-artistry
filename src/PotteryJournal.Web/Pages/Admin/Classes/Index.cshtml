@@ -1,0 +1,36 @@
+@page "/admin/classes"
+@{
+    ViewData["Title"] = "Classes";
+}
+
+<h1 class="h3 mb-4">Classes</h1>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Availability</h2>
+        <p class="text-muted">Define bookable class windows, one-off or recurring.</p>
+        <a class="btn btn-primary" href="/admin/classes/availability">Manage Availability</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Bookings</h2>
+        <p class="text-muted">Review and approve or decline tentative booking requests.</p>
+        <a class="btn btn-primary" href="/admin/classes/bookings">Manage Bookings</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h2 class="h5">Blackout Dates</h2>
+        <p class="text-muted">Block off dates and times classes can't be booked.</p>
+        <a class="btn btn-primary" href="/admin/classes/blackouts">Manage Blackout Dates</a>
+      </div>
+    </div>
+  </div>
+</div>

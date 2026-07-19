@@ -35,6 +35,7 @@ builder.Services.AddScoped<IReferenceDataHandler, ReferenceDataHandler>();
 builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IAdminSettingsHandler, AdminSettingsHandler>();
+builder.Services.AddScoped<IClassesHandler, ClassesHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
@@ -64,6 +65,13 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter(RateLimiterPolicies.LoginAttempts, limiterOptions =>
     {
         limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+    // Public, unauthenticated POST that writes to the database -- same treatment as LoginAttempts.
+    options.AddFixedWindowLimiter(RateLimiterPolicies.ClassBooking, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
         limiterOptions.Window = TimeSpan.FromMinutes(1);
         limiterOptions.QueueLimit = 0;
     });
@@ -154,6 +162,15 @@ app.MapGet("/events/data/all", async (IEventsHandler eventsHandler) =>
 {
     DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetOccurrencesAsync();
     return JsonResult(response.Data ?? new List<EventModel>());
+}).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
+
+app.MapGet("/classes/data", async (IClassesHandler classesHandler) =>
+{
+    // A fixed 90-day public booking window -- generous for planning ahead without ever needing to
+    // expand indefinite recurrence unboundedly.
+    DateTimeOffset now = DateTimeOffset.UtcNow;
+    DataHandlerResponse<List<ClassSlotModel>> response = await classesHandler.GetAvailableSlotsAsync(now, now.AddDays(90));
+    return JsonResult(response.Data ?? new List<ClassSlotModel>());
 }).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
 app.MapGet("/events/{id:guid}/ics", async (Guid id, IEventsHandler eventsHandler, IIcsGenerator icsGenerator) =>

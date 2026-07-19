@@ -1,0 +1,81 @@
+@page "/admin/classes/bookings"
+@model PotteryJournal.Web.Pages.Admin.Classes.Bookings.IndexModel
+@{
+    ViewData["Title"] = "Class Bookings";
+}
+
+<h1 class="h3 mb-4">Class Bookings</h1>
+
+<div class="btn-group mb-4" role="group">
+  <a class="btn btn-outline-secondary btn-sm @(Model.Status == null ? "active" : "")" href="/admin/classes/bookings">All</a>
+  <a class="btn btn-outline-secondary btn-sm @(Model.Status == PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Tentative ? "active" : "")" href="/admin/classes/bookings?status=Tentative">Tentative</a>
+  <a class="btn btn-outline-secondary btn-sm @(Model.Status == PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Confirmed ? "active" : "")" href="/admin/classes/bookings?status=Confirmed">Confirmed</a>
+  <a class="btn btn-outline-secondary btn-sm @(Model.Status == PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Declined ? "active" : "")" href="/admin/classes/bookings?status=Declined">Declined</a>
+</div>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Class</th>
+      <th>When</th>
+      <th>Customer</th>
+      <th>Party</th>
+      <th>Status</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (PotteryJournal.Infrastructure.Models.ClassBookingModel booking in Model.Bookings)
+    {
+      <tr>
+        <td>@booking.ClassTypeName</td>
+        <td>@booking.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+        <td>
+          @booking.CustomerName<br>
+          <span class="text-muted small">
+            @booking.CustomerEmail@(string.IsNullOrEmpty(booking.CustomerPhone) ? "" : " · " + booking.CustomerPhone)
+          </span>
+          @if (!string.IsNullOrEmpty(booking.Message))
+          {
+            <div class="text-muted small fst-italic">"@booking.Message"</div>
+          }
+        </td>
+        <td>@booking.PartySize</td>
+        <td>
+          @switch (booking.Status)
+          {
+            case PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Tentative:
+              <span class="badge text-bg-warning">Tentative</span>
+              break;
+            case PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Confirmed:
+              <span class="badge text-bg-success">Confirmed</span>
+              break;
+            case PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Declined:
+              <span class="badge text-bg-secondary">Declined</span>
+              break;
+            default:
+              break;
+          }
+        </td>
+        <td class="text-end">
+          @if (booking.Status == PotteryJournal.Infrastructure.Data.Entities.ClassBookingStatus.Tentative)
+          {
+            <form method="post" asp-page-handler="Approve" asp-route-id="@booking.Id" class="d-inline">
+              <button type="submit" class="btn btn-outline-success btn-sm">Approve</button>
+            </form>
+            <form method="post" asp-page-handler="Decline" asp-route-id="@booking.Id" class="d-inline"
+                  onsubmit="return confirm('Decline this booking?');">
+              <button type="submit" class="btn btn-outline-danger btn-sm">Decline</button>
+            </form>
+          }
+        </td>
+      </tr>
+    }
+    @if (Model.Bookings.Count == 0)
+    {
+      <tr>
+        <td colspan="6" class="text-muted">None yet.</td>
+      </tr>
+    }
+  </tbody>
+</table>

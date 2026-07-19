@@ -130,6 +130,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   using them (`Npgsql.NpgsqlException: Failed to connect to 127.0.0.1:55432`, or images 404ing).
   This has recurred multiple times from rebuilding the app image for verification with the base file
   only -- the container needing rebuilt is almost never a reason to drop the `-f` flags.
+- **Every `.cshtml` with a code-behind `.cshtml.cs` must declare `@model`.** Omitting it (as
+  `Classes.cshtml` did while being built) doesn't break the page visibly -- it still compiles, `OnGet`
+  still renders correctly, and the form's antiforgery token still shows up -- but Razor Pages fails
+  to associate the compiled view with its `PageModel` class for POST **handler dispatch**: every POST
+  silently falls through to re-rendering the GET view (200, no handler code runs at all, no exception,
+  no log line) instead of invoking `OnPost*Async`. This is essentially undetectable by inspection or
+  by manually clicking through the page in a browser during dev (it looks like the form "did nothing"
+  or "didn't save," easy to blame on the handler logic instead) -- it only surfaced here via an
+  integration test asserting the POST's redirect status. Confirmed no other page with a code-behind
+  in this repo is missing `@model` except `Gallery.cshtml` (GET-only, so harmless there, left alone).
 
 ## Testing
 

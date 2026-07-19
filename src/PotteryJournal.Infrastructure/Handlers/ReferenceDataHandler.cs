@@ -235,7 +235,20 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// <inheritdoc />
         public async Task<HandlerResponse> RemoveClassTypeAsync(Guid id)
         {
-            return await RemoveLookupAsync(_context.ClassTypes, "class type", id, c => c.Id == id);
+            return await RemoveLookupAsync(_context.ClassTypes, "class type", id, c => c.Id == id, async classType =>
+            {
+                int availabilityCount = await _context.ClassAvailabilities.CountAsync(a => a.ClassTypeId == classType.Id);
+                int activeBookingCount = await _context.ClassBookings.CountAsync(b => b.ClassTypeId == classType.Id && b.Status != ClassBookingStatus.Declined);
+                if (availabilityCount == 0 && activeBookingCount == 0)
+                {
+                    return null;
+                }
+
+                HandlerResponse inUseResponse = new HandlerResponse();
+                inUseResponse.AddError($"\"{classType.Name}\" is still used by {availabilityCount} availability rule{(availabilityCount == 1 ? string.Empty : "s")} and {activeBookingCount} active booking{(activeBookingCount == 1 ? string.Empty : "s")}, and can't be deleted.");
+                inUseResponse.IsSuccess = false;
+                return inUseResponse;
+            });
         }
 
         /// <inheritdoc />

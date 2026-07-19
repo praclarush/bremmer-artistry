@@ -53,6 +53,16 @@ namespace PotteryJournal.Web.Tests
         }
 
         [Test]
+        public async Task GetClassesData_NoAvailability_ReturnsEmptyJsonArray()
+        {
+            HttpResponseMessage response = await _client.GetAsync("/classes/data");
+
+            Assert.That(response.IsSuccessStatusCode, Is.True);
+            string body = await response.Content.ReadAsStringAsync();
+            Assert.That(body.Trim(), Is.EqualTo("[]"));
+        }
+
+        [Test]
         public async Task GetEventIcs_UnknownId_ReturnsNotFound()
         {
             HttpResponseMessage response = await _client.GetAsync($"/events/{Guid.NewGuid()}/ics");

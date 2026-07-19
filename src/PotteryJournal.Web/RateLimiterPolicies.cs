@@ -9,5 +9,7 @@ namespace PotteryJournal.Web
         public const string DataEndpoints = "DataEndpoints";
 
         public const string LoginAttempts = "LoginAttempts";
+
+        public const string ClassBooking = "ClassBooking";
     }
 }

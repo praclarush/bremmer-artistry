@@ -1,0 +1,64 @@
+@page "/admin/classes/blackouts"
+@model PotteryJournal.Web.Pages.Admin.Classes.Blackouts.IndexModel
+@{
+    ViewData["Title"] = "Blackout Dates";
+}
+
+<h1 class="h3 mb-4">Blackout Dates</h1>
+<p class="text-muted">Classes can't be booked during these ranges.</p>
+
+<div class="card mb-4" style="max-width: 40rem;">
+  <div class="card-body">
+    <h2 class="h5">Add a blackout period</h2>
+    <form method="post" asp-page-handler="Add">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <label class="form-label" for="startDateTime">Start</label>
+          <input type="datetime-local" class="form-control" id="startDateTime" name="NewBlackoutPeriod.StartDateTime" required>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label" for="endDateTime">End</label>
+          <input type="datetime-local" class="form-control" id="endDateTime" name="NewBlackoutPeriod.EndDateTime" required>
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="reason">Reason (optional)</label>
+        <input type="text" class="form-control" id="reason" asp-for="NewBlackoutPeriod.Reason">
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Add</button>
+    </form>
+  </div>
+</div>
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Start</th>
+      <th>End</th>
+      <th>Reason</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (PotteryJournal.Infrastructure.Models.BlackoutPeriodModel blackout in Model.BlackoutPeriods)
+    {
+      <tr>
+        <td>@blackout.StartDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+        <td>@blackout.EndDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+        <td>@blackout.Reason</td>
+        <td class="text-end">
+          <form method="post" asp-page-handler="Remove" asp-route-id="@blackout.Id"
+                onsubmit="return confirm('Remove this blackout period?');">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+          </form>
+        </td>
+      </tr>
+    }
+    @if (Model.BlackoutPeriods.Count == 0)
+    {
+      <tr>
+        <td colspan="4" class="text-muted">None yet.</td>
+      </tr>
+    }
+  </tbody>
+</table>
