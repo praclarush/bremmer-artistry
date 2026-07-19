@@ -33,6 +33,15 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<EventModel>>> GetOccurrencesAsync();
 
         /// <summary>
+        /// Gets every event occurrence within the given range, for the admin calendar. Unlike
+        /// <see cref="GetOccurrencesAsync"/>, the range is caller-supplied rather than an internal
+        /// window, so the admin calendar can page arbitrarily far back or forward.
+        /// </summary>
+        /// <param name="from">Inclusive start of the range to search.</param>
+        /// <param name="to">Inclusive end of the range to search.</param>
+        Task<DataHandlerResponse<List<EventModel>>> GetOccurrencesInRangeAsync(DateTimeOffset from, DateTimeOffset to);
+
+        /// <summary>
         /// Gets a single event by its primary key.
         /// </summary>
         /// <param name="id">The event's primary key.</param>

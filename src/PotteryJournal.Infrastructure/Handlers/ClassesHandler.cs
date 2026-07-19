@@ -353,6 +353,23 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<List<ClassBookingModel>>> GetBookingsInRangeAsync(DateTimeOffset from, DateTimeOffset to)
+        {
+            List<ClassBooking> bookings = await _context.ClassBookings
+                .AsNoTracking()
+                .Include(b => b.ClassType)
+                .Where(b => b.Status != ClassBookingStatus.Declined && b.StartDateTime >= from && b.StartDateTime <= to)
+                .OrderBy(b => b.StartDateTime)
+                .ToListAsync();
+
+            return new DataHandlerResponse<List<ClassBookingModel>>
+            {
+                Data = bookings.Select(ToModel).ToList(),
+                IsSuccess = true,
+            };
+        }
+
+        /// <inheritdoc />
         public async Task<HandlerResponse> ApproveBookingAsync(Guid id)
         {
             HandlerResponse response = new HandlerResponse();

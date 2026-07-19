@@ -166,6 +166,35 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task GetOccurrencesInRangeAsync_RecurringEvent_BoundedByCallerSuppliedRange()
+        {
+            EventSaveModel model = BuildRecurringSaveModel(
+                "Long Series",
+                DateTimeOffset.UtcNow.AddDays(-60),
+                RecurrenceFrequency.Weekly,
+                interval: 1);
+            await _sut.CreateAsync(model, "admin@example.com");
+
+            DateTimeOffset rangeStart = DateTimeOffset.UtcNow.AddDays(-14);
+            DateTimeOffset rangeEnd = DateTimeOffset.UtcNow.AddDays(14);
+            DataHandlerResponse<List<EventModel>> response = await _sut.GetOccurrencesInRangeAsync(rangeStart, rangeEnd);
+
+            Assert.That(response.Data!.All(e => e.StartDateTime >= rangeStart && e.StartDateTime <= rangeEnd), Is.True);
+            Assert.That(response.Data, Is.Not.Empty);
+        }
+
+        [Test]
+        public async Task GetOccurrencesInRangeAsync_NonRecurringEventOutsideRange_Excluded()
+        {
+            await _sut.CreateAsync(BuildSaveModel("Far Future Show", DateTimeOffset.UtcNow.AddYears(1)), "admin@example.com");
+
+            DataHandlerResponse<List<EventModel>> response = await _sut.GetOccurrencesInRangeAsync(
+                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+
+            Assert.That(response.Data, Is.Empty);
+        }
+
+        [Test]
         public async Task UpdateAsync_TogglesRecurrenceBackToNone_ClearsIntervalAndEndDate()
         {
             DateTimeOffset start = DateTimeOffset.UtcNow.AddDays(1);

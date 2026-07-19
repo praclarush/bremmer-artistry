@@ -80,5 +80,16 @@ namespace PotteryJournal.Web.Tests
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Redirect));
             Assert.That(response.Headers.Location?.ToString(), Does.Contain("/Admin/Login"));
         }
+
+        [Test]
+        public async Task GetAdminCalendarData_Unauthenticated_RedirectsToLogin()
+        {
+            using HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+            HttpResponseMessage response = await client.GetAsync("/admin/calendar?handler=Data&start=2026-01-01&end=2026-02-01");
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Redirect));
+            Assert.That(response.Headers.Location?.ToString(), Does.Contain("/Admin/Login"));
+        }
     }
 }

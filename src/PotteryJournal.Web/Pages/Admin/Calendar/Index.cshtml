@@ -1,0 +1,34 @@
+@page "/admin/calendar"
+@model PotteryJournal.Web.Pages.Admin.Calendar.IndexModel
+@{
+    ViewData["Title"] = "Calendar";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h1 class="h3 m-0">Calendar</h1>
+  <div class="d-flex align-items-center gap-2">
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="viewWeekBtn">Week</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="viewMonthBtn">Month</button>
+    </div>
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="calendarPrevBtn" aria-label="Previous">&lsaquo;</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="calendarTodayBtn">Today</button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" id="calendarNextBtn" aria-label="Next">&rsaquo;</button>
+    </div>
+  </div>
+</div>
+
+<h2 class="h6 text-muted mb-3" id="calendarRangeLabel"></h2>
+
+<div class="mb-3 small">
+  <span class="badge text-bg-primary">Event</span>
+  <span class="badge text-bg-warning">Tentative Booking</span>
+  <span class="badge text-bg-success">Confirmed Booking</span>
+</div>
+
+<div id="adminCalendarGrid" class="admin-calendar-grid"></div>
+
+@section Scripts {
+  <script src="~/js/admin-calendar.js" asp-append-version="true"></script>
+}

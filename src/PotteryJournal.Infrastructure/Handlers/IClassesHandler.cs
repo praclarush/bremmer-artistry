@@ -72,6 +72,14 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<ClassBookingModel>>> GetBookingsAsync(ClassBookingStatus? status);
 
         /// <summary>
+        /// Gets non-declined class bookings (Tentative and Confirmed) within the given range, for
+        /// the admin calendar.
+        /// </summary>
+        /// <param name="from">Inclusive start of the range to search.</param>
+        /// <param name="to">Inclusive end of the range to search.</param>
+        Task<DataHandlerResponse<List<ClassBookingModel>>> GetBookingsInRangeAsync(DateTimeOffset from, DateTimeOffset to);
+
+        /// <summary>
         /// Approves a tentative booking, marking it <see cref="ClassBookingStatus.Confirmed"/> and
         /// sending the customer a confirmation email.
         /// </summary>

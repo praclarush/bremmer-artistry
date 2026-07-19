@@ -127,6 +127,34 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<List<EventModel>>> GetOccurrencesInRangeAsync(DateTimeOffset from, DateTimeOffset to)
+        {
+            DataHandlerResponse<List<EventModel>> response = new DataHandlerResponse<List<EventModel>>();
+
+            List<Event> events = await _context.Events.AsNoTracking().ToListAsync();
+
+            List<EventModel> occurrences = new List<EventModel>();
+            foreach (Event eventEntity in events)
+            {
+                if (eventEntity.RecurrenceFrequency == RecurrenceFrequency.None)
+                {
+                    if (eventEntity.StartDateTime >= from && eventEntity.StartDateTime <= to)
+                    {
+                        occurrences.Add(ToModel(eventEntity));
+                    }
+
+                    continue;
+                }
+
+                occurrences.AddRange(ExpandRecurringOccurrences(eventEntity, from, to));
+            }
+
+            response.Data = occurrences.OrderBy(e => e.StartDateTime).ToList();
+            response.IsSuccess = true;
+            return response;
+        }
+
+        /// <inheritdoc />
         public async Task<DataHandlerResponse<EventModel>> GetByIdAsync(Guid id)
         {
             Event? eventEntity = await _context.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);

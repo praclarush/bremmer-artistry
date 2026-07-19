@@ -255,6 +255,23 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task GetBookingsInRangeAsync_ExcludesDeclinedAndOutOfRangeBookings()
+        {
+            DateTimeOffset inRangeSlot = DateTimeOffset.UtcNow.AddDays(5);
+            DateTimeOffset outOfRangeSlot = DateTimeOffset.UtcNow.AddDays(60);
+            DataHandlerResponse<Guid> inRangeBooking = await _sut.CreateBookingAsync(BuildBookingModel(inRangeSlot));
+            await _sut.CreateBookingAsync(BuildBookingModel(outOfRangeSlot));
+            DataHandlerResponse<Guid> declinedBooking = await _sut.CreateBookingAsync(BuildBookingModel(inRangeSlot.AddHours(3)));
+            await _sut.DeclineBookingAsync(declinedBooking.Data);
+
+            DataHandlerResponse<List<ClassBookingModel>> response = await _sut.GetBookingsInRangeAsync(
+                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(10));
+
+            Assert.That(response.Data, Has.Count.EqualTo(1));
+            Assert.That(response.Data![0].Id, Is.EqualTo(inRangeBooking.Data));
+        }
+
+        [Test]
         public async Task GetBookingsAsync_FilteredByStatus_ReturnsOnlyMatching()
         {
             DateTimeOffset firstSlot = DateTimeOffset.UtcNow.AddDays(5);
