@@ -43,6 +43,8 @@ namespace PotteryJournal.Infrastructure.Data
 
         public DbSet<AllowedAdmin> AllowedAdmins => Set<AllowedAdmin>();
 
+        public DbSet<AdminSettings> AdminSettings => Set<AdminSettings>();
+
         /// <summary>
         /// Configures the EF Core model, applying every <see cref="Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{TEntity}"/>
         /// in this assembly.

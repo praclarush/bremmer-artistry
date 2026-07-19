@@ -34,6 +34,7 @@ builder.Services.AddScoped<IPieceHandler, PieceHandler>();
 builder.Services.AddScoped<IReferenceDataHandler, ReferenceDataHandler>();
 builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
+builder.Services.AddScoped<IAdminSettingsHandler, AdminSettingsHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
