@@ -11,5 +11,7 @@ namespace PotteryJournal.Web
         public const string LoginAttempts = "LoginAttempts";
 
         public const string ClassBooking = "ClassBooking";
+
+        public const string ContactForm = "ContactForm";
     }
 }

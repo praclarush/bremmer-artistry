@@ -552,4 +552,84 @@ a { color: var(--copper-glaze); }
 
 .contact-list li { margin-bottom: 0.4rem; }
 
+/* ---------- shared simple form (Classes booking form, Contact Us) ---------- */
+
+.form-status-message {
+  margin: 1rem clamp(1rem, 4vw, 3rem) 0;
+  padding: 0.75rem 1rem;
+  background: var(--shelf);
+  border: 1px solid var(--copper-glaze-dim);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.simple-form {
+  padding: 1.5rem clamp(1.25rem, 4vw, 2rem);
+  max-width: 32rem;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+}
+
+.simple-form h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.simple-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.simple-form-field label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bisque-dark);
+}
+
+.simple-form-field input,
+.simple-form-field textarea {
+  background: var(--kiln-char);
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+}
+
+.simple-form-field input:focus-visible,
+.simple-form-field textarea:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 1px;
+  border-color: var(--copper-glaze);
+}
+
+.simple-form-submit {
+  background: var(--copper-glaze);
+  color: var(--kiln-char);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.simple-form-submit:hover,
+.simple-form-submit:focus-visible {
+  background: var(--copper-glaze-bright);
+}
+
+.simple-form-submit:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
+
 .hidden { display: none !important; }

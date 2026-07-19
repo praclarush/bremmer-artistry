@@ -22,45 +22,45 @@
 
 @if (TempData["StatusMessage"] is string statusMessage && !string.IsNullOrEmpty(statusMessage))
 {
-  <p class="classes-status">@statusMessage</p>
+  <p class="form-status-message">@statusMessage</p>
 }
 
 <div id="classSlots" class="class-slot-groups"></div>
 <p id="classesEmptyState" class="empty-state hidden">No class slots are available to book right now -- check back soon.</p>
 
-<form method="post" asp-page-handler="Book" id="bookingForm" class="booking-form hidden">
+<form method="post" asp-page-handler="Book" id="bookingForm" class="simple-form booking-form hidden">
   <h3>Complete your booking</h3>
   <p id="bookingSummary" class="booking-summary"></p>
 
   <input type="hidden" name="Booking.ClassTypeId" id="bookingClassTypeId">
   <input type="hidden" name="Booking.StartDateTime" id="bookingStartDateTime">
 
-  <div class="booking-field">
+  <div class="simple-form-field">
     <label for="bookingName">Name</label>
     <input type="text" id="bookingName" name="Booking.CustomerName" required>
   </div>
 
-  <div class="booking-field">
+  <div class="simple-form-field">
     <label for="bookingEmail">Email</label>
     <input type="email" id="bookingEmail" name="Booking.CustomerEmail" required>
   </div>
 
-  <div class="booking-field">
+  <div class="simple-form-field">
     <label for="bookingPhone">Phone (optional)</label>
     <input type="tel" id="bookingPhone" name="Booking.CustomerPhone">
   </div>
 
-  <div class="booking-field">
+  <div class="simple-form-field">
     <label for="bookingPartySize">Party size</label>
     <input type="number" id="bookingPartySize" name="Booking.PartySize" min="1" value="1" required>
   </div>
 
-  <div class="booking-field">
+  <div class="simple-form-field">
     <label for="bookingMessage">Message (optional)</label>
     <textarea id="bookingMessage" name="Booking.Message" rows="3"></textarea>
   </div>
 
-  <button type="submit" class="booking-submit">Request Booking</button>
+  <button type="submit" class="simple-form-submit">Request Booking</button>
 </form>
 
 @section Scripts {

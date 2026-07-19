@@ -11,16 +11,6 @@
   color: var(--copper-glaze-bright);
 }
 
-.classes-status {
-  margin: 1rem clamp(1rem, 4vw, 3rem) 0;
-  padding: 0.75rem 1rem;
-  background: var(--shelf);
-  border: 1px solid var(--copper-glaze-dim);
-  color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-}
-
 .class-slot-groups {
   padding: 1.5rem clamp(1rem, 4vw, 3rem) 2rem;
 }
@@ -72,20 +62,11 @@
 }
 
 /* ---------- booking form ---------- */
+/* Container sizing/placement is Classes-specific; field/label/submit styling is shared via
+   .simple-form/.simple-form-field/.simple-form-submit in site.css (also used by Contact Us). */
 
 .booking-form {
   margin: 0 clamp(1rem, 4vw, 3rem) 4rem;
-  padding: 1.5rem clamp(1.25rem, 4vw, 2rem);
-  max-width: 32rem;
-  background: var(--shelf);
-  border: 1px solid var(--shelf-line);
-}
-
-.booking-form h3 {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  color: var(--paper);
-  margin: 0 0 0.5rem;
 }
 
 .booking-summary {
@@ -93,58 +74,4 @@
   font-size: 0.72rem;
   color: var(--copper-glaze-bright);
   margin: 0 0 1.25rem;
-}
-
-.booking-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 1rem;
-}
-
-.booking-field label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--bisque-dark);
-}
-
-.booking-field input,
-.booking-field textarea {
-  background: var(--kiln-char);
-  border: 1px solid var(--shelf-line);
-  color: var(--paper);
-  font: inherit;
-  padding: 0.55rem 0.7rem;
-}
-
-.booking-field input:focus-visible,
-.booking-field textarea:focus-visible {
-  outline: 2px solid var(--copper-glaze);
-  outline-offset: 1px;
-  border-color: var(--copper-glaze);
-}
-
-.booking-submit {
-  background: var(--copper-glaze);
-  color: var(--kiln-char);
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.7rem 1.5rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.booking-submit:hover,
-.booking-submit:focus-visible {
-  background: var(--copper-glaze-bright);
-}
-
-.booking-submit:focus-visible {
-  outline: 2px solid var(--paper);
-  outline-offset: 2px;
 }

@@ -36,6 +36,7 @@ builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IAdminSettingsHandler, AdminSettingsHandler>();
 builder.Services.AddScoped<IClassesHandler, ClassesHandler>();
+builder.Services.AddScoped<IContactHandler, ContactHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
@@ -70,6 +71,13 @@ builder.Services.AddRateLimiter(options =>
     });
     // Public, unauthenticated POST that writes to the database -- same treatment as LoginAttempts.
     options.AddFixedWindowLimiter(RateLimiterPolicies.ClassBooking, limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    });
+    // Public, unauthenticated POST that sends email -- same treatment as ClassBooking.
+    options.AddFixedWindowLimiter(RateLimiterPolicies.ContactForm, limiterOptions =>
     {
         limiterOptions.PermitLimit = 5;
         limiterOptions.Window = TimeSpan.FromMinutes(1);
