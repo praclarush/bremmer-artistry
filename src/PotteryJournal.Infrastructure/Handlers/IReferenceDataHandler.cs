@@ -34,6 +34,11 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<CollectionModel>>> GetCollectionsAsync();
 
         /// <summary>
+        /// Gets every class type, ordered by name.
+        /// </summary>
+        Task<DataHandlerResponse<List<ClassTypeModel>>> GetClassTypesAsync();
+
+        /// <summary>
         /// Adds a new clay body. Fails if the name is blank or already exists.
         /// </summary>
         /// <param name="name">The clay body's display name.</param>
@@ -56,6 +61,20 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// </summary>
         /// <param name="name">The collection's display name.</param>
         Task<DataHandlerResponse<Guid>> AddCollectionAsync(string name);
+
+        /// <summary>
+        /// Adds a new class type. Fails if the name is blank, already exists, or maxCapacity is less than 1.
+        /// </summary>
+        /// <param name="name">The class type's display name.</param>
+        /// <param name="maxCapacity">The maximum party size a single booking may request for this class type.</param>
+        Task<DataHandlerResponse<Guid>> AddClassTypeAsync(string name, int maxCapacity);
+
+        /// <summary>
+        /// Updates a class type's maximum party size.
+        /// </summary>
+        /// <param name="id">The class type's primary key.</param>
+        /// <param name="maxCapacity">The new maximum party size. Fails if less than 1.</param>
+        Task<HandlerResponse> UpdateClassTypeCapacityAsync(Guid id, int maxCapacity);
 
         /// <summary>
         /// Removes a clay body. Any piece using it reverts to unspecified.
@@ -81,6 +100,18 @@ namespace PotteryJournal.Infrastructure.Handlers
         /// </summary>
         /// <param name="id">The collection's primary key.</param>
         Task<HandlerResponse> RemoveCollectionAsync(Guid id);
+
+        /// <summary>
+        /// Removes a class type.
+        /// </summary>
+        /// <param name="id">The class type's primary key.</param>
+        Task<HandlerResponse> RemoveClassTypeAsync(Guid id);
+
+        /// <summary>
+        /// Seeds the default class types ("Wheel Throw", "Hand-Building") if the ClassTypes table is
+        /// empty. No-ops otherwise, so it's safe to call on every startup.
+        /// </summary>
+        Task<HandlerResponse> EnsureSeedClassTypesAsync();
 
         /// <summary>
         /// Sets or clears whether a collection is featured on the homepage. Setting one collection

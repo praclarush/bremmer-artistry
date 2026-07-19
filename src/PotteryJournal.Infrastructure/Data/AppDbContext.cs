@@ -39,6 +39,8 @@ namespace PotteryJournal.Infrastructure.Data
 
         public DbSet<Collection> Collections => Set<Collection>();
 
+        public DbSet<ClassType> ClassTypes => Set<ClassType>();
+
         public DbSet<Event> Events => Set<Event>();
 
         public DbSet<AllowedAdmin> AllowedAdmins => Set<AllowedAdmin>();

@@ -84,6 +84,17 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<List<ClassTypeModel>>> GetClassTypesAsync()
+        {
+            List<ClassType> classTypes = await _context.ClassTypes.AsNoTracking().OrderBy(c => c.Name).ToListAsync();
+            return new DataHandlerResponse<List<ClassTypeModel>>
+            {
+                Data = classTypes.Select(c => new ClassTypeModel { Id = c.Id, Name = c.Name, MaxCapacity = c.MaxCapacity }).ToList(),
+                IsSuccess = true,
+            };
+        }
+
+        /// <inheritdoc />
         public async Task<DataHandlerResponse<Guid>> AddClayBodyAsync(string name)
         {
             return await AddLookupAsync(
@@ -128,6 +139,64 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<Guid>> AddClassTypeAsync(string name, int maxCapacity)
+        {
+            if (maxCapacity < 1)
+            {
+                DataHandlerResponse<Guid> invalidResponse = new DataHandlerResponse<Guid>();
+                invalidResponse.AddError("Max capacity must be at least 1.");
+                invalidResponse.IsSuccess = false;
+                return invalidResponse;
+            }
+
+            return await AddLookupAsync(
+                _context.ClassTypes,
+                name,
+                normalized => _context.ClassTypes.AsNoTracking().AnyAsync(c => c.Name == normalized),
+                normalized => new ClassType { Name = normalized, MaxCapacity = maxCapacity },
+                c => c.Id);
+        }
+
+        /// <inheritdoc />
+        public async Task<HandlerResponse> UpdateClassTypeCapacityAsync(Guid id, int maxCapacity)
+        {
+            if (maxCapacity < 1)
+            {
+                HandlerResponse invalidResponse = new HandlerResponse();
+                invalidResponse.AddError("Max capacity must be at least 1.");
+                invalidResponse.IsSuccess = false;
+                return invalidResponse;
+            }
+
+            ClassType? classType = await _context.ClassTypes.FirstOrDefaultAsync(c => c.Id == id);
+            if (classType is null)
+            {
+                return HandlerResponse.NotFound("class type", id);
+            }
+
+            classType.MaxCapacity = maxCapacity;
+            await _context.SaveChangesAsync();
+            return new HandlerResponse { IsSuccess = true };
+        }
+
+        /// <inheritdoc />
+        public async Task<HandlerResponse> EnsureSeedClassTypesAsync()
+        {
+            bool anyClassTypesExist = await _context.ClassTypes.AnyAsync();
+            if (anyClassTypesExist)
+            {
+                return new HandlerResponse { IsSuccess = true };
+            }
+
+            _context.ClassTypes.AddRange(
+                new ClassType { Name = "Wheel Throw", MaxCapacity = 6 },
+                new ClassType { Name = "Hand-Building", MaxCapacity = 6 });
+            await _context.SaveChangesAsync();
+
+            return new HandlerResponse { IsSuccess = true };
+        }
+
+        /// <inheritdoc />
         public async Task<HandlerResponse> RemoveClayBodyAsync(Guid id)
         {
             return await RemoveLookupAsync(_context.ClayBodies, "clay body", id, c => c.Id == id);
@@ -161,6 +230,12 @@ namespace PotteryJournal.Infrastructure.Handlers
         public async Task<HandlerResponse> RemoveCollectionAsync(Guid id)
         {
             return await RemoveLookupAsync(_context.Collections, "collection", id, c => c.Id == id);
+        }
+
+        /// <inheritdoc />
+        public async Task<HandlerResponse> RemoveClassTypeAsync(Guid id)
+        {
+            return await RemoveLookupAsync(_context.ClassTypes, "class type", id, c => c.Id == id);
         }
 
         /// <inheritdoc />

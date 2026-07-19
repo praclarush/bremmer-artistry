@@ -92,6 +92,9 @@ using (IServiceScope startupScope = app.Services.CreateScope())
         IAllowedAdminsHandler allowedAdminsHandler = startupScope.ServiceProvider.GetRequiredService<IAllowedAdminsHandler>();
         await allowedAdminsHandler.EnsureBootstrapAdminAsync(bootstrapAdminEmail, bootstrapAdminPassword);
     }
+
+    IReferenceDataHandler referenceDataHandler = startupScope.ServiceProvider.GetRequiredService<IReferenceDataHandler>();
+    await referenceDataHandler.EnsureSeedClassTypesAsync();
 }
 
 // Configure the HTTP request pipeline.
