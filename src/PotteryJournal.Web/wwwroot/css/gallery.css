@@ -39,6 +39,36 @@
   opacity: 0;
 }
 
+/* ---------- shared-element photo morph (View Transitions, gallery.js) ----------
+   #lightboxImage carries this name permanently, whenever it's visible -- gallery.js tags the
+   relevant tile <img> with the same name for the brief moment a transition is captured (before
+   snapshot on open, after snapshot on close), which is what tells the browser to morph geometry
+   between them instead of a plain page-level crossfade. Browsers without View Transitions ignore
+   this property entirely, so it's safe unconditionally. */
+#lightboxImage {
+  view-transition-name: gallery-lightbox-photo;
+}
+
+::view-transition-group(gallery-lightbox-photo) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1); /* ease-out-quint, matches tile-reveal below */
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(gallery-lightbox-photo),
+  ::view-transition-old(gallery-lightbox-photo),
+  ::view-transition-new(gallery-lightbox-photo),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
 .lightbox-arrow {
   position: fixed;
   top: 50%;
