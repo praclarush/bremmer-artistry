@@ -11,6 +11,13 @@ services:
       POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL: "${BOOTSTRAP_ADMIN_EMAIL}"
       POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD: "${BOOTSTRAP_ADMIN_PASSWORD}"
       Uploads__RootPath: /app/uploads
+      Smtp__Host: "${SMTP_HOST}"
+      Smtp__Port: "${SMTP_PORT:-587}"
+      Smtp__User: "${SMTP_USER}"
+      Smtp__Password: "${SMTP_PASSWORD}"
+      Smtp__FromAddress: "${SMTP_FROM_ADDRESS}"
+      Smtp__FromName: "${SMTP_FROM_NAME:-Bremmer Artistry}"
+      Smtp__UseStartTls: "${SMTP_USE_STARTTLS:-true}"
     volumes:
       - uploads:/app/uploads
     depends_on:

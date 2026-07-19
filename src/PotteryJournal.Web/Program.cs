@@ -28,6 +28,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PotteryJournal")));
 
 builder.Services.Configure<UploadsOptions>(builder.Configuration.GetSection("Uploads"));
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
 
 builder.Services.AddScoped<IPieceHandler, PieceHandler>();
 builder.Services.AddScoped<IReferenceDataHandler, ReferenceDataHandler>();
@@ -36,6 +37,7 @@ builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton<IPasswordHasher<AllowedAdmin>, PasswordHasher<AllowedAdmin>>();
 
 builder.Services

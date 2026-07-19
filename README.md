@@ -59,6 +59,10 @@ is also the effective ceiling for a landscape banner.
    gitignored -- never commit real secrets.
 3. When adding further admins from `/admin/allowed-admins`, you set their initial password
    directly in the form (there's no invite-email flow) -- they can change it themselves afterward.
+4. **SMTP** (optional but needed for class booking notifications/confirmations and the Contact Us
+   form): set `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`SMTP_FROM_ADDRESS` in `.env`.
+   Left blank, those email sends fail gracefully (reported as an error, not a crash) -- fine if
+   you're not exercising those flows locally.
 
 Sign-in attempts against `/admin/login` are rate-limited (10/minute per IP) since there's no
 external identity provider absorbing brute-force attempts anymore.
@@ -100,6 +104,11 @@ dotnet user-secrets set "ConnectionStrings:PotteryJournal" "Host=localhost;Port=
 dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL" "<BOOTSTRAP_ADMIN_EMAIL from .env>"
 dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD" "<BOOTSTRAP_ADMIN_PASSWORD from .env>"
 ```
+
+SMTP settings follow the same pattern if you need to test email locally, e.g.
+`dotnet user-secrets set "Smtp:Host" "<value>"` (and `Smtp:Port`, `Smtp:User`, `Smtp:Password`,
+`Smtp:FromAddress`) -- these map to `appsettings.json`'s nested `Smtp` section rather than a flat
+`POTTERYJOURNAL_`-prefixed key, since it's structured config, not a single secret.
 
 User secrets only load when `ASPNETCORE_ENVIRONMENT=Development`, which the `http`/`https` launch
 profiles already set -- run/debug via one of those profiles (Visual Studio's default), not
