@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PotteryJournal.Infrastructure.Data.Entities;
 
 namespace PotteryJournal.Infrastructure.Models
@@ -10,12 +11,14 @@ namespace PotteryJournal.Infrastructure.Models
     {
         public Guid ClassTypeId { get; set; }
 
-        public DateTimeOffset StartDateTime { get; set; }
+        public List<ClassAvailabilityDays> DaysOfWeek { get; set; } = new List<ClassAvailabilityDays>();
 
-        public RecurrenceFrequency RecurrenceFrequency { get; set; }
+        public TimeSpan StartTime { get; set; }
 
-        public int RecurrenceInterval { get; set; } = 1;
+        public bool RepeatsMultipleTimesPerDay { get; set; }
 
-        public DateTimeOffset? RecurrenceEndDate { get; set; }
+        public TimeSpan LastStartTime { get; set; }
+
+        public int IntervalHours { get; set; } = 2;
     }
 }

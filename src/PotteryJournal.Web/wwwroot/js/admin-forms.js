@@ -42,13 +42,15 @@ function removeRow(removeButton) {
   });
 }
 
-// Shows/hides a target element based on whether a <select> (e.g. a recurrence frequency dropdown)
-// is set to "None" -- declarative, so any admin form can opt in with data-recurrence-toggle="<id>".
-document.querySelectorAll("[data-recurrence-toggle]").forEach((select) => {
-  const target = document.getElementById(select.getAttribute("data-recurrence-toggle"));
+// Shows/hides a target element based on a control's state -- a <select> (e.g. a recurrence
+// frequency dropdown) collapses the target when set to "None"; a checkbox collapses the target
+// when unchecked. Declarative, so any admin form can opt in with data-recurrence-toggle="<id>".
+document.querySelectorAll("[data-recurrence-toggle]").forEach((control) => {
+  const target = document.getElementById(control.getAttribute("data-recurrence-toggle"));
   if (!target) return;
 
-  const sync = () => target.classList.toggle("d-none", select.value === "None");
-  select.addEventListener("change", sync);
+  const isCollapsed = () => (control.type === "checkbox" ? !control.checked : control.value === "None");
+  const sync = () => target.classList.toggle("d-none", isCollapsed());
+  control.addEventListener("change", sync);
   sync();
 });

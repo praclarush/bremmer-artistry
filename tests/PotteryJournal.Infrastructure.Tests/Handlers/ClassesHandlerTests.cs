@@ -38,7 +38,7 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
                 .Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new HandlerResponse { IsSuccess = true });
 
-            _sut = new ClassesHandler(_context, new RecurrenceExpander(), _emailSenderMock.Object, _adminSettingsHandler);
+            _sut = new ClassesHandler(_context, _emailSenderMock.Object, _adminSettingsHandler);
 
             await _adminSettingsHandler.UpdateAsync(new AdminSettingsModel
             {
@@ -66,14 +66,102 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
-        public async Task GetAvailableSlotsAsync_WeeklyRecurringRule_ExpandsMultipleSlots()
+        public async Task GetAvailabilityRuleByIdAsync_ExistingRule_ReturnsIt()
+        {
+            DataHandlerResponse<Guid> createResponse = await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Monday },
+                StartTime = TimeSpan.FromHours(11),
+            });
+
+            DataHandlerResponse<ClassAvailabilityModel> response = await _sut.GetAvailabilityRuleByIdAsync(createResponse.Data);
+
+            Assert.That(response.IsSuccess, Is.True);
+            Assert.That(response.Data!.ClassTypeId, Is.EqualTo(_wheelThrowId));
+            Assert.That(response.Data!.DaysOfWeek, Is.EqualTo(ClassAvailabilityDays.Monday));
+            Assert.That(response.Data!.StartTime, Is.EqualTo(TimeSpan.FromHours(11)));
+        }
+
+        [Test]
+        public async Task GetAvailabilityRuleByIdAsync_NonexistentId_ReturnsFailure()
+        {
+            DataHandlerResponse<ClassAvailabilityModel> response = await _sut.GetAvailabilityRuleByIdAsync(Guid.NewGuid());
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task UpdateAvailabilityRuleAsync_ValidChanges_UpdatesRule()
+        {
+            DataHandlerResponse<Guid> createResponse = await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Monday },
+                StartTime = TimeSpan.FromHours(11),
+            });
+
+            HandlerResponse updateResponse = await _sut.UpdateAvailabilityRuleAsync(createResponse.Data, new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Tuesday, ClassAvailabilityDays.Thursday },
+                StartTime = TimeSpan.FromHours(9),
+                RepeatsMultipleTimesPerDay = true,
+                IntervalHours = 3,
+                LastStartTime = TimeSpan.FromHours(15),
+            });
+
+            Assert.That(updateResponse.IsSuccess, Is.True);
+            DataHandlerResponse<ClassAvailabilityModel> getResponse = await _sut.GetAvailabilityRuleByIdAsync(createResponse.Data);
+            Assert.That(getResponse.Data!.DaysOfWeek, Is.EqualTo(ClassAvailabilityDays.Tuesday | ClassAvailabilityDays.Thursday));
+            Assert.That(getResponse.Data!.StartTime, Is.EqualTo(TimeSpan.FromHours(9)));
+            Assert.That(getResponse.Data!.IntervalHours, Is.EqualTo(3));
+            Assert.That(getResponse.Data!.LastStartTime, Is.EqualTo(TimeSpan.FromHours(15)));
+        }
+
+        [Test]
+        public async Task UpdateAvailabilityRuleAsync_NonexistentId_ReturnsFailure()
+        {
+            HandlerResponse response = await _sut.UpdateAvailabilityRuleAsync(Guid.NewGuid(), new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Monday },
+                StartTime = TimeSpan.FromHours(11),
+            });
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task UpdateAvailabilityRuleAsync_NoDaysSelected_ReturnsFailureAndLeavesRuleUnchanged()
+        {
+            DataHandlerResponse<Guid> createResponse = await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Monday },
+                StartTime = TimeSpan.FromHours(11),
+            });
+
+            HandlerResponse updateResponse = await _sut.UpdateAvailabilityRuleAsync(createResponse.Data, new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays>(),
+                StartTime = TimeSpan.FromHours(11),
+            });
+
+            Assert.That(updateResponse.IsSuccess, Is.False);
+            DataHandlerResponse<ClassAvailabilityModel> getResponse = await _sut.GetAvailabilityRuleByIdAsync(createResponse.Data);
+            Assert.That(getResponse.Data!.DaysOfWeek, Is.EqualTo(ClassAvailabilityDays.Monday));
+        }
+
+        [Test]
+        public async Task GetAvailableSlotsAsync_WeeklyRule_ExpandsMultipleSlotsAcrossWeeks()
         {
             await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
             {
                 ClassTypeId = _wheelThrowId,
-                StartDateTime = DateTimeOffset.UtcNow.AddDays(5),
-                RecurrenceFrequency = RecurrenceFrequency.Weekly,
-                RecurrenceInterval = 1,
+                DaysOfWeek = new List<ClassAvailabilityDays> { ClassAvailabilityDays.Monday, ClassAvailabilityDays.Wednesday, ClassAvailabilityDays.Friday },
+                StartTime = TimeSpan.FromHours(18),
             });
 
             DataHandlerResponse<List<ClassSlotModel>> response = await _sut.GetAvailableSlotsAsync(
@@ -84,30 +172,65 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
-        public async Task GetAvailableSlotsAsync_SlotInsideMinimumLeadTime_Excluded()
+        public async Task GetAvailableSlotsAsync_RepeatsMultipleTimesPerDay_GeneratesBlocksAtInterval()
         {
+            DateTimeOffset day = DateTimeOffset.UtcNow.AddDays(10);
+            ClassAvailabilityDays dayFlag = (ClassAvailabilityDays)(1 << (int)day.DayOfWeek);
+
             await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
             {
                 ClassTypeId = _wheelThrowId,
-                StartDateTime = DateTimeOffset.UtcNow.AddHours(6),
-                RecurrenceFrequency = RecurrenceFrequency.None,
+                DaysOfWeek = new List<ClassAvailabilityDays> { dayFlag },
+                StartTime = TimeSpan.FromHours(11),
+                RepeatsMultipleTimesPerDay = true,
+                IntervalHours = 2,
+                LastStartTime = TimeSpan.FromHours(18),
+            });
+
+            DateTimeOffset dayStart = new DateTimeOffset(day.UtcDateTime.Date, TimeSpan.Zero);
+            DataHandlerResponse<List<ClassSlotModel>> response = await _sut.GetAvailableSlotsAsync(
+                dayStart, dayStart.AddDays(1));
+
+            List<TimeSpan> times = response.Data!.Select(s => s.StartDateTime.TimeOfDay).OrderBy(t => t).ToList();
+            Assert.That(times, Is.EqualTo(new[]
+            {
+                TimeSpan.FromHours(11),
+                TimeSpan.FromHours(13),
+                TimeSpan.FromHours(15),
+                TimeSpan.FromHours(17),
+            }));
+        }
+
+        [Test]
+        public async Task GetAvailableSlotsAsync_SlotInsideMinimumLeadTime_Excluded()
+        {
+            ClassAvailabilityDays everyDay = ClassAvailabilityDays.Sunday | ClassAvailabilityDays.Monday | ClassAvailabilityDays.Tuesday
+                | ClassAvailabilityDays.Wednesday | ClassAvailabilityDays.Thursday | ClassAvailabilityDays.Friday | ClassAvailabilityDays.Saturday;
+
+            await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
+            {
+                ClassTypeId = _wheelThrowId,
+                DaysOfWeek = new List<ClassAvailabilityDays> { everyDay },
+                StartTime = DateTimeOffset.UtcNow.AddHours(6).TimeOfDay,
             });
 
             DataHandlerResponse<List<ClassSlotModel>> response = await _sut.GetAvailableSlotsAsync(
                 DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
 
-            Assert.That(response.Data, Is.Empty);
+            DateTimeOffset earliestBookable = DateTimeOffset.UtcNow.AddDays(2);
+            Assert.That(response.Data!.All(s => s.StartDateTime >= earliestBookable), Is.True);
         }
 
         [Test]
         public async Task GetAvailableSlotsAsync_SlotInsideBlackoutPeriod_Excluded()
         {
             DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassAvailabilityDays dayFlag = (ClassAvailabilityDays)(1 << (int)slotStart.DayOfWeek);
             await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
             {
                 ClassTypeId = _wheelThrowId,
-                StartDateTime = slotStart,
-                RecurrenceFrequency = RecurrenceFrequency.None,
+                DaysOfWeek = new List<ClassAvailabilityDays> { dayFlag },
+                StartTime = slotStart.TimeOfDay,
             });
             await _sut.AddBlackoutPeriodAsync(new BlackoutPeriodSaveModel
             {
@@ -116,7 +239,7 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             });
 
             DataHandlerResponse<List<ClassSlotModel>> response = await _sut.GetAvailableSlotsAsync(
-                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+                DateTimeOffset.UtcNow, slotStart.AddDays(1));
 
             Assert.That(response.Data, Is.Empty);
         }
@@ -125,16 +248,17 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         public async Task GetAvailableSlotsAsync_AlreadyBookedSlot_Excluded()
         {
             DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassAvailabilityDays dayFlag = (ClassAvailabilityDays)(1 << (int)slotStart.DayOfWeek);
             await _sut.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
             {
                 ClassTypeId = _wheelThrowId,
-                StartDateTime = slotStart,
-                RecurrenceFrequency = RecurrenceFrequency.None,
+                DaysOfWeek = new List<ClassAvailabilityDays> { dayFlag },
+                StartTime = slotStart.TimeOfDay,
             });
             await _sut.CreateBookingAsync(BuildBookingModel(slotStart));
 
             DataHandlerResponse<List<ClassSlotModel>> response = await _sut.GetAvailableSlotsAsync(
-                DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddDays(30));
+                DateTimeOffset.UtcNow, slotStart.AddDays(1));
 
             Assert.That(response.Data, Is.Empty);
         }
@@ -158,6 +282,18 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
             ClassBookingSaveModel model = BuildBookingModel(slotStart);
             model.PartySize = 10;
+
+            DataHandlerResponse<Guid> response = await _sut.CreateBookingAsync(model);
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task CreateBookingAsync_MissingPhone_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassBookingSaveModel model = BuildBookingModel(slotStart);
+            model.CustomerPhone = null;
 
             DataHandlerResponse<Guid> response = await _sut.CreateBookingAsync(model);
 
@@ -213,6 +349,69 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             DataHandlerResponse<Guid> secondResponse = await _sut.CreateBookingAsync(BuildBookingModel(slotStart));
 
             Assert.That(secondResponse.IsSuccess, Is.True);
+        }
+
+        [Test]
+        public async Task CreateManualBookingAsync_ValidRequest_ConfirmsImmediatelyAndEmailsCustomerOnly()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+
+            DataHandlerResponse<Guid> response = await _sut.CreateManualBookingAsync(BuildBookingModel(slotStart));
+
+            Assert.That(response.IsSuccess, Is.True);
+            ClassBooking? booking = await _context.ClassBookings.FirstOrDefaultAsync(b => b.Id == response.Data);
+            Assert.That(booking!.Status, Is.EqualTo(ClassBookingStatus.Confirmed));
+            Assert.That(booking.DecisionDate, Is.Not.Null);
+            _emailSenderMock.Verify(e => e.SendAsync("customer@example.com", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            _emailSenderMock.Verify(e => e.SendAsync("studio@example.com", It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
+        public async Task CreateManualBookingAsync_InsideMinimumLeadTime_StillSucceeds()
+        {
+            ClassBookingSaveModel model = BuildBookingModel(DateTimeOffset.UtcNow.AddHours(6));
+
+            DataHandlerResponse<Guid> response = await _sut.CreateManualBookingAsync(model);
+
+            Assert.That(response.IsSuccess, Is.True);
+        }
+
+        [Test]
+        public async Task CreateManualBookingAsync_PartySizeExceedsCapacity_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            ClassBookingSaveModel model = BuildBookingModel(slotStart);
+            model.PartySize = 10;
+
+            DataHandlerResponse<Guid> response = await _sut.CreateManualBookingAsync(model);
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task CreateManualBookingAsync_SlotInsideBlackoutPeriod_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            await _sut.AddBlackoutPeriodAsync(new BlackoutPeriodSaveModel
+            {
+                StartDateTime = slotStart.AddHours(-1),
+                EndDateTime = slotStart.AddHours(3),
+            });
+
+            DataHandlerResponse<Guid> response = await _sut.CreateManualBookingAsync(BuildBookingModel(slotStart));
+
+            Assert.That(response.IsSuccess, Is.False);
+        }
+
+        [Test]
+        public async Task CreateManualBookingAsync_SlotAlreadyActivelyBooked_ReturnsFailure()
+        {
+            DateTimeOffset slotStart = DateTimeOffset.UtcNow.AddDays(5);
+            await _sut.CreateManualBookingAsync(BuildBookingModel(slotStart));
+
+            DataHandlerResponse<Guid> secondResponse = await _sut.CreateManualBookingAsync(BuildBookingModel(slotStart));
+
+            Assert.That(secondResponse.IsSuccess, Is.False);
         }
 
         [Test]
@@ -295,6 +494,7 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
                 StartDateTime = startDateTime,
                 CustomerName = "Jane Doe",
                 CustomerEmail = "customer@example.com",
+                CustomerPhone = "555-0100",
                 PartySize = 2,
             };
         }

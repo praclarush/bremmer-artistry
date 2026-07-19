@@ -1,7 +1,7 @@
 namespace PotteryJournal.Infrastructure.Data.Entities
 {
     /// <summary>
-    /// How often a recurring <see cref="Event"/> or class availability rule repeats.
+    /// How often a recurring <see cref="Event"/> repeats.
     /// </summary>
     public enum RecurrenceFrequency
     {

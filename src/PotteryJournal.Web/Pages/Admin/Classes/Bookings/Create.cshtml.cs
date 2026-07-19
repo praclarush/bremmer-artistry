@@ -7,7 +7,7 @@ using PotteryJournal.Infrastructure.Handlers;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.SharedKernel.Core;
 
-namespace PotteryJournal.Web.Pages.Admin.Classes.Availability
+namespace PotteryJournal.Web.Pages.Admin.Classes.Bookings
 {
     public class CreateModel : PageModel
     {
@@ -21,7 +21,7 @@ namespace PotteryJournal.Web.Pages.Admin.Classes.Availability
         }
 
         [BindProperty]
-        public ClassAvailabilitySaveModel Rule { get; set; } = new ClassAvailabilitySaveModel { StartDateTime = DateTimeOffset.Now };
+        public ClassBookingSaveModel Booking { get; set; } = new ClassBookingSaveModel { StartDateTime = DateTimeOffset.Now, PartySize = 1 };
 
         public List<ClassTypeModel> ClassTypes { get; private set; } = new List<ClassTypeModel>();
 
@@ -32,7 +32,7 @@ namespace PotteryJournal.Web.Pages.Admin.Classes.Availability
 
         public async Task<IActionResult> OnPostSaveAsync()
         {
-            DataHandlerResponse<Guid> response = await _classesHandler.CreateAvailabilityRuleAsync(Rule);
+            DataHandlerResponse<Guid> response = await _classesHandler.CreateManualBookingAsync(Booking);
             if (!response.IsSuccess)
             {
                 await LoadClassTypesAsync();
@@ -44,7 +44,9 @@ namespace PotteryJournal.Web.Pages.Admin.Classes.Availability
                 return Page();
             }
 
-            TempData["StatusMessage"] = "Availability rule created.";
+            TempData["StatusMessage"] = response.Warnings.Count > 0
+                ? "Class scheduled. " + string.Join(" ", response.Warnings)
+                : "Class scheduled and confirmed.";
             return RedirectToPage("Index");
         }
 

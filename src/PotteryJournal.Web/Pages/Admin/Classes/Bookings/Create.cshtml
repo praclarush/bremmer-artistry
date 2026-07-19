@@ -1,0 +1,64 @@
+@page "/admin/classes/bookings/create"
+@model PotteryJournal.Web.Pages.Admin.Classes.Bookings.CreateModel
+@{
+    ViewData["Title"] = "Schedule a Class";
+}
+
+<h1 class="h3 mb-4">Schedule a Class</h1>
+<p class="text-muted">
+  For call-based or in-person scheduling. This books and confirms the class immediately -- the
+  customer gets a confirmation email right away, with no separate approval step. Capacity, blackout
+  dates, and double-booking are still checked, but the usual minimum booking lead time is not.
+</p>
+
+<form method="post" asp-page-handler="Save" style="max-width: 40rem;">
+  <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+  <div class="mb-3">
+    <label class="form-label" for="classTypeId">Class type</label>
+    <select class="form-select" id="classTypeId" asp-for="Booking.ClassTypeId" required>
+      <option value="">Select a class type...</option>
+      @foreach (PotteryJournal.Infrastructure.Models.ClassTypeModel classType in Model.ClassTypes)
+      {
+        <option value="@classType.Id">@classType.Name (max @classType.MaxCapacity)</option>
+      }
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="startDateTime">Starts</label>
+    <input type="datetime-local" class="form-control" id="startDateTime" name="Booking.StartDateTime"
+           value="@Model.Booking.StartDateTime.ToString("yyyy-MM-ddTHH:mm")" style="max-width: 16rem;" required>
+    <div class="form-text">Classes are always fixed 2-hour segments.</div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="customerName">Customer name</label>
+      <input type="text" class="form-control" id="customerName" asp-for="Booking.CustomerName" required>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="customerEmail">Customer email</label>
+      <input type="email" class="form-control" id="customerEmail" asp-for="Booking.CustomerEmail" required>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="customerPhone">Customer phone</label>
+      <input type="tel" class="form-control" id="customerPhone" asp-for="Booking.CustomerPhone" required>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="partySize">Party size</label>
+      <input type="number" class="form-control" id="partySize" asp-for="Booking.PartySize" min="1" style="max-width: 8rem;" required>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="message">Message (optional)</label>
+    <textarea class="form-control" id="message" asp-for="Booking.Message" rows="3"></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Schedule &amp; Confirm</button>
+  <a class="btn btn-link" href="/admin/classes/bookings">Cancel</a>
+</form>

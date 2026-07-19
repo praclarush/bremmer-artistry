@@ -41,8 +41,8 @@ namespace PotteryJournal.Web.Tests
             await classesHandler.CreateAvailabilityRuleAsync(new ClassAvailabilitySaveModel
             {
                 ClassTypeId = _classTypeId,
-                StartDateTime = _slotStart,
-                RecurrenceFrequency = RecurrenceFrequency.None,
+                DaysOfWeek = new List<ClassAvailabilityDays> { (ClassAvailabilityDays)(1 << (int)_slotStart.DayOfWeek) },
+                StartTime = _slotStart.TimeOfDay,
             });
         }
 
@@ -101,6 +101,7 @@ namespace PotteryJournal.Web.Tests
                 ["Booking.StartDateTime"] = _slotStart.ToString("O"),
                 ["Booking.CustomerName"] = "Jane Doe",
                 ["Booking.CustomerEmail"] = "customer@example.com",
+                ["Booking.CustomerPhone"] = "555-0100",
                 ["Booking.PartySize"] = "2",
                 ["__RequestVerificationToken"] = antiForgeryToken,
             });

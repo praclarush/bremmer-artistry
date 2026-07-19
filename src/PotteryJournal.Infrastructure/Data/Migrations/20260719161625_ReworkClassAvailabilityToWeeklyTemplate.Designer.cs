@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PotteryJournal.Infrastructure.Data;
@@ -11,9 +12,11 @@ using PotteryJournal.Infrastructure.Data;
 namespace PotteryJournal.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260719161625_ReworkClassAvailabilityToWeeklyTemplate")]
+    partial class ReworkClassAvailabilityToWeeklyTemplate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -193,19 +196,9 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasComment("Bitmask of weekdays this rule is offered on (Sunday=1, Monday=2, Tuesday=4, Wednesday=8, Thursday=16, Friday=32, Saturday=64).");
 
-                    b.Property<int>("IntervalHours")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasComment("Hours between successive class start times on a matching day. 1 when the class only runs once a day.");
-
-                    b.Property<TimeSpan>("LastStartTime")
-                        .HasColumnType("interval")
-                        .HasComment("The last class start time of the day. Equals StartTime when the class only runs once a day.");
-
                     b.Property<TimeSpan>("StartTime")
                         .HasColumnType("interval")
-                        .HasComment("Time of day the first occurrence starts each matching day. Classes are always fixed 2-hour segments.");
+                        .HasComment("Time of day each occurrence starts. Classes are always fixed 2-hour segments.");
 
                     b.HasKey("Id")
                         .HasName("PK_ClassAvailabilities_Id");

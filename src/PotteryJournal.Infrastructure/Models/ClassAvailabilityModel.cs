@@ -4,7 +4,7 @@ using PotteryJournal.Infrastructure.Data.Entities;
 namespace PotteryJournal.Infrastructure.Models
 {
     /// <summary>
-    /// An admin-defined recurring or one-off bookable window for a class type.
+    /// An admin-defined weekly bookable window for a class type.
     /// </summary>
     public class ClassAvailabilityModel
     {
@@ -14,12 +14,12 @@ namespace PotteryJournal.Infrastructure.Models
 
         public string ClassTypeName { get; set; } = string.Empty;
 
-        public DateTimeOffset StartDateTime { get; set; }
+        public ClassAvailabilityDays DaysOfWeek { get; set; }
 
-        public RecurrenceFrequency RecurrenceFrequency { get; set; }
+        public TimeSpan StartTime { get; set; }
 
-        public int RecurrenceInterval { get; set; } = 1;
+        public TimeSpan LastStartTime { get; set; }
 
-        public DateTimeOffset? RecurrenceEndDate { get; set; }
+        public int IntervalHours { get; set; }
     }
 }

@@ -191,80 +191,13 @@
 }
 
 /* ---------- calendar grid ---------- */
+/* The month-grid shell (.calendar-nav/.calendar-grid/.calendar-weekday/.calendar-day) is shared
+   with Classes' date picker and lives in site.css; this file only adds the Events-specific pieces
+   (page padding, event pills) layered on top of it. */
 
 .calendar {
   padding: 1.5rem clamp(1rem, 4vw, 3rem) 4rem;
 }
-
-.calendar-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 1.25rem;
-  font-family: var(--font-mono);
-}
-
-.calendar-nav button {
-  background: none;
-  border: 1px solid var(--shelf-line);
-  color: var(--paper);
-  border-radius: 999px;
-  width: 2rem;
-  height: 2rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.calendar-nav button:hover {
-  border-color: var(--copper-glaze-dim);
-  color: var(--copper-glaze);
-}
-
-.calendar-nav button:focus-visible {
-  outline: 2px solid var(--copper-glaze);
-  outline-offset: 2px;
-}
-
-.calendar-month-label {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  color: var(--paper);
-  min-width: 10rem;
-  text-align: center;
-}
-
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
-  background: var(--shelf-line);
-  border: 1px solid var(--shelf-line);
-}
-
-.calendar-weekday {
-  background: var(--shelf);
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--bisque-dark);
-  padding: 0.5rem 0;
-}
-
-.calendar-day {
-  background: var(--kiln-char);
-  min-height: 5rem;
-  padding: 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--bisque-dark);
-}
-
-.calendar-day.outside-month { opacity: 0.35; }
-
-.calendar-day-number { display: block; margin-bottom: 0.3rem; }
 
 .calendar-event {
   display: block;

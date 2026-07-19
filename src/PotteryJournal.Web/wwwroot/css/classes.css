@@ -1,4 +1,5 @@
-/* Classes page: available slots grouped by class type, plus the booking request form. */
+/* Classes page: a class-type picker (step 1), then a per-type slot picker plus the booking
+   request form (step 2), toggled client-side via #type/<id> hash routing (classes.js). */
 
 .classes-intro {
   padding: 0 clamp(1rem, 4vw, 3rem);
@@ -11,62 +12,198 @@
   color: var(--copper-glaze-bright);
 }
 
-.class-slot-groups {
-  padding: 1.5rem clamp(1rem, 4vw, 3rem) 2rem;
-}
+/* ---------- step 1: class type picker ---------- */
 
-.class-slot-group {
-  margin-bottom: 2rem;
-}
-
-.class-slot-group h3 {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  color: var(--paper);
-  margin: 0 0 0.75rem;
-}
-
-.class-slot-grid {
+.class-type-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem clamp(1rem, 4vw, 3rem) 3rem;
 }
 
-.class-slot-btn {
+.class-type-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+  padding: 1.5rem 1.5rem 1.75rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.class-type-tile:hover,
+.class-type-tile:focus-visible {
+  border-color: var(--copper-glaze);
+}
+
+.class-type-tile:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.class-type-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--paper);
+}
+
+.class-type-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bisque-dark);
+}
+
+.class-type-select {
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--copper-glaze);
+  transition: color 0.15s ease;
+}
+
+.class-type-tile:hover .class-type-select,
+.class-type-tile:focus-visible .class-type-select {
+  color: var(--copper-glaze-bright);
+}
+
+/* ---------- step 2: per-type slots + booking form ---------- */
+
+.back-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 1.75rem clamp(1rem, 4vw, 3rem) 0;
+  cursor: pointer;
+}
+
+.booking-view-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--paper);
+  padding: 0 clamp(1rem, 4vw, 3rem);
+  margin: 1.25rem 0 1.5rem;
+}
+
+/* Nav shell (.calendar-nav/.calendar-month-label) is shared via site.css (also used by Events'
+   month view); the week grid below is Classes-specific since Events has no week view. */
+
+.class-week {
+  padding: 0 clamp(1rem, 4vw, 3rem) 3rem;
+}
+
+.class-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--shelf-line);
+  border: 1px solid var(--shelf-line);
+}
+
+.class-week-day {
+  background: var(--kiln-char);
+  min-height: 8rem;
+  padding: 0.6rem 0.4rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.class-week-day-header {
+  text-align: center;
+}
+
+.class-week-day-name {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bisque-dark);
+}
+
+.class-week-day-date {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--paper);
+  margin-top: 0.15rem;
+}
+
+.class-week-day.is-today .class-week-day-date {
+  color: var(--copper-glaze-bright);
+}
+
+.class-week-day-times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.class-week-day-empty {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bisque-dark);
+  opacity: 0.5;
+}
+
+.class-time-btn {
   background: var(--shelf);
   border: 1px solid var(--shelf-line);
   color: var(--paper);
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  padding: 0.65rem 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.3rem;
   cursor: pointer;
   text-align: center;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.class-slot-btn:hover,
-.class-slot-btn:focus-visible {
+.class-time-btn:hover,
+.class-time-btn:focus-visible {
   border-color: var(--copper-glaze);
   color: var(--copper-glaze-bright);
 }
 
-.class-slot-btn:focus-visible {
+.class-time-btn:focus-visible {
   outline: 2px solid var(--copper-glaze);
   outline-offset: 2px;
 }
 
-.class-slot-btn.selected {
+.class-time-btn.selected {
   background: var(--copper-glaze-dim);
   border-color: var(--copper-glaze);
   color: var(--paper);
 }
 
-/* ---------- booking form ---------- */
-/* Container sizing/placement is Classes-specific; field/label/submit styling is shared via
-   .simple-form/.simple-form-field/.simple-form-submit in site.css (also used by Contact Us). */
+/* ---------- booking form modal ---------- */
+/* Reuses the shared .lightbox scrim/open/close mechanics from site.css (also used by Events'
+   flyer viewer and Gallery's photo viewer); field/label/submit styling is shared via
+   .simple-form/.simple-form-field/.simple-form-submit (also used by Contact Us). */
 
-.booking-form {
-  margin: 0 clamp(1rem, 4vw, 3rem) 4rem;
+.booking-modal-panel {
+  width: 100%;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  transform: scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.lightbox.open .booking-modal-panel {
+  transform: scale(1);
+}
+
+.booking-modal-panel .hero-eyebrow {
+  margin: 0 0 0.35rem;
 }
 
 .booking-summary {

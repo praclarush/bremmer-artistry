@@ -9,59 +9,80 @@
   <link rel="stylesheet" href="~/css/classes.css" asp-append-version="true">
 }
 
-<div class="section-heading">
-  <h2>Classes</h2>
-</div>
-
-<div class="classes-intro">
-  <p>
-    Pick a Wheel Throw or Hand-Building slot below and send a request. Every booking is
-    <strong>tentative</strong> until we confirm it -- you'll get an email once it's approved.
-  </p>
-</div>
-
 @if (TempData["StatusMessage"] is string statusMessage && !string.IsNullOrEmpty(statusMessage))
 {
   <p class="form-status-message">@statusMessage</p>
 }
 
-<div id="classSlots" class="class-slot-groups"></div>
-<p id="classesEmptyState" class="empty-state hidden">No class slots are available to book right now -- check back soon.</p>
-
-<form method="post" asp-page-handler="Book" id="bookingForm" class="simple-form booking-form hidden">
-  <h3>Complete your booking</h3>
-  <p id="bookingSummary" class="booking-summary"></p>
-
-  <input type="hidden" name="Booking.ClassTypeId" id="bookingClassTypeId">
-  <input type="hidden" name="Booking.StartDateTime" id="bookingStartDateTime">
-
-  <div class="simple-form-field">
-    <label for="bookingName">Name</label>
-    <input type="text" id="bookingName" name="Booking.CustomerName" required>
+<div id="typeListView">
+  <div class="section-heading">
+    <h2>Classes</h2>
   </div>
 
-  <div class="simple-form-field">
-    <label for="bookingEmail">Email</label>
-    <input type="email" id="bookingEmail" name="Booking.CustomerEmail" required>
+  <div class="classes-intro">
+    <p>
+      Pick a class below to see available times and send a request. Every booking is
+      <strong>tentative</strong> until we confirm it -- you'll get an email once it's approved.
+    </p>
   </div>
 
-  <div class="simple-form-field">
-    <label for="bookingPhone">Phone (optional)</label>
-    <input type="tel" id="bookingPhone" name="Booking.CustomerPhone">
-  </div>
+  <div id="classTypeList" class="class-type-grid"></div>
+  <p id="classesEmptyState" class="empty-state hidden">No classes are available to book right now -- check back soon.</p>
+</div>
 
-  <div class="simple-form-field">
-    <label for="bookingPartySize">Party size</label>
-    <input type="number" id="bookingPartySize" name="Booking.PartySize" min="1" value="1" required>
-  </div>
+<div id="bookingView" class="booking-view hidden">
+  <button type="button" id="backToClassTypes" class="hero-secondary-link back-link">&lsaquo; Back to classes</button>
 
-  <div class="simple-form-field">
-    <label for="bookingMessage">Message (optional)</label>
-    <textarea id="bookingMessage" name="Booking.Message" rows="3"></textarea>
-  </div>
+  <h2 id="bookingViewTitle" class="booking-view-title"></h2>
 
-  <button type="submit" class="simple-form-submit">Request Booking</button>
-</form>
+  <div class="class-week">
+    <div class="calendar-nav">
+      <button type="button" id="classWeekPrev" aria-label="Previous week">&lsaquo;</button>
+      <span class="calendar-month-label" id="classWeekLabel"></span>
+      <button type="button" id="classWeekNext" aria-label="Next week">&rsaquo;</button>
+    </div>
+    <div class="class-week-grid" id="classWeekGrid"></div>
+  </div>
+</div>
+
+<div id="bookingModal" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Complete your booking">
+  <button type="button" id="bookingModalClose" class="lightbox-close" aria-label="Close">&times;</button>
+  <form method="post" asp-page-handler="Book" id="bookingForm" class="simple-form booking-modal-panel">
+    <p class="hero-eyebrow">Your Details</p>
+    <h3>Complete your booking</h3>
+    <p id="bookingSummary" class="booking-summary"></p>
+
+    <input type="hidden" name="Booking.ClassTypeId" id="bookingClassTypeId">
+    <input type="hidden" name="Booking.StartDateTime" id="bookingStartDateTime">
+
+    <div class="simple-form-field">
+      <label for="bookingName">Name</label>
+      <input type="text" id="bookingName" name="Booking.CustomerName" required>
+    </div>
+
+    <div class="simple-form-field">
+      <label for="bookingEmail">Email</label>
+      <input type="email" id="bookingEmail" name="Booking.CustomerEmail" required>
+    </div>
+
+    <div class="simple-form-field">
+      <label for="bookingPhone">Phone</label>
+      <input type="tel" id="bookingPhone" name="Booking.CustomerPhone" required>
+    </div>
+
+    <div class="simple-form-field">
+      <label for="bookingPartySize">Party size</label>
+      <input type="number" id="bookingPartySize" name="Booking.PartySize" min="1" value="1" required>
+    </div>
+
+    <div class="simple-form-field">
+      <label for="bookingMessage">Message (optional)</label>
+      <textarea id="bookingMessage" name="Booking.Message" rows="3"></textarea>
+    </div>
+
+    <button type="submit" class="simple-form-submit">Request Booking</button>
+  </form>
+</div>
 
 @section Scripts {
   <script src="~/js/classes.js" asp-append-version="true"></script>

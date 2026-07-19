@@ -39,24 +39,41 @@ namespace PotteryJournal.Web.Pages.Admin.Classes.Availability
             return RedirectToPage();
         }
 
-        public static string FormatRecurrence(ClassAvailabilityModel rule)
+        private static readonly (ClassAvailabilityDays Day, string Abbreviation)[] _dayOrder =
         {
-            if (rule.RecurrenceFrequency == RecurrenceFrequency.None)
+            (ClassAvailabilityDays.Sunday, "Sun"),
+            (ClassAvailabilityDays.Monday, "Mon"),
+            (ClassAvailabilityDays.Tuesday, "Tue"),
+            (ClassAvailabilityDays.Wednesday, "Wed"),
+            (ClassAvailabilityDays.Thursday, "Thu"),
+            (ClassAvailabilityDays.Friday, "Fri"),
+            (ClassAvailabilityDays.Saturday, "Sat"),
+        };
+
+        public static string FormatDaysOfWeek(ClassAvailabilityModel rule)
+        {
+            List<string> days = new List<string>();
+            foreach ((ClassAvailabilityDays day, string abbreviation) in _dayOrder)
             {
-                return "Does not repeat";
+                if (rule.DaysOfWeek.HasFlag(day))
+                {
+                    days.Add(abbreviation);
+                }
             }
 
-            string unit = rule.RecurrenceFrequency.ToString().ToLowerInvariant();
-            string description = rule.RecurrenceInterval > 1
-                ? $"Every {rule.RecurrenceInterval} {unit}s"
-                : $"Every {unit}";
+            return days.Count > 0 ? string.Join(", ", days) : "None";
+        }
 
-            if (rule.RecurrenceEndDate.HasValue)
+        public static string FormatTimes(ClassAvailabilityModel rule)
+        {
+            string start = DateTime.Today.Add(rule.StartTime).ToString("h:mm tt");
+            if (rule.LastStartTime <= rule.StartTime)
             {
-                description += $" until {rule.RecurrenceEndDate.Value:yyyy-MM-dd}";
+                return start;
             }
 
-            return description;
+            string last = DateTime.Today.Add(rule.LastStartTime).ToString("h:mm tt");
+            return $"{start} – {last}, every {rule.IntervalHours}h";
         }
     }
 }

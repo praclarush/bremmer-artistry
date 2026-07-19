@@ -4,7 +4,10 @@
     ViewData["Title"] = "Class Bookings";
 }
 
-<h1 class="h3 mb-4">Class Bookings</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 m-0">Class Bookings</h1>
+  <a class="btn btn-primary" href="/admin/classes/bookings/create">Schedule a Class</a>
+</div>
 
 <div class="btn-group mb-4" role="group">
   <a class="btn btn-outline-secondary btn-sm @(Model.Status == null ? "active" : "")" href="/admin/classes/bookings">All</a>

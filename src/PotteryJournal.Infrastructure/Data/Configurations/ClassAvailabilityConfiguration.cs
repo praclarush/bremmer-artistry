@@ -15,11 +15,9 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
         /// <param name="builder">The entity type builder supplied by EF Core.</param>
         public void Configure(EntityTypeBuilder<ClassAvailability> builder)
         {
-            builder.ToTable("ClassAvailabilities", tb => tb.HasComment("An admin-defined recurring or one-off bookable window for a class type."));
+            builder.ToTable("ClassAvailabilities", tb => tb.HasComment("An admin-defined weekly bookable window for a class type: which weekdays it's offered on and what time it starts."));
 
             builder.HasKey(a => a.Id).HasName("PK_ClassAvailabilities_Id");
-
-            builder.HasIndex(a => a.StartDateTime).HasDatabaseName("IX_ClassAvailabilities_StartDateTime");
 
             builder.Property(a => a.Id)
                 .HasDefaultValueSql("gen_random_uuid()")
@@ -35,22 +33,22 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .HasConstraintName("FK_ClassAvailabilities_ClassTypes_ClassTypeId")
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Property(a => a.StartDateTime)
+            builder.Property(a => a.DaysOfWeek)
                 .IsRequired()
-                .HasComment("Start date and time of the first/anchor occurrence.");
+                .HasComment("Bitmask of weekdays this rule is offered on (Sunday=1, Monday=2, Tuesday=4, Wednesday=8, Thursday=16, Friday=32, Saturday=64).");
 
-            builder.Property(a => a.RecurrenceFrequency)
+            builder.Property(a => a.StartTime)
                 .IsRequired()
-                .HasDefaultValue(RecurrenceFrequency.None)
-                .HasComment("How often this availability window repeats. None means a single occurrence at StartDateTime.");
+                .HasComment("Time of day the first occurrence starts each matching day. Classes are always fixed 2-hour segments.");
 
-            builder.Property(a => a.RecurrenceInterval)
+            builder.Property(a => a.LastStartTime)
+                .IsRequired()
+                .HasComment("The last class start time of the day. Equals StartTime when the class only runs once a day.");
+
+            builder.Property(a => a.IntervalHours)
                 .IsRequired()
                 .HasDefaultValue(1)
-                .HasComment("Recurrence step, e.g. 2 with a Weekly frequency means every 2 weeks. Ignored when RecurrenceFrequency is None.");
-
-            builder.Property(a => a.RecurrenceEndDate)
-                .HasComment("Last date recurrence may occur on. Null means the window recurs indefinitely, bounded only by each read's query range.");
+                .HasComment("Hours between successive class start times on a matching day. 1 when the class only runs once a day.");
 
             builder.Property(a => a.CreatedDate)
                 .IsRequired()
