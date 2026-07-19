@@ -171,6 +171,13 @@
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
+/* Extra space above the first button of a new time-of-day group (set in classes.js), so a day
+   with 4-5 same-looking buttons reads as morning/afternoon/evening clusters instead of one
+   undifferentiated stack. */
+.class-time-btn.period-start {
+  margin-top: 0.5rem;
+}
+
 .class-time-btn:hover,
 .class-time-btn:focus-visible {
   border-color: var(--copper-glaze);

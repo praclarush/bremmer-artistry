@@ -226,14 +226,24 @@ function renderClassWeek() {
       empty.textContent = "—";
       times.appendChild(empty);
     } else {
+      // A day offered every 2 hours from morning to evening can produce 4-5+ visually identical
+      // buttons in a row -- grouping by time of day (extra space at each boundary, no label
+      // needed since the button text already reads AM/PM) breaks that into readable clusters of
+      // 1-2 instead of one undifferentiated stack.
+      let previousPeriod = null;
       daySlots.forEach((slot) => {
         const start = slotWallClockDate(slot.startDateTime);
+        const period = timePeriod(start.getHours());
         const button = document.createElement("button");
         button.type = "button";
         button.className = "class-time-btn";
+        if (previousPeriod !== null && period !== previousPeriod) {
+          button.classList.add("period-start");
+        }
         button.textContent = formatTimeLabel(start);
         button.addEventListener("click", () => selectSlot(slot, button));
         times.appendChild(button);
+        previousPeriod = period;
       });
     }
 
@@ -270,6 +280,16 @@ function formatDateLabel(start) {
 
 function formatTimeLabel(start) {
   return start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
+function timePeriod(hour) {
+  if (hour < 12) {
+    return "Morning";
+  }
+  if (hour < 17) {
+    return "Afternoon";
+  }
+  return "Evening";
 }
 
 function formatSlot(slot) {
