@@ -86,6 +86,49 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   collection has no photographed pieces); `wwwroot/js/featured-collection.js` auto-advances the
   crossfade and explicitly no-ops under `prefers-reduced-motion` rather than relying solely on the
   global CSS override.
+- **Recurrence (`Event` and `ClassAvailability`) is expanded dynamically on read, never persisted as
+  occurrence rows.** Both entities carry the same three fields (`RecurrenceFrequency`,
+  `RecurrenceInterval`, `RecurrenceEndDate`) and are expanded by the shared
+  `IRecurrenceExpander`/`RecurrenceExpander` (`Infrastructure/Services/`), which wraps Ical.Net's
+  `RecurrencePattern`/`CalendarEvent.GetOccurrences(...)` -- the same library already used for `.ics`
+  export -- rather than a hand-rolled recurrence implementation. `RecurrenceFrequencyMapper` maps the
+  local enum to Ical.Net's `FrequencyType` in one place, shared by both the expander and
+  `IcsGenerator` (a recurring event's `.ics` download emits a real `RRULE`, not a flat single date).
+  Because occurrences are virtual, deleting a recurring `Event` or `ClassAvailability` row always
+  removes the whole series -- there's no per-occurrence edit/delete, and no orphaned rows to clean up
+  either way. `EventsHandler` exposes three shapes over the same data: `GetAllAsync` (series-level,
+  unexpanded -- the admin CRUD list, since edit/delete act on the whole series) `GetUpcomingAsync`
+  (expands recurring events forward, bounded by an internal window so indefinite recurrence can't
+  generate unbounded lists; non-recurring events stay unbounded, unchanged from before recurrence
+  existed) and `GetOccurrencesInRangeAsync` (same expansion, but a caller-supplied range instead of
+  an internal window, so the admin calendar can page arbitrarily far back or forward).
+- **Email is MailKit-backed, added from scratch for class booking and Contact Us -- nothing else
+  sends email.** `IEmailSender`/`SmtpEmailSender` (`Infrastructure/Services/`) wrap MailKit;
+  `SmtpOptions` binds SMTP host/port/credentials from the `Smtp:*` config section, wired the same way
+  `ConnectionStrings:PotteryJournal` already is (`Smtp__*` env vars in `docker-compose.yml`, sourced
+  from `.env`; `Smtp:*` user-secrets for local debugging -- see README). A failed send is caught and
+  returned as a `HandlerResponse` error, never thrown -- email is an external I/O boundary that
+  shouldn't crash whatever triggered it.
+- **Settings vs. config: `AdminSettings` (a DB table) holds business-level values the studio owner
+  edits from `/admin/settings`; `Smtp:*` (env-var config) holds deployment secrets a developer edits
+  by redeploying.** `AdminSettings` has exactly two fields today --
+  `NotificationRecipientEmail` (where class-booking and Contact-Us notifications go) and
+  `MinimumBookingLeadDays` (how many days ahead a class must be booked) -- deliberately not a
+  generic key-value settings system, since nothing else needs one yet.
+  `AdminSettingsHandler.GetAsync()` creates the single row with defaults on first read if the table
+  is empty, mirroring `EnsureBootstrapAdminAsync`'s idempotent-seed pattern.
+- **Class booking is a two-step approval flow, and a booking is independent of the
+  `ClassAvailability` rule that produced its slot.** A public submission
+  (`ClassesHandler.CreateBookingAsync`) re-validates lead time, blackout periods, and party-size-vs-
+  `ClassType.MaxCapacity` server-side (never trusts the client's already-filtered slot list), inserts
+  as `ClassBookingStatus.Tentative`, and emails `AdminSettings.NotificationRecipientEmail` -- the
+  customer gets nothing yet. An admin approving it from `/admin/classes/bookings`
+  (`ApproveBookingAsync`) is what emails the customer a confirmation and flips it to `Confirmed`;
+  declining frees the slot. A partial unique index on `(ClassTypeId, StartDateTime)` excluding
+  `Declined` rows enforces "one active booking per class type per slot" at the DB level (a Wheel
+  Throw and a Hand-Building booking can share a slot; two Wheel Throws can't) -- since `ClassBooking`
+  has no FK to `ClassAvailability`, editing or deleting the availability rule that originally
+  produced a slot never touches bookings already made against it.
 
 ## Editing Notes
 
