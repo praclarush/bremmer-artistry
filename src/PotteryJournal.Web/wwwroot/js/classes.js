@@ -112,7 +112,7 @@ function renderTypeList() {
 
     const select = document.createElement("span");
     select.className = "class-type-select";
-    select.textContent = "Select →";
+    select.textContent = "View times →";
     tile.appendChild(select);
 
     tile.addEventListener("click", () => {
@@ -142,6 +142,9 @@ function route() {
   typeListView.classList.add("hidden");
   bookingView.classList.remove("hidden");
   bookingViewTitle.textContent = type.classTypeName;
+  // The visible heading is just the class name for a clean look, but a screen-reader user
+  // landing here (e.g. via a shared #type/<id> link) needs the "you're now booking" context too.
+  bookingViewTitle.setAttribute("aria-label", `Book ${type.classTypeName}`);
 
   currentTypeSlots = SLOTS.filter((s) => s.classTypeId === classTypeId);
   classWeekCursor = firstAvailableWeek(currentTypeSlots);
@@ -224,6 +227,7 @@ function renderClassWeek() {
       const empty = document.createElement("span");
       empty.className = "class-week-day-empty";
       empty.textContent = "—";
+      empty.setAttribute("aria-label", "No times available");
       times.appendChild(empty);
     } else {
       // A day offered every 2 hours from morning to evening can produce 4-5+ visually identical

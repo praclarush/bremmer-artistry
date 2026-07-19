@@ -402,19 +402,24 @@ namespace PotteryJournal.Infrastructure.Handlers
             string normalizedName = model.CustomerName?.Trim() ?? string.Empty;
             string normalizedEmail = model.CustomerEmail?.Trim() ?? string.Empty;
             string normalizedPhone = model.CustomerPhone?.Trim() ?? string.Empty;
+            // "Name"/"Email"/"Phone" rather than "your"/"the customer's" -- this validation is
+            // shared by the public form (where the visitor is entering their own details) and the
+            // admin manual-booking form (where an admin enters someone else's), and each already
+            // labels its fields appropriately ("Name" vs. "Customer name") -- a neutral message
+            // reads correctly against either.
             if (normalizedName.Length == 0)
             {
-                response.AddError("The customer's name is required.");
+                response.AddError("Name is required.");
             }
 
             if (normalizedEmail.Length == 0)
             {
-                response.AddError("The customer's email is required.");
+                response.AddError("Email is required.");
             }
 
             if (normalizedPhone.Length == 0)
             {
-                response.AddError("The customer's phone number is required.");
+                response.AddError("Phone number is required.");
             }
 
             if (normalizedName.Length > MAX_CUSTOMER_NAME_LENGTH)
@@ -470,7 +475,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .AnyAsync(b => startDateTime < b.EndDateTime && endDateTime > b.StartDateTime);
             if (isBlackedOut)
             {
-                response.AddError("That date and time is not available for booking.");
+                response.AddError("That date and time isn't available for booking. Please pick another time.");
             }
 
             bool slotAlreadyBooked = await _context.ClassBookings
