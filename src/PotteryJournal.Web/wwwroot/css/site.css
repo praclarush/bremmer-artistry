@@ -285,7 +285,8 @@ a { color: var(--copper-glaze); }
 }
 
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
@@ -293,6 +294,7 @@ a { color: var(--copper-glaze); }
   text-decoration: none;
   color: var(--paper);
   border: 1px solid var(--copper-glaze);
+  min-height: 44px;
   padding: 0.65rem 1.2rem;
   border-radius: 2px;
   transition: background 0.15s ease, color 0.15s ease;
@@ -456,8 +458,8 @@ a { color: var(--copper-glaze); }
   position: fixed;
   top: clamp(0.75rem, 3vw, 1.75rem);
   right: clamp(0.75rem, 3vw, 1.75rem);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   background: none;
   border: 1px solid var(--shelf-line);
   color: var(--paper);
@@ -568,8 +570,8 @@ a { color: var(--copper-glaze); }
   border: 1px solid var(--shelf-line);
   color: var(--paper);
   border-radius: 999px;
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
@@ -689,6 +691,7 @@ a { color: var(--copper-glaze); }
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  min-height: 44px;
   padding: 0.7rem 1.5rem;
   cursor: pointer;
   transition: background 0.15s ease;
