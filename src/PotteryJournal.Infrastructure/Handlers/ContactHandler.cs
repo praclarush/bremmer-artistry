@@ -10,6 +10,10 @@ namespace PotteryJournal.Infrastructure.Handlers
     /// </summary>
     public class ContactHandler : IContactHandler
     {
+        private const int MAX_NAME_LENGTH = 200;
+        private const int MAX_EMAIL_LENGTH = 320;
+        private const int MAX_MESSAGE_LENGTH = 1000;
+
         private readonly IEmailSender _emailSender;
         private readonly IAdminSettingsHandler _adminSettingsHandler;
 
@@ -35,15 +39,27 @@ namespace PotteryJournal.Infrastructure.Handlers
             {
                 response.AddError("Your name is required.");
             }
+            else if (normalizedName.Length > MAX_NAME_LENGTH)
+            {
+                response.AddError($"Name must be {MAX_NAME_LENGTH} characters or fewer.");
+            }
 
             if (normalizedEmail.Length == 0)
             {
                 response.AddError("Your email is required.");
             }
+            else if (normalizedEmail.Length > MAX_EMAIL_LENGTH)
+            {
+                response.AddError($"Email must be {MAX_EMAIL_LENGTH} characters or fewer.");
+            }
 
             if (normalizedMessage.Length == 0)
             {
                 response.AddError("A message is required.");
+            }
+            else if (normalizedMessage.Length > MAX_MESSAGE_LENGTH)
+            {
+                response.AddError($"Message must be {MAX_MESSAGE_LENGTH} characters or fewer.");
             }
 
             if (response.Errors.Count > 0)

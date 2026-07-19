@@ -19,17 +19,17 @@
   <form method="post" asp-page="/Contact" class="simple-form">
     <div class="simple-form-field">
       <label for="contactName">Name</label>
-      <input type="text" id="contactName" asp-for="Name" required>
+      <input type="text" id="contactName" asp-for="Name" maxlength="200" required>
     </div>
 
     <div class="simple-form-field">
       <label for="contactEmail">Email</label>
-      <input type="email" id="contactEmail" asp-for="Email" required>
+      <input type="email" id="contactEmail" asp-for="Email" maxlength="320" required>
     </div>
 
     <div class="simple-form-field">
       <label for="contactMessage">Message</label>
-      <textarea id="contactMessage" asp-for="Message" rows="5" required></textarea>
+      <textarea id="contactMessage" asp-for="Message" rows="5" maxlength="1000" required></textarea>
     </div>
 
     <button type="submit" class="simple-form-submit">Send Message</button>

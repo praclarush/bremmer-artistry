@@ -81,6 +81,21 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task SubmitAsync_MessageExceedsMaxLength_ReturnsFailureWithoutSendingEmail()
+        {
+            await _adminSettingsHandler.UpdateAsync(new AdminSettingsModel
+            {
+                NotificationRecipientEmail = "studio@example.com",
+                MinimumBookingLeadDays = 2,
+            });
+
+            HandlerResponse response = await _sut.SubmitAsync("Jane Doe", "customer@example.com", new string('a', 1001));
+
+            Assert.That(response.IsSuccess, Is.False);
+            _emailSenderMock.Verify(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Test]
         public async Task SubmitAsync_NoRecipientConfigured_ReturnsFailure()
         {
             HandlerResponse response = await _sut.SubmitAsync("Jane Doe", "customer@example.com", "Hello there.");
