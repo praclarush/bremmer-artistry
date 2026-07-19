@@ -35,6 +35,7 @@ builder.Services.AddScoped<IEventsHandler, EventsHandler>();
 builder.Services.AddScoped<IAllowedAdminsHandler, AllowedAdminsHandler>();
 builder.Services.AddScoped<IImageStorageService, ImageStorageService>();
 builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
+builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
 builder.Services.AddSingleton<IPasswordHasher<AllowedAdmin>, PasswordHasher<AllowedAdmin>>();
 
 builder.Services
@@ -145,7 +146,7 @@ app.MapGet("/events/data", async (IEventsHandler eventsHandler) =>
 
 app.MapGet("/events/data/all", async (IEventsHandler eventsHandler) =>
 {
-    DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetAllAsync();
+    DataHandlerResponse<List<EventModel>> response = await eventsHandler.GetOccurrencesAsync();
     return JsonResult(response.Data ?? new List<EventModel>());
 }).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 

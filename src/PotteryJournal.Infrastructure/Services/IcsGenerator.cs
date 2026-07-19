@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Text;
 using Ical.Net;
 using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using Ical.Net.Serialization;
+using PotteryJournal.Infrastructure.Data.Entities;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.SharedKernel.Core;
 
@@ -31,6 +33,17 @@ namespace PotteryJournal.Infrastructure.Services
             if (eventModel.EndDateTime.HasValue)
             {
                 calendarEvent.End = new CalDateTime(eventModel.EndDateTime.Value.UtcDateTime, "UTC");
+            }
+
+            if (eventModel.RecurrenceFrequency != RecurrenceFrequency.None)
+            {
+                RecurrencePattern pattern = new RecurrencePattern(RecurrenceFrequencyMapper.ToFrequencyType(eventModel.RecurrenceFrequency), eventModel.RecurrenceInterval);
+                if (eventModel.RecurrenceEndDate.HasValue)
+                {
+                    pattern.Until = eventModel.RecurrenceEndDate.Value.UtcDateTime;
+                }
+
+                calendarEvent.RecurrenceRules = new List<RecurrencePattern> { pattern };
             }
 
             calendar.Events.Add(calendarEvent);

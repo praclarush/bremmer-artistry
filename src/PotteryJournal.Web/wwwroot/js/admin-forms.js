@@ -41,3 +41,14 @@ function removeRow(removeButton) {
     el.value = "";
   });
 }
+
+// Shows/hides a target element based on whether a <select> (e.g. a recurrence frequency dropdown)
+// is set to "None" -- declarative, so any admin form can opt in with data-recurrence-toggle="<id>".
+document.querySelectorAll("[data-recurrence-toggle]").forEach((select) => {
+  const target = document.getElementById(select.getAttribute("data-recurrence-toggle"));
+  if (!target) return;
+
+  const sync = () => target.classList.toggle("d-none", select.value === "None");
+  select.addEventListener("change", sync);
+  sync();
+});

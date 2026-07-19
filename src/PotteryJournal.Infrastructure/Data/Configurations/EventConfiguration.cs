@@ -74,6 +74,19 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(320)
                 .HasComment("Email of the admin who created the event.");
+
+            builder.Property(e => e.RecurrenceFrequency)
+                .IsRequired()
+                .HasDefaultValue(RecurrenceFrequency.None)
+                .HasComment("How often this event repeats. None means a single occurrence at StartDateTime.");
+
+            builder.Property(e => e.RecurrenceInterval)
+                .IsRequired()
+                .HasDefaultValue(1)
+                .HasComment("Recurrence step, e.g. 2 with a Weekly frequency means every 2 weeks. Ignored when RecurrenceFrequency is None.");
+
+            builder.Property(e => e.RecurrenceEndDate)
+                .HasComment("Last date recurrence may occur on. Null means the event recurs indefinitely, bounded only by each read's query range.");
         }
     }
 }

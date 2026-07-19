@@ -58,6 +58,9 @@ namespace PotteryJournal.Web.Pages.Admin.Events
                 VenueAddress = existing.VenueAddress,
                 ExternalLinkUrl = existing.ExternalLinkUrl,
                 SocialMediaUrl = existing.SocialMediaUrl,
+                RecurrenceFrequency = existing.RecurrenceFrequency,
+                RecurrenceInterval = existing.RecurrenceInterval,
+                RecurrenceEndDate = existing.RecurrenceEndDate,
             };
             ImageFileName = existing.ImageFileName;
             FlyerImageFileName = existing.FlyerImageFileName;

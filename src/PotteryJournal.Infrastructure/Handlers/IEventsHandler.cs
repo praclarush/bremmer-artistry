@@ -12,14 +12,25 @@ namespace PotteryJournal.Infrastructure.Handlers
     public interface IEventsHandler
     {
         /// <summary>
-        /// Gets events starting now or later, in chronological order.
+        /// Gets events starting now or later, in chronological order. Recurring events are expanded
+        /// into one <see cref="EventModel"/> per upcoming occurrence (within an internal forward
+        /// window); non-recurring events are unaffected by that window.
         /// </summary>
         Task<DataHandlerResponse<List<EventModel>>> GetUpcomingAsync();
 
         /// <summary>
-        /// Gets every event, most recently starting first, for the admin list.
+        /// Gets every event, most recently starting first, for the admin CRUD list. Returns one row
+        /// per series (the anchor <see cref="Data.Entities.Event"/> row) -- never expanded into
+        /// occurrences, since admin edit/delete acts on the whole series.
         /// </summary>
         Task<DataHandlerResponse<List<EventModel>>> GetAllAsync();
+
+        /// <summary>
+        /// Gets every event occurrence, past and future, for the public "all events" calendar view.
+        /// Recurring events are expanded into one <see cref="EventModel"/> per occurrence (within an
+        /// internal past+forward window); non-recurring events are unaffected by that window.
+        /// </summary>
+        Task<DataHandlerResponse<List<EventModel>>> GetOccurrencesAsync();
 
         /// <summary>
         /// Gets a single event by its primary key.

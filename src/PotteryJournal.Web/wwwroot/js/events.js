@@ -136,10 +136,17 @@ function renderCards() {
   });
 }
 
+// A recurring event's Id repeats across every expanded occurrence, so the DOM id / calendar-pill
+// link has to be scoped to the specific occurrence (id + startDateTime), not just the series id --
+// otherwise two occurrences of the same recurring event collide on the same "event-<id>" element id.
+function occurrenceKey(evt) {
+  return `${evt.id}-${evt.startDateTime.replace(/[^0-9]/g, "")}`;
+}
+
 function buildCard(evt) {
   const card = document.createElement("article");
   card.className = "event-card";
-  card.id = `event-${evt.id}`;
+  card.id = `event-${occurrenceKey(evt)}`;
 
   if (evt.imageFileName) {
     // When a flyer also exists, the banner becomes the click target for it (same "click the
@@ -312,16 +319,16 @@ function renderCalendar() {
 
     const key = dayKey(day);
     (eventsByDay.get(key) || []).forEach((evt) => {
-      const hasCard = EVENTS.some((e) => e.id === evt.id);
+      const hasCard = EVENTS.some((e) => occurrenceKey(e) === occurrenceKey(evt));
       const pill = document.createElement(hasCard ? "a" : "span");
       pill.className = "calendar-event";
       pill.textContent = evt.title;
       if (hasCard) {
-        pill.href = `#event-${evt.id}`;
+        pill.href = `#event-${occurrenceKey(evt)}`;
         pill.addEventListener("click", (e) => {
           e.preventDefault();
           showView("list");
-          document.getElementById(`event-${evt.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+          document.getElementById(`event-${occurrenceKey(evt)}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
       } else {
         pill.classList.add("calendar-event-past");
