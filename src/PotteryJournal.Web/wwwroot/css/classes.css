@@ -151,8 +151,11 @@
   text-align: center;
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--bisque-dark);
-  opacity: 0.5;
+  /* A solid, deliberately muted value rather than dimming --bisque-dark with opacity -- that
+     alpha-blended toward Kiln Char landed around 2.7:1, well under WCAG AA. This is #7e909a,
+     chosen to clear 4.5:1 on Kiln Char (~4.8:1) while still reading as clearly de-emphasized
+     next to full-strength --bisque-dark (~6.7:1). */
+  color: #7e909a;
 }
 
 .class-time-btn {
@@ -203,6 +206,9 @@
 }
 
 .booking-modal-panel .hero-eyebrow {
+  /* Base --copper-glaze only reaches ~4.36:1 on a Shelf background, short of WCAG AA's 4.5:1 for
+     this text size -- DESIGN.md documents --copper-glaze-bright for exactly this case. */
+  color: var(--copper-glaze-bright);
   margin: 0 0 0.35rem;
 }
 

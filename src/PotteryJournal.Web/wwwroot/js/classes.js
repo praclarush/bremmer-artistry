@@ -8,6 +8,9 @@ let classWeekCursor = startOfWeek(new Date());
 const typeListView = document.getElementById("typeListView");
 const classTypeList = document.getElementById("classTypeList");
 const classesEmptyState = document.getElementById("classesEmptyState");
+const classesLoading = document.getElementById("classesLoading");
+const classesError = document.getElementById("classesError");
+const classesRetryBtn = document.getElementById("classesRetryBtn");
 
 const bookingView = document.getElementById("bookingView");
 const backToClassTypes = document.getElementById("backToClassTypes");
@@ -44,23 +47,34 @@ bookingForm.addEventListener("submit", () => {
   bookingSubmit.disabled = true;
   bookingSubmit.textContent = "Submitting…";
 });
+backToClassTypes.addEventListener("click", () => {
+  location.hash = "";
+});
+document.getElementById("classWeekPrev").addEventListener("click", () => shiftClassWeek(-7));
+document.getElementById("classWeekNext").addEventListener("click", () => shiftClassWeek(7));
+window.addEventListener("hashchange", route);
+classesRetryBtn.addEventListener("click", () => init());
 
 init();
 
 async function init() {
-  const response = await fetch("/classes/data");
-  SLOTS = await response.json();
-  TYPES = buildTypeList(SLOTS);
+  classesLoading.classList.remove("hidden");
+  classesError.classList.add("hidden");
+  try {
+    const response = await fetch("/classes/data");
+    if (!response.ok) {
+      throw new Error(`Unexpected response: ${response.status}`);
+    }
+    SLOTS = await response.json();
+    TYPES = buildTypeList(SLOTS);
 
-  renderTypeList();
-  backToClassTypes.addEventListener("click", () => {
-    location.hash = "";
-  });
-  document.getElementById("classWeekPrev").addEventListener("click", () => shiftClassWeek(-7));
-  document.getElementById("classWeekNext").addEventListener("click", () => shiftClassWeek(7));
-  window.addEventListener("hashchange", route);
-
-  route();
+    renderTypeList();
+    route();
+  } catch (err) {
+    classesError.classList.remove("hidden");
+  } finally {
+    classesLoading.classList.add("hidden");
+  }
 }
 
 function buildTypeList(slots) {
