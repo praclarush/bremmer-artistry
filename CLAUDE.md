@@ -122,6 +122,14 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   the login page rendered *two* antiforgery-protected forms (its own + the nav's sign-out form),
   which is confusing UI and made scripting the login flow error-prone. Any other pre-auth page needs
   `_AuthLayout.cshtml` too.
+- **Always pass both compose files together**: `docker compose -f docker-compose.yml -f
+  docker-compose.dev.yml <command>`, never plain `docker compose <command>` in this repo. The dev
+  overlay is what publishes Postgres to `localhost:55432` and bind-mounts `./uploads` -- running any
+  command (`up`, `build`, etc.) with just the base file recalculates the `db`/`app` services from
+  the base file alone and silently drops both, breaking a Visual-Studio-debugging session that's
+  using them (`Npgsql.NpgsqlException: Failed to connect to 127.0.0.1:55432`, or images 404ing).
+  This has recurred multiple times from rebuilding the app image for verification with the base file
+  only -- the container needing rebuilt is almost never a reason to drop the `-f` flags.
 
 ## Testing
 
