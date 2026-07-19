@@ -54,7 +54,7 @@
 .class-type-description {
   font-family: var(--font-body);
   font-size: 0.85rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--bisque-dark);
 }
 
@@ -108,8 +108,13 @@
 
 .class-week-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  /* minmax's 84px floor keeps each day's time buttons above the 44px touch-target minimum on
+     narrow viewports -- 7 equal 1fr columns alone would squeeze buttons down to ~39px wide on a
+     375px screen. Below that floor the grid overflows its own box and scrolls horizontally
+     instead of shrinking further; at desktop widths 1fr simply expands past the floor as before. */
+  grid-template-columns: repeat(7, minmax(84px, 1fr));
   gap: 1px;
+  overflow-x: auto;
   background: var(--shelf-line);
   border: 1px solid var(--shelf-line);
 }
@@ -172,6 +177,7 @@
   font-family: var(--font-mono);
   font-size: 0.72rem;
   width: 100%;
+  min-height: 44px;
   padding: 0.5rem 0.3rem;
   cursor: pointer;
   text-align: center;
