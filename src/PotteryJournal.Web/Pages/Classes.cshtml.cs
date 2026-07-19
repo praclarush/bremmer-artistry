@@ -38,9 +38,10 @@ namespace PotteryJournal.Web.Pages
                 return RedirectToPage(pageName: null, pageHandler: null, routeValues: null, fragment: $"type/{Booking.ClassTypeId}");
             }
 
+            string formattedWhen = Booking.StartDateTime.ToString("dddd, MMMM d 'at' h:mm tt");
             TempData["StatusMessage"] = response.Warnings.Count > 0
-                ? "Thanks! Your request is tentative until we confirm it. " + string.Join(" ", response.Warnings)
-                : "Thanks! Your request is tentative until we confirm it -- you'll get an email once it's approved.";
+                ? $"Thanks! Your request for {formattedWhen} is in -- tentative until we confirm it. " + string.Join(" ", response.Warnings)
+                : $"Thanks! Your request for {formattedWhen} is in -- tentative until we confirm it by email.";
             return RedirectToPage();
         }
     }

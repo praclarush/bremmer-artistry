@@ -91,6 +91,15 @@ function buildTypeList(slots) {
   return [...map.values()];
 }
 
+// Short studio-voiced descriptions per class type, shown above the practical meta line so the
+// tile reads as this specific studio's offerings rather than a generic booking-widget row. Falls
+// back to a generic line for any class type name added later that isn't one of these two, so a
+// new type never renders blank.
+const CLASS_TYPE_DESCRIPTIONS = {
+  "Wheel Throw": "Center the clay and pull it up as the wheel spins -- the classic first bowl or cup.",
+  "Hand-Building": "Pinch, coil, and slab work -- no wheel, just your hands shaping the clay directly.",
+};
+
 function renderTypeList() {
   classTypeList.innerHTML = "";
   classesEmptyState.classList.toggle("hidden", TYPES.length > 0);
@@ -104,6 +113,12 @@ function renderTypeList() {
     name.className = "class-type-name";
     name.textContent = type.classTypeName;
     tile.appendChild(name);
+
+    const description = document.createElement("span");
+    description.className = "class-type-description";
+    description.textContent =
+      CLASS_TYPE_DESCRIPTIONS[type.classTypeName] || `A hands-on ${type.classTypeName.toLowerCase()} session.`;
+    tile.appendChild(description);
 
     const meta = document.createElement("span");
     meta.className = "class-type-meta";
