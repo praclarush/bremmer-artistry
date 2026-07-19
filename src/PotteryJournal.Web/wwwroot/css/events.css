@@ -16,6 +16,8 @@
 }
 
 .view-toggle button {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   color: var(--bisque-dark);
@@ -23,6 +25,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  min-height: 44px;
   padding: 0.45rem 1rem;
   cursor: pointer;
   transition: color 0.15s ease, background 0.15s ease;
