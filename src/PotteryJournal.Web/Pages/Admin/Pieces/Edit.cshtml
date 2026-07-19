@@ -48,8 +48,9 @@
         <label class="form-check-label" for="showInGallery">Show in Gallery</label>
         <div class="form-text">
           The Pottery Journal and Gallery are independent -- every piece is logged here for
-          record-keeping, but only pieces checked here (with a Category set above) appear as
-          finished work on the public Gallery page.
+          record-keeping, but only pieces checked here appear as finished work on the public
+          Gallery page. Set a Category above to group it there; if you leave Category blank but
+          set a Collection below, the piece is grouped under the Collection name instead.
         </div>
       </div>
     </div>
@@ -65,7 +66,10 @@
           <option value="@collection.Id">@collection.Name</option>
         }
       </select>
-      <div class="form-text">Independent of Category -- groups pieces for the homepage rotating display.</div>
+      <div class="form-text">
+        Groups pieces for the homepage rotating display. If a piece has no Category, it also
+        becomes the piece's Gallery grouping in place of a Category.
+      </div>
     </div>
   </div>
 

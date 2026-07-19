@@ -107,8 +107,9 @@ namespace PotteryJournal.Infrastructure.Handlers
             List<Piece> pieces = await _context.Pieces
                 .Include(p => p.Images)
                 .Include(p => p.Category)
+                .Include(p => p.Collection)
                 .AsNoTracking()
-                .Where(p => p.ShowInGallery && p.Category != null)
+                .Where(p => p.ShowInGallery && (p.Category != null || p.Collection != null))
                 .OrderByDescending(p => p.StartedDate)
                 .ToListAsync();
 
@@ -117,7 +118,10 @@ namespace PotteryJournal.Infrastructure.Handlers
                 {
                     Id = p.Id,
                     Title = p.Title,
-                    Category = p.Category!.Name,
+                    // A piece with no Category falls back to its Collection name as the Gallery
+                    // grouping, so collection-only pieces still surface as a tile instead of being
+                    // silently excluded.
+                    Category = p.Category?.Name ?? p.Collection!.Name,
                     StartedDate = p.StartedDate,
                     ImageFileNames = p.Images
                         .OrderBy(i => i.SortOrder)

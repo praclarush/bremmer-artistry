@@ -50,9 +50,11 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   matching the convention documented in the old `Pottery` project's CLAUDE.md.
 - **Gallery is deliberately independent of the Pottery Journal.** They share the same `Piece` rows
   (no separate content type -- avoids duplicate data entry) but the relationship is opt-in, not
-  automatic: a piece only appears on `/gallery` when `Piece.ShowInGallery` is true *and*
-  `Piece.CategoryId` is set. Every piece is loggable for record-keeping (glaze combos, clay, notes)
-  without ever surfacing publicly. This replaced an earlier design where any piece with a
+  automatic: a piece only appears on `/gallery` when `Piece.ShowInGallery` is true *and* it has
+  either a `Piece.CategoryId` or a `Piece.CollectionId` set (see the Collection note below --
+  Collection is a fallback grouping when Category is blank, not a duplicate of it). Every piece is
+  loggable for record-keeping (glaze combos, clay, notes) without ever surfacing publicly. This
+  replaced an earlier design where any piece with a
   non-empty `Category` auto-generated a Gallery tile, and clicking that tile just navigated to
   `/pottery-journal?category=X` -- i.e. Gallery used to be a filtered lens into the Journal, not its
   own thing. Don't reintroduce that coupling. `Gallery.cshtml`/`gallery.js` now fetch their own
@@ -68,10 +70,15 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   surfaces outside the admin portal -- `PieceHandler.GetAllDetailsAsync` (used by the public
   `/pottery-journal/data` endpoint) filters on `GlazeApplications.Any()`; admin-only reads
   (`GetByIdAsync`, `GetSummariesPagedAsync`) are unfiltered.
-- **Collection is a separate concept from Category, not a synonym for it.** Category groups pieces
-  by form/type on the Gallery; Collection (`Collections` table, `Piece.CollectionId`) groups pieces
-  by a named body of work (e.g. "Lightning-Cracked Collection") for the homepage's rotating
-  showcase, independent of whatever category those pieces also carry. At most one collection has
+- **Collection is a separate concept from Category, not a synonym for it -- but it's a Gallery
+  fallback, not fully independent of it.** Category groups pieces by form/type on the Gallery;
+  Collection (`Collections` table, `Piece.CollectionId`) groups pieces by a named body of work
+  (e.g. "Lightning-Cracked Collection") for the homepage's rotating showcase, independent of
+  whatever category those pieces also carry. `PieceHandler.GetGalleryPiecesAsync` uses
+  `Category?.Name ?? Collection!.Name` as each piece's Gallery tile label, so a piece with a
+  Collection but no Category still gets a Gallery tile (named after the Collection) instead of
+  being silently excluded -- a piece that has both keeps grouping under its Category, unaffected.
+  At most one collection has
   `IsFeaturedOnHomepage = true` at a time -- `ReferenceDataHandler.SetCollectionFeaturedAsync`
   un-features any previous one before featuring the new one, so callers never need to clear the old
   flag themselves. `IndexModel` fetches the featured set via
