@@ -241,12 +241,15 @@
 }
 
 .back-btn {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: none;
   color: var(--copper-glaze);
   font-family: var(--font-mono);
   font-size: 0.85rem;
   cursor: pointer;
+  min-height: 44px;
   padding: 0.5rem 0;
   margin-bottom: 1.5rem;
 }
