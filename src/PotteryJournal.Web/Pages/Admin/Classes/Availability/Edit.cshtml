@@ -1,0 +1,82 @@
+@page "/admin/classes/availability/edit/{id:guid?}"
+@model PotteryJournal.Web.Pages.Admin.Classes.Availability.EditModel
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Edit Availability" : "New Availability";
+
+    // asp-route-id with a null Guid? adds an explicit null route value instead of omitting the
+    // "id" segment, which breaks Form Tag Helper URL generation for the New Availability page --
+    // see CLAUDE.md (same fix used by Admin/Events/Edit.cshtml).
+    Dictionary<string, string> saveRouteValues = new Dictionary<string, string>();
+    if (Model.Id.HasValue)
+    {
+        saveRouteValues["id"] = Model.Id.Value.ToString();
+    }
+}
+
+<h1 class="h3 mb-4">@(Model.Id.HasValue ? "Edit Availability" : "New Availability")</h1>
+
+<form method="post" asp-page-handler="Save" asp-all-route-data="saveRouteValues" style="max-width: 40rem;">
+  <div class="mb-3">
+    <label class="form-label" for="classTypeId">Class type</label>
+    <select class="form-select" id="classTypeId" asp-for="Rule.ClassTypeId" required>
+      <option value="">Select a class type...</option>
+      @foreach (PotteryJournal.Infrastructure.Models.ClassTypeModel classType in Model.ClassTypes)
+      {
+        <option value="@classType.Id">@classType.Name (max @classType.MaxCapacity)</option>
+      }
+    </select>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label d-block">Days of week</label>
+    @foreach (PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays day in new[]
+    {
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Sunday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Monday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Tuesday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Wednesday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Thursday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Friday,
+      PotteryJournal.Infrastructure.Data.Entities.ClassAvailabilityDays.Saturday,
+    })
+    {
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" id="day@(day)" name="Rule.DaysOfWeek" value="@day"
+               @(Model.Rule.DaysOfWeek.Contains(day) ? "checked" : "")>
+        <label class="form-check-label" for="day@(day)">@day.ToString().Substring(0, 3)</label>
+      </div>
+    }
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="startTime">Starts at</label>
+    <input type="time" class="form-control" id="startTime" name="Rule.StartTime"
+           value="@Model.Rule.StartTime.ToString(@"hh\:mm")" style="max-width: 12rem;" required>
+    <div class="form-text">Classes are always fixed 2-hour segments. This repeats weekly on the selected days, indefinitely -- use Blackout Dates to close off a specific date or time.</div>
+  </div>
+
+  <div class="form-check mb-3">
+    <input class="form-check-input" type="checkbox" id="repeatsMultipleTimesPerDay" asp-for="Rule.RepeatsMultipleTimesPerDay"
+           data-recurrence-toggle="multiTimeFields">
+    <label class="form-check-label" for="repeatsMultipleTimesPerDay">Offer this class more than once a day</label>
+  </div>
+
+  <div id="multiTimeFields" class="row mb-3 d-none">
+    <div class="col-sm-6">
+      <label class="form-label" for="intervalHours">Repeat every</label>
+      <div class="input-group" style="max-width: 12rem;">
+        <input type="number" class="form-control" id="intervalHours" asp-for="Rule.IntervalHours" min="1">
+        <span class="input-group-text">hours</span>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="lastStartTime">Last class starts at</label>
+      <input type="time" class="form-control" id="lastStartTime" name="Rule.LastStartTime"
+             value="@Model.Rule.LastStartTime.ToString(@"hh\:mm")" style="max-width: 12rem;">
+      <div class="form-text">E.g. 11:00 AM start, every 2 hours, until 6:00 PM -- offers 11, 1, 3, 5.</div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Save</button>
+  <a class="btn btn-link" href="/admin/classes/availability">Cancel</a>
+</form>

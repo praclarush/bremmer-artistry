@@ -36,6 +36,13 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<DataHandlerResponse<List<GalleryPieceModel>>> GetGalleryPiecesAsync();
 
         /// <summary>
+        /// Gets the Gallery's category tiles (name, piece count, cover photo), sorted by name, for
+        /// pages that render the tiles server-side instead of fetching every Gallery photo. Groups
+        /// the same pieces <see cref="GetGalleryPiecesAsync"/> returns.
+        /// </summary>
+        Task<DataHandlerResponse<List<GalleryCategoryModel>>> GetGalleryCategoriesAsync();
+
+        /// <summary>
         /// Gets the collection currently featured on the homepage and one representative photo per
         /// piece in it, for the rotating display next to the hero. Returns a null <c>Data</c> when
         /// no collection is featured, or the featured collection has no pieces with a photo.

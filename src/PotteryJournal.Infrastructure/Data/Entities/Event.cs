@@ -32,5 +32,11 @@ namespace PotteryJournal.Infrastructure.Data.Entities
         public DateTimeOffset CreatedDate { get; set; }
 
         public string CreatedByEmail { get; set; } = string.Empty;
+
+        public RecurrenceFrequency RecurrenceFrequency { get; set; }
+
+        public int RecurrenceInterval { get; set; } = 1;
+
+        public DateTimeOffset? RecurrenceEndDate { get; set; }
     }
 }

@@ -53,6 +53,16 @@ namespace PotteryJournal.Web.Tests
         }
 
         [Test]
+        public async Task GetClassesData_NoAvailability_ReturnsEmptyJsonArray()
+        {
+            HttpResponseMessage response = await _client.GetAsync("/classes/data");
+
+            Assert.That(response.IsSuccessStatusCode, Is.True);
+            string body = await response.Content.ReadAsStringAsync();
+            Assert.That(body.Trim(), Is.EqualTo("[]"));
+        }
+
+        [Test]
         public async Task GetEventIcs_UnknownId_ReturnsNotFound()
         {
             HttpResponseMessage response = await _client.GetAsync($"/events/{Guid.NewGuid()}/ics");
@@ -66,6 +76,17 @@ namespace PotteryJournal.Web.Tests
             using HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
             HttpResponseMessage response = await client.GetAsync("/admin/pieces");
+
+            Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Redirect));
+            Assert.That(response.Headers.Location?.ToString(), Does.Contain("/Admin/Login"));
+        }
+
+        [Test]
+        public async Task GetAdminCalendarData_Unauthenticated_RedirectsToLogin()
+        {
+            using HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+            HttpResponseMessage response = await client.GetAsync("/admin/calendar?handler=Data&start=2026-01-01&end=2026-02-01");
 
             Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Redirect));
             Assert.That(response.Headers.Location?.ToString(), Does.Contain("/Admin/Login"));

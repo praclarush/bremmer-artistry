@@ -23,6 +23,35 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.AdminSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()")
+                        .HasComment("Surrogate primary key.");
+
+                    b.Property<int>("MinimumBookingLeadDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(2)
+                        .HasComment("Minimum number of days in advance a class booking must be requested.");
+
+                    b.Property<string>("NotificationRecipientEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasComment("Email address that receives class booking and Contact Us notifications.");
+
+                    b.HasKey("Id")
+                        .HasName("PK_AdminSettings_Id");
+
+                    b.ToTable("AdminSettings", "potteryjournal", t =>
+                        {
+                            t.HasComment("Studio-wide settings editable by an admin without a redeploy. Always exactly one row.");
+                        });
+                });
+
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.AllowedAdmin", b =>
                 {
                     b.Property<Guid>("Id")
@@ -77,6 +106,45 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.BlackoutPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()")
+                        .HasComment("Surrogate primary key.");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()")
+                        .HasComment("Timestamp the blackout was created in the admin area.");
+
+                    b.Property<DateTimeOffset>("EndDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("End of the blacked-out range.");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasComment("Optional note explaining why this range is blacked out.");
+
+                    b.Property<DateTimeOffset>("StartDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Start of the blacked-out range.");
+
+                    b.HasKey("Id")
+                        .HasName("PK_BlackoutPeriods_Id");
+
+                    b.HasIndex("StartDateTime")
+                        .HasDatabaseName("IX_BlackoutPeriods_StartDateTime");
+
+                    b.ToTable("BlackoutPeriods", "potteryjournal", t =>
+                        {
+                            t.HasComment("An admin-managed date/time range during which class bookings can't be made.");
+                        });
+                });
+
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -100,6 +168,166 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                     b.ToTable("Categories", "potteryjournal", t =>
                         {
                             t.HasComment("Managed list of category options assignable to a piece, used to group it on the Gallery page.");
+                        });
+                });
+
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClassAvailability", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()")
+                        .HasComment("Surrogate primary key.");
+
+                    b.Property<Guid>("ClassTypeId")
+                        .HasColumnType("uuid")
+                        .HasComment("The class type this availability window applies to.");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()")
+                        .HasComment("Timestamp the availability window was created in the admin area.");
+
+                    b.Property<int>("DaysOfWeek")
+                        .HasColumnType("integer")
+                        .HasComment("Bitmask of weekdays this rule is offered on (Sunday=1, Monday=2, Tuesday=4, Wednesday=8, Thursday=16, Friday=32, Saturday=64).");
+
+                    b.Property<int>("IntervalHours")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasComment("Hours between successive class start times on a matching day. 1 when the class only runs once a day.");
+
+                    b.Property<TimeSpan>("LastStartTime")
+                        .HasColumnType("interval")
+                        .HasComment("The last class start time of the day. Equals StartTime when the class only runs once a day.");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval")
+                        .HasComment("Time of day the first occurrence starts each matching day. Classes are always fixed 2-hour segments.");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ClassAvailabilities_Id");
+
+                    b.HasIndex("ClassTypeId");
+
+                    b.ToTable("ClassAvailabilities", "potteryjournal", t =>
+                        {
+                            t.HasComment("An admin-defined weekly bookable window for a class type: which weekdays it's offered on and what time it starts.");
+                        });
+                });
+
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClassBooking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()")
+                        .HasComment("Surrogate primary key.");
+
+                    b.Property<Guid>("ClassTypeId")
+                        .HasColumnType("uuid")
+                        .HasComment("The class type booked.");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("now()")
+                        .HasComment("Timestamp the booking request was submitted.");
+
+                    b.Property<string>("CustomerEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasComment("Email of the customer who requested the booking -- where the confirmation email is sent once approved.");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasComment("Name of the customer who requested the booking.");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasComment("Optional phone number of the customer.");
+
+                    b.Property<DateTimeOffset?>("DecisionDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Timestamp an admin approved or declined the booking, if a decision has been made.");
+
+                    b.Property<DateTimeOffset>("EndDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("End date and time of the booked class slot (start plus the fixed 2-hour class duration).");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasComment("Optional note from the customer submitted with the booking request.");
+
+                    b.Property<int>("PartySize")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasComment("Number of people in the group, validated against the class type's MaxCapacity.");
+
+                    b.Property<DateTimeOffset>("StartDateTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Start date and time of the booked class slot.");
+
+                    b.Property<int>("Status")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("Tentative until an admin approves (Confirmed) or declines (Declined) the request.");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ClassBookings_Id");
+
+                    b.HasIndex("StartDateTime")
+                        .HasDatabaseName("IX_ClassBookings_StartDateTime");
+
+                    b.HasIndex("ClassTypeId", "StartDateTime")
+                        .IsUnique()
+                        .HasDatabaseName("UK_ClassBookings_ClassTypeId_StartDateTime")
+                        .HasFilter("\"Status\" <> 2");
+
+                    b.ToTable("ClassBookings", "potteryjournal", t =>
+                        {
+                            t.HasComment("A customer's request to book a class slot, starting Tentative until an admin approves or declines it.");
+                        });
+                });
+
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClassType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()")
+                        .HasComment("Surrogate primary key.");
+
+                    b.Property<int>("MaxCapacity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(6)
+                        .HasComment("Maximum party size a single booking may request for this class type.");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("Display name of the class type, e.g. Wheel Throw.");
+
+                    b.HasKey("Id")
+                        .HasName("PK_ClassTypes_Id");
+
+                    b.HasAlternateKey("Name")
+                        .HasName("UK_ClassTypes_Name");
+
+                    b.ToTable("ClassTypes", "potteryjournal", t =>
+                        {
+                            t.HasComment("Managed list of class type options (e.g. Wheel Throw, Hand-Building) bookable by the public.");
                         });
                 });
 
@@ -204,6 +432,22 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         .HasMaxLength(260)
                         .HasColumnType("character varying(260)")
                         .HasComment("File name of the event's banner photo on the uploads volume.");
+
+                    b.Property<DateTimeOffset?>("RecurrenceEndDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("Last date recurrence may occur on. Null means the event recurs indefinitely, bounded only by each read's query range.");
+
+                    b.Property<int>("RecurrenceFrequency")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasComment("How often this event repeats. None means a single occurrence at StartDateTime.");
+
+                    b.Property<int>("RecurrenceInterval")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasComment("Recurrence step, e.g. 2 with a Weekly frequency means every 2 weeks. Ignored when RecurrenceFrequency is None.");
 
                     b.Property<string>("SocialMediaUrl")
                         .HasMaxLength(500)
@@ -481,6 +725,30 @@ namespace PotteryJournal.Infrastructure.Data.Migrations
                         {
                             t.HasComment("A note recorded against a pottery piece.");
                         });
+                });
+
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClassAvailability", b =>
+                {
+                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.ClassType", "ClassType")
+                        .WithMany()
+                        .HasForeignKey("ClassTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ClassAvailabilities_ClassTypes_ClassTypeId");
+
+                    b.Navigation("ClassType");
+                });
+
+            modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.ClassBooking", b =>
+                {
+                    b.HasOne("PotteryJournal.Infrastructure.Data.Entities.ClassType", "ClassType")
+                        .WithMany()
+                        .HasForeignKey("ClassTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ClassBookings_ClassTypes_ClassTypeId");
+
+                    b.Navigation("ClassType");
                 });
 
             modelBuilder.Entity("PotteryJournal.Infrastructure.Data.Entities.GlazeApplication", b =>

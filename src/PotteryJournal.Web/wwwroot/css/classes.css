@@ -1,0 +1,243 @@
+/* Classes page: a class-type picker (step 1), then a per-type slot picker plus the booking
+   request form (step 2), toggled client-side via #type/<id> hash routing (classes.js). */
+
+.classes-intro {
+  padding: 0 var(--page-x);
+  color: var(--bisque-dark);
+  line-height: 1.6;
+}
+
+.classes-intro p {
+  max-width: 60ch;
+}
+
+.classes-intro strong {
+  color: var(--copper-glaze-bright);
+}
+
+/* ---------- step 1: class type picker ---------- */
+
+.class-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  padding: 1.5rem var(--page-x) 3rem;
+}
+
+.class-type-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+  padding: 1.5rem 1.5rem 1.75rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.class-type-tile:hover,
+.class-type-tile:focus-visible {
+  border-color: var(--copper-glaze);
+}
+
+.class-type-tile:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.class-type-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: var(--paper);
+}
+
+.class-type-description {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--bisque-dark);
+}
+
+.class-type-meta {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--bisque-dark);
+}
+
+.class-type-select {
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--copper-glaze);
+  transition: color 0.15s ease;
+}
+
+.class-type-tile:hover .class-type-select,
+.class-type-tile:focus-visible .class-type-select {
+  color: var(--copper-glaze-bright);
+}
+
+/* ---------- step 2: per-type slots + booking form ---------- */
+
+.back-link {
+  display: inline-block;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 1.75rem var(--page-x) 0;
+  cursor: pointer;
+}
+
+.booking-view-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.5rem;
+  color: var(--paper);
+  padding: 0 var(--page-x);
+  margin: 1.25rem 0 1.5rem;
+}
+
+/* Nav shell (.calendar-nav/.calendar-month-label) is shared via site.css (also used by Events'
+   month view); the week grid below is Classes-specific since Events has no week view. */
+
+.class-week {
+  padding: 0 var(--page-x) 3rem;
+}
+
+.class-week-grid {
+  display: grid;
+  /* minmax's 84px floor keeps each day's time buttons above the 44px touch-target minimum on
+     narrow viewports -- 7 equal 1fr columns alone would squeeze buttons down to ~39px wide on a
+     375px screen. Below that floor the grid overflows its own box and scrolls horizontally
+     instead of shrinking further; at desktop widths 1fr simply expands past the floor as before. */
+  grid-template-columns: repeat(7, minmax(84px, 1fr));
+  gap: 1px;
+  overflow-x: auto;
+  background: var(--shelf-line);
+  border: 1px solid var(--shelf-line);
+}
+
+.class-week-day {
+  background: var(--kiln-char);
+  min-height: 8rem;
+  padding: 0.6rem 0.4rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.class-week-day-header {
+  text-align: center;
+}
+
+.class-week-day-name {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bisque-dark);
+}
+
+.class-week-day-date {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--paper);
+  margin-top: 0.15rem;
+}
+
+.class-week-day.is-today .class-week-day-date {
+  color: var(--copper-glaze-bright);
+}
+
+.class-week-day-times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.class-week-day-empty {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  /* A solid, deliberately muted value rather than dimming --bisque-dark with opacity -- that
+     alpha-blended toward Kiln Char landed around 2.7:1, well under WCAG AA. This is #7e909a,
+     chosen to clear 4.5:1 on Kiln Char (~4.8:1) while still reading as clearly de-emphasized
+     next to full-strength --bisque-dark (~6.7:1). */
+  color: #7e909a;
+}
+
+.class-time-btn {
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.3rem;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+/* Extra space above the first button of a new time-of-day group (set in classes.js), so a day
+   with 4-5 same-looking buttons reads as morning/afternoon/evening clusters instead of one
+   undifferentiated stack. */
+.class-time-btn.period-start {
+  margin-top: 0.5rem;
+}
+
+.class-time-btn:hover,
+.class-time-btn:focus-visible {
+  border-color: var(--copper-glaze);
+  color: var(--copper-glaze-bright);
+}
+
+.class-time-btn:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.class-time-btn.selected {
+  background: var(--copper-glaze-dim);
+  border-color: var(--copper-glaze);
+  color: var(--paper);
+}
+
+/* ---------- booking form modal ---------- */
+/* Reuses the shared .lightbox scrim/open/close mechanics from site.css (also used by Events'
+   flyer viewer and Gallery's photo viewer); field/label/submit styling is shared via
+   .simple-form/.simple-form-field/.simple-form-submit (also used by Contact Us). */
+
+.booking-modal-panel {
+  width: 100%;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  transform: scale(0.98);
+  transition: transform 0.2s ease;
+}
+
+.lightbox.open .booking-modal-panel {
+  transform: scale(1);
+}
+
+.booking-modal-panel .hero-eyebrow {
+  /* Base --copper-glaze only reaches ~4.36:1 on a Shelf background, short of WCAG AA's 4.5:1 for
+     this text size -- DESIGN.md documents --copper-glaze-bright for exactly this case. */
+  color: var(--copper-glaze-bright);
+  margin: 0 0 0.35rem;
+}
+
+.booking-summary {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--copper-glaze-bright);
+  margin: 0 0 1.25rem;
+}

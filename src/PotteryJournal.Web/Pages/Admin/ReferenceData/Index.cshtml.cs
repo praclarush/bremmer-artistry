@@ -26,6 +26,8 @@ namespace PotteryJournal.Web.Pages.Admin.ReferenceData
 
         public List<CollectionModel> Collections { get; private set; } = new List<CollectionModel>();
 
+        public List<ClassTypeModel> ClassTypes { get; private set; } = new List<ClassTypeModel>();
+
         [BindProperty]
         public string NewClayBodyName { get; set; } = string.Empty;
 
@@ -37,6 +39,12 @@ namespace PotteryJournal.Web.Pages.Admin.ReferenceData
 
         [BindProperty]
         public string NewCollectionName { get; set; } = string.Empty;
+
+        [BindProperty]
+        public string NewClassTypeName { get; set; } = string.Empty;
+
+        [BindProperty]
+        public int NewClassTypeMaxCapacity { get; set; } = 6;
 
         public async Task OnGetAsync()
         {
@@ -79,6 +87,24 @@ namespace PotteryJournal.Web.Pages.Admin.ReferenceData
             return RedirectToPage();
         }
 
+        public async Task<IActionResult> OnPostAddClassTypeAsync()
+        {
+            DataHandlerResponse<Guid> response = await _referenceDataHandler.AddClassTypeAsync(NewClassTypeName, NewClassTypeMaxCapacity);
+            TempData["StatusMessage"] = response.IsSuccess
+                ? $"\"{NewClassTypeName.Trim()}\" was added."
+                : string.Join(" ", response.Errors);
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostUpdateClassTypeCapacityAsync(Guid id, int maxCapacity)
+        {
+            HandlerResponse response = await _referenceDataHandler.UpdateClassTypeCapacityAsync(id, maxCapacity);
+            TempData["StatusMessage"] = response.IsSuccess
+                ? "Capacity updated."
+                : string.Join(" ", response.Errors);
+            return RedirectToPage();
+        }
+
         public async Task<IActionResult> OnPostRemoveClayBodyAsync(Guid id)
         {
             HandlerResponse response = await _referenceDataHandler.RemoveClayBodyAsync(id);
@@ -111,6 +137,15 @@ namespace PotteryJournal.Web.Pages.Admin.ReferenceData
             HandlerResponse response = await _referenceDataHandler.RemoveCollectionAsync(id);
             TempData["StatusMessage"] = response.IsSuccess
                 ? "The collection was removed."
+                : string.Join(" ", response.Errors);
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostRemoveClassTypeAsync(Guid id)
+        {
+            HandlerResponse response = await _referenceDataHandler.RemoveClassTypeAsync(id);
+            TempData["StatusMessage"] = response.IsSuccess
+                ? "The class type was removed."
                 : string.Join(" ", response.Errors);
             return RedirectToPage();
         }
@@ -157,6 +192,12 @@ namespace PotteryJournal.Web.Pages.Admin.ReferenceData
             if (collectionsResponse.IsSuccess && collectionsResponse.Data is not null)
             {
                 Collections = collectionsResponse.Data;
+            }
+
+            DataHandlerResponse<List<ClassTypeModel>> classTypesResponse = await _referenceDataHandler.GetClassTypesAsync();
+            if (classTypesResponse.IsSuccess && classTypesResponse.Data is not null)
+            {
+                ClassTypes = classTypesResponse.Data;
             }
         }
     }

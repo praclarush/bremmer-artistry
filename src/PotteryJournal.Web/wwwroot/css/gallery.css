@@ -3,8 +3,10 @@
    grid reuses pottery-journal.css's .tile/.tile-photo/.tile-title "specimen card" component. */
 
 .gallery-intro {
-  max-width: 720px;
-  padding: 0 clamp(1rem, 4vw, 3rem);
+  /* 42rem of text plus the page gutters -- see --page-x in site.css for why the gutter can't
+     simply sit inside a fixed max-width. */
+  max-width: calc(42rem + 2 * var(--page-x));
+  padding: 0 var(--page-x);
   margin: 0 0 2rem;
   line-height: 1.8;
   color: var(--bisque-dark);
@@ -13,7 +15,14 @@
 /* ---------- category drill-down ---------- */
 
 .gallery-category-view {
-  padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
+  padding: 0 var(--page-x) 2rem;
+}
+
+/* The shared .gallery grid carries its own page gutter for the Pottery Journal, where it sits
+   at the top level. Here it's nested inside a view that already has one. */
+.gallery-category-view .gallery {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Reveal on first render only -- reuses site.css's tile-reveal keyframes, scoped here so it
@@ -37,6 +46,36 @@
 
 .lightbox-figure img.is-swapping {
   opacity: 0;
+}
+
+/* ---------- shared-element photo morph (View Transitions, gallery.js) ----------
+   #lightboxImage carries this name permanently, whenever it's visible -- gallery.js tags the
+   relevant tile <img> with the same name for the brief moment a transition is captured (before
+   snapshot on open, after snapshot on close), which is what tells the browser to morph geometry
+   between them instead of a plain page-level crossfade. Browsers without View Transitions ignore
+   this property entirely, so it's safe unconditionally. */
+#lightboxImage {
+  view-transition-name: gallery-lightbox-photo;
+}
+
+::view-transition-group(gallery-lightbox-photo) {
+  animation-duration: 0.4s;
+  animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1); /* ease-out-quint, matches tile-reveal below */
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(gallery-lightbox-photo),
+  ::view-transition-old(gallery-lightbox-photo),
+  ::view-transition-new(gallery-lightbox-photo),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
 }
 
 .lightbox-arrow {

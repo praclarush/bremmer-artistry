@@ -39,9 +39,19 @@ namespace PotteryJournal.Infrastructure.Data
 
         public DbSet<Collection> Collections => Set<Collection>();
 
+        public DbSet<ClassType> ClassTypes => Set<ClassType>();
+
         public DbSet<Event> Events => Set<Event>();
 
         public DbSet<AllowedAdmin> AllowedAdmins => Set<AllowedAdmin>();
+
+        public DbSet<AdminSettings> AdminSettings => Set<AdminSettings>();
+
+        public DbSet<BlackoutPeriod> BlackoutPeriods => Set<BlackoutPeriod>();
+
+        public DbSet<ClassAvailability> ClassAvailabilities => Set<ClassAvailability>();
+
+        public DbSet<ClassBooking> ClassBookings => Set<ClassBooking>();
 
         /// <summary>
         /// Configures the EF Core model, applying every <see cref="Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{TEntity}"/>

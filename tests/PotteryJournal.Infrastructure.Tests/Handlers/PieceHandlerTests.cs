@@ -120,6 +120,62 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             Assert.That(response.IsSuccess, Is.False);
         }
 
+        [Test]
+        public async Task GetGalleryCategoriesAsync_GroupsGalleryPiecesByCategory_SortedByName()
+        {
+            Category vases = new Category { Id = Guid.NewGuid(), Name = "Vases" };
+            Category bowls = new Category { Id = Guid.NewGuid(), Name = "Bowls" };
+            _context.Categories.AddRange(vases, bowls);
+            _context.Pieces.AddRange(
+                BuildGalleryPiece(1, vases.Id, new DateOnly(2026, 3, 1), "vase.jpg"),
+                BuildGalleryPiece(2, bowls.Id, new DateOnly(2026, 1, 1), "older-bowl.jpg"),
+                BuildGalleryPiece(3, bowls.Id, new DateOnly(2026, 2, 1), "newer-bowl.jpg"));
+            await _context.SaveChangesAsync();
+
+            DataHandlerResponse<List<GalleryCategoryModel>> response = await _sut.GetGalleryCategoriesAsync();
+
+            Assert.That(response.IsSuccess, Is.True);
+            Assert.That(response.Data, Has.Count.EqualTo(2));
+            Assert.That(response.Data![0].Name, Is.EqualTo("Bowls"));
+            Assert.That(response.Data![0].PieceCount, Is.EqualTo(2));
+            Assert.That(response.Data![0].CoverImageFileName, Is.EqualTo("newer-bowl.jpg"));
+            Assert.That(response.Data![1].Name, Is.EqualTo("Vases"));
+        }
+
+        [Test]
+        public async Task GetGalleryCategoriesAsync_PieceNotShownInGallery_IsExcluded()
+        {
+            Category bowls = new Category { Id = Guid.NewGuid(), Name = "Bowls" };
+            _context.Categories.Add(bowls);
+            Piece hidden = BuildGalleryPiece(1, bowls.Id, new DateOnly(2026, 1, 1), "hidden.jpg");
+            hidden.ShowInGallery = false;
+            _context.Pieces.Add(hidden);
+            await _context.SaveChangesAsync();
+
+            DataHandlerResponse<List<GalleryCategoryModel>> response = await _sut.GetGalleryCategoriesAsync();
+
+            Assert.That(response.IsSuccess, Is.True);
+            Assert.That(response.Data, Is.Empty);
+        }
+
+        private static Piece BuildGalleryPiece(int pieceNumber, Guid categoryId, DateOnly startedDate, string imageFileName)
+        {
+            return new Piece
+            {
+                Id = Guid.NewGuid(),
+                PieceNumber = pieceNumber,
+                Title = $"Piece {pieceNumber}",
+                CategoryId = categoryId,
+                ShowInGallery = true,
+                StartedDate = startedDate,
+                CreatedByEmail = "admin@example.com",
+                Images = new List<PieceImage>
+                {
+                    new PieceImage { Id = Guid.NewGuid(), FileName = imageFileName, SortOrder = 0 },
+                },
+            };
+        }
+
         private PieceSaveModel BuildSaveModel(string title)
         {
             return new PieceSaveModel

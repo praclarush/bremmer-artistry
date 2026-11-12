@@ -1,4 +1,5 @@
 using System;
+using PotteryJournal.Infrastructure.Data.Entities;
 
 namespace PotteryJournal.Infrastructure.Models
 {
@@ -22,5 +23,11 @@ namespace PotteryJournal.Infrastructure.Models
         public string? ExternalLinkUrl { get; set; }
 
         public string? SocialMediaUrl { get; set; }
+
+        public RecurrenceFrequency RecurrenceFrequency { get; set; }
+
+        public int RecurrenceInterval { get; set; } = 1;
+
+        public DateTimeOffset? RecurrenceEndDate { get; set; }
     }
 }

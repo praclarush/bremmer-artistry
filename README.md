@@ -1,21 +1,26 @@
 # Bremmer Artistry
 
-The Bremmer Artistry site: a landing page, the Pottery Journal piece catalog, an Events/calendar
-section, FAQ, and About -- modeled on [bremmer-artistry.art](https://www.bremmer-artistry.art/).
-Unlike the old [`Pottery`](../Pottery) static site this replaces, the catalog and events are
-data-driven (Postgres) and manageable by the site owner through an internally-authenticated admin
-area (email + password, no third-party sign-in). Everything else (Home, Gallery, FAQ, About copy)
-is developer-maintained static content -- this is not a CMS.
+The Bremmer Artistry site: a landing page, a Gallery, the Pottery Journal piece catalog, an
+Events/calendar section, class booking, FAQ, About, and Contact -- modeled on
+[bremmer-artistry.art](https://www.bremmer-artistry.art/). Unlike the old [`Pottery`](../Pottery)
+static site this replaces, the catalog, gallery, events, and classes are data-driven (Postgres)
+and manageable by the site owner through an internally-authenticated admin area (email + password,
+no third-party sign-in). Page copy (the Home headline and statement, FAQ, About) is
+developer-maintained static content -- this is not a CMS.
 
 ## Structure
 
 ```
-PotteryJournal.sln
+PotteryJournal.slnx
+PRODUCT.md                         Who the site is for and what it has to do
+DESIGN.md                          The visual system: palette, type scale, components, rules
 src/
   PotteryJournal.SharedKernel/     Handler response types (HandlerResponse, DataHandlerResponse<T>,
                                     PagedHandlerResponse<T>) shared across the Infrastructure layer
   PotteryJournal.Infrastructure/   EF Core DbContext + entities/migrations, business logic handlers
-                                    (Pieces, Events, AllowedAdmins), image resizing, ICS generation
+                                    (Pieces, Events, Classes, Contact, ReferenceData, AdminSettings,
+                                    AllowedAdmins), image resizing, ICS generation, event
+                                    recurrence, SMTP email
   PotteryJournal.Web/              Razor Pages (public site + /admin), cookie auth against
                                     internally-stored credentials, the plain JSON data endpoints
                                     backing the public pages' scripts
@@ -29,10 +34,32 @@ docker-compose.yml                 App + Postgres + named volumes (pgdata, uploa
 
 ## Public site
 
-Home (`/`), Gallery (`/gallery`), Pottery Journal (`/pottery-journal`), Events (`/events`), FAQ
-(`/faq`), About (`/about`). The Pottery Journal page carries over the old static site's grid,
-filter chips, search, and hash-routed (`#piece/<n>`) worksheet detail view -- same look, feel, and
-interaction, now backed by Postgres instead of a checked-in `pieces.json`.
+Home (`/`), Gallery (`/gallery`), Pottery Journal (`/pottery-journal`), Events (`/events`), Classes
+(`/classes`), FAQ (`/faq`), About (`/about`), Contact (`/contact`).
+
+- **Home** is rendered entirely on the server, in the order a visitor deciding whether to come see
+  the work needs it: the headline beside the featured collection's rotating photo, upcoming events
+  (the next one as a wide feature, later ones as dated rows), a one-sentence statement about the
+  work, a row of Gallery category tiles, then the footer. Each section drops out cleanly when its
+  data is missing -- no featured collection, no events, or no Gallery pieces.
+- **Gallery** shows category tiles, a per-category photo grid, and a lightbox. A piece appears
+  only when it is marked "show in gallery" and has a category or a collection.
+- **Pottery Journal** carries over the old static site's grid, filter chips, search, and
+  hash-routed (`#piece/<n>`) worksheet detail view -- same look, feel, and interaction, now backed
+  by Postgres instead of a checked-in `pieces.json`.
+- **Events** offers a card list and a month calendar. Home's event links open this page scrolled
+  to the specific event, with that card outlined.
+- **Classes** is a two-step picker (class type, then a week of open times) that submits a
+  tentative booking request for the studio to approve.
+
+The footer on every page links the main sections plus email and Instagram.
+
+### Design
+
+`PRODUCT.md` and `DESIGN.md` at the repo root are the source of truth for audience, tone, palette,
+type scale, and component rules -- read them before changing public-facing UI. Content is held to
+an 82rem maximum width on large screens; the gutter token that does this (`--page-x` in
+`site.css`) has a couple of non-obvious rules, covered in `DESIGN.md` under "Page width".
 
 ## Admin area
 
@@ -40,14 +67,22 @@ interaction, now backed by Postgres instead of a checked-in `pieces.json`.
 (`AllowedAdmins` table, password hashed with ASP.NET Core's PBKDF2-based `PasswordHasher`) -- there
 is no open signup and no third-party identity provider. From here the site owner can create/edit
 pottery pieces (including photo upload, resized to a 1600px long edge and re-encoded JPEG quality
-82), manage events, manage who else is allowed to sign in, and change their own password from
-`/admin/change-password`.
+82), manage events, manage class availability, blackout dates and bookings, maintain the clay,
+glaze, category, collection and class-type lists, edit notification settings, manage who else is
+allowed to sign in, and change their own password from `/admin/change-password`.
 
-**Event banner photos**: the Home page and Events page card lists both display the banner in a
-16:9 crop (`object-fit: cover`), so upload an image already close to a 16:9 aspect ratio (e.g.
-1600x900) -- a portrait or square photo will have most of its height cropped out of view. Uploads
-are resized to a 1600px long edge (never upscaled) and re-encoded as JPEG quality 82, so 1600x900
-is also the effective ceiling for a landscape banner.
+**Event banner photos**: the Events page cards display the banner in a 16:9 crop and the Home
+page's "next event" feature in a slightly taller 16:10 crop (both `object-fit: cover`), so upload
+an image already close to 16:9 (e.g. 1600x900) with nothing important at the left or right edge --
+a portrait or square photo will have most of its height cropped out of view. Uploads are resized
+to a 1600px long edge (never upscaled) and re-encoded as JPEG quality 82, so 1600x900 is also the
+effective ceiling for a landscape banner. A flyer belongs in the separate flyer upload, which
+opens uncropped in a lightbox.
+
+**Home page content**: the photo beside the headline comes from whichever collection is marked
+"featured on homepage" under `/admin/reference-data` (one photo per piece in it, rotating); with
+none featured, the headline stands alone. The Gallery row shows the first four Gallery categories
+by name.
 
 ### First-time setup
 
@@ -59,6 +94,10 @@ is also the effective ceiling for a landscape banner.
    gitignored -- never commit real secrets.
 3. When adding further admins from `/admin/allowed-admins`, you set their initial password
    directly in the form (there's no invite-email flow) -- they can change it themselves afterward.
+4. **SMTP** (optional but needed for class booking notifications/confirmations and the Contact Us
+   form): set `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASSWORD`/`SMTP_FROM_ADDRESS` in `.env`.
+   Left blank, those email sends fail gracefully (reported as an error, not a crash) -- fine if
+   you're not exercising those flows locally.
 
 Sign-in attempts against `/admin/login` are rate-limited (10/minute per IP) since there's no
 external identity provider absorbing brute-force attempts anymore.
@@ -101,6 +140,11 @@ dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL" "<BOOTSTRAP_ADMIN
 dotnet user-secrets set "POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD" "<BOOTSTRAP_ADMIN_PASSWORD from .env>"
 ```
 
+SMTP settings follow the same pattern if you need to test email locally, e.g.
+`dotnet user-secrets set "Smtp:Host" "<value>"` (and `Smtp:Port`, `Smtp:User`, `Smtp:Password`,
+`Smtp:FromAddress`) -- these map to `appsettings.json`'s nested `Smtp` section rather than a flat
+`POTTERYJOURNAL_`-prefixed key, since it's structured config, not a single secret.
+
 User secrets only load when `ASPNETCORE_ENVIRONMENT=Development`, which the `http`/`https` launch
 profiles already set -- run/debug via one of those profiles (Visual Studio's default), not
 `--no-launch-profile`.
@@ -116,6 +160,8 @@ projects target `net8.0` (per house style) but set `<RollForward>LatestMajor</Ro
 dotnet test
 ```
 
+Both test projects run against EF Core's in-memory provider, so no Postgres or Docker is needed.
+
 ## Deployment
 
 Same homelab pattern as the old `Pottery` project: built via `docker/Dockerfile`, deployed behind
@@ -130,5 +176,6 @@ persisting keys to a volume (`PersistKeysToFileSystem`) in a later pass.
 ## Not in this phase
 
 See the "Explicitly deferred" section of the implementation plan this was built from: Gallery
-cart/checkout, migrating the old 287-piece catalog, category taxonomy management UI, recurring
-events, self-lockout protection when an admin edits their own allow-list entry.
+cart/checkout, migrating the old 287-piece catalog, self-lockout protection when an admin edits
+their own allow-list entry. (Category management and recurring events were on that list and have
+since been built.)

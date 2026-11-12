@@ -16,9 +16,19 @@
   --font-display: "Fraunces", serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Page gutter. Fluid up to 3rem, then grows so content never runs wider than --page-max on
+     large screens -- rules and borders stay full-bleed, only the content is held in. Blocks that
+     also cap their own width must do it on their children or with calc(), since this padding
+     alone exceeds a small max-width on very wide viewports. */
+  --page-max: 82rem;
+  --page-x: max(clamp(1rem, 4vw, 3rem), calc((100vw - var(--page-max)) / 2));
 }
 
 * { box-sizing: border-box; }
+
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -43,6 +53,7 @@ a { color: var(--copper-glaze); }
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .site-main { flex: 1; }
@@ -78,7 +89,7 @@ a { color: var(--copper-glaze); }
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem 2rem;
-  padding: 1.75rem clamp(1rem, 4vw, 3rem) 1.25rem;
+  padding: 1.75rem var(--page-x) 1.25rem;
   border-bottom: 1px solid var(--shelf-line);
 }
 
@@ -144,27 +155,85 @@ a { color: var(--copper-glaze); }
 
 .site-footer {
   border-top: 1px solid var(--shelf-line);
-  padding: 1.75rem clamp(1rem, 4vw, 3rem);
+  padding: 3rem var(--page-x) 2rem;
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--bisque-dark);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  gap: 2.5rem 2rem;
 }
 
-.site-footer a { color: var(--bisque-dark); }
-.site-footer a:hover { color: var(--copper-glaze); }
+.site-footer a { color: var(--bisque-dark); text-decoration: none; transition: color 0.15s ease; }
+.site-footer a:hover,
+.site-footer a:focus-visible { color: var(--copper-glaze); }
+
+.site-footer .wordmark,
+.site-footer .wordmark:hover,
+.site-footer .wordmark:focus-visible {
+  font-size: 1.35rem;
+  color: var(--paper);
+}
+
+.footer-brand p {
+  max-width: 34ch;
+  margin: 0.9rem 0 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.footer-heading {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--copper-glaze);
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+/* Padding, not line-height, carries the row height so each link is a comfortable tap target
+   without the list reading as double-spaced. */
+.footer-links a {
+  display: inline-block;
+  padding: 0.35rem 0;
+  overflow-wrap: anywhere;
+}
+
+.footer-legal {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--shelf-line);
+}
+
+@media (max-width: 800px) {
+  .site-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Full width so the email address isn't broken mid-word in a half-width column. */
+  .footer-brand,
+  .footer-follow {
+    grid-column: 1 / -1;
+  }
+}
 
 /* ---------- hero (Home) ---------- */
 
-.hero {
-  padding: 4rem clamp(1rem, 4vw, 3rem) 3rem;
-  max-width: 780px;
-}
-
 .hero-eyebrow {
+  margin: 0;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   letter-spacing: 0.1em;
@@ -174,14 +243,23 @@ a { color: var(--copper-glaze); }
 
 .hero h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(2.4rem, 4.4vw, 4.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
   color: var(--paper);
-  margin: 0.5rem 0 1rem;
+  margin: 1rem 0 1.5rem;
 }
 
-.hero p {
-  font-size: 1rem;
+.hero h1 em {
+  font-style: italic;
+}
+
+.hero p:not(.hero-eyebrow) {
+  max-width: 46ch;
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
   line-height: 1.7;
   color: var(--bisque-dark);
 }
@@ -214,39 +292,61 @@ a { color: var(--copper-glaze); }
 
 /* ---------- home intro layout (hero + featured collection) ---------- */
 
+/* The photo gets the larger share of the first screen: the work, not the copy, is the proof.
+   Text sits in the narrower column and is centered against the photo's height. */
 .home-intro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 1rem 3rem;
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  align-items: center;
+  gap: 2.5rem clamp(2rem, 5vw, 5rem);
+  padding: clamp(2rem, 5vw, 4rem) var(--page-x) clamp(1.5rem, 3vw, 2.5rem);
 }
 
-.home-intro .hero {
-  flex: 1 1 420px;
-  align-self: stretch;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+/* No featured collection to show: the hero stands alone at a readable measure. */
+.home-intro--solo {
+  grid-template-columns: minmax(0, 46rem);
 }
 
+/* Width is capped from the viewport height (4:5 photo, so width = 0.8 x height) so the whole
+   photo and its caption stay inside a laptop-height first screen. Capping the section rather
+   than the stage keeps the caption exactly as wide as the photo above it. */
 .featured-collection {
-  flex: 1 1 320px;
   min-width: 0;
-  padding: 4rem clamp(1rem, 4vw, 3rem) 3rem 0;
+  width: 100%;
+  max-width: calc(min(44rem, 100dvh - 15rem) * 0.8);
+  justify-self: end;
+}
+
+.featured-collection-caption {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.1rem;
 }
 
 .featured-collection h2 {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 500;
   font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  letter-spacing: -0.01em;
   color: var(--paper);
-  margin: 0.5rem 0 1.25rem;
+  margin: 0.35rem 0 0;
+}
+
+.featured-collection-position {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--bisque-dark);
+  white-space: nowrap;
 }
 
 .featured-collection-stage {
   position: relative;
   aspect-ratio: 4 / 5;
-  max-width: 420px;
   background: var(--shelf);
   border: 1px solid var(--shelf-line);
   overflow: hidden;
@@ -277,15 +377,55 @@ a { color: var(--copper-glaze); }
   margin-top: 0.9rem;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
+  .home-intro {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Photo first when stacked, so the first mobile screen shows pottery instead of only type. */
   .home-intro .featured-collection {
     order: -1;
-    padding-right: clamp(1rem, 4vw, 3rem);
+    justify-self: start;
+    max-width: min(100%, calc(62dvh * 0.8));
+  }
+}
+
+/* ---------- statement band (Home) ----------
+   One sentence about the work, set large, between the events and the gallery teaser. A ledger
+   row at display scale: mono label in the margin column, statement beside it. */
+
+.statement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+  gap: 1rem clamp(2rem, 5vw, 5rem);
+  align-items: baseline;
+  margin: clamp(3rem, 7vw, 6rem) 0 0;
+  padding: clamp(2.5rem, 6vw, 4.5rem) var(--page-x);
+  border-top: 1px solid var(--shelf-line);
+  border-bottom: 1px solid var(--shelf-line);
+}
+
+.statement-text {
+  max-width: 30em;
+  margin: 0 0 1.5rem;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+}
+
+@media (max-width: 640px) {
+  .statement {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 .btn {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
@@ -293,9 +433,10 @@ a { color: var(--copper-glaze); }
   text-decoration: none;
   color: var(--paper);
   border: 1px solid var(--copper-glaze);
+  min-height: 44px;
   padding: 0.65rem 1.2rem;
   border-radius: 2px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
 .btn:hover,
@@ -304,29 +445,60 @@ a { color: var(--copper-glaze); }
   color: var(--kiln-char);
 }
 
-/* ---------- section heading, shared across pages ---------- */
+.btn:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* ---------- section heading, shared across pages ----------
+   h1 when it titles the page (Gallery, Events, Classes), h2 when it titles a section within one
+   (Home). Same component either way; only the scale differs. */
 
 .section-heading {
-  padding: 0 clamp(1rem, 4vw, 3rem);
-  margin: 3rem 0 1.5rem;
+  padding: 0 var(--page-x);
+  margin: clamp(2.5rem, 5vw, 4rem) 0 1.5rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem 1.5rem;
+}
+
+.section-heading h1,
+.section-heading h2 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  margin: 0;
+}
+
+.section-heading h1 {
+  font-size: clamp(2rem, 4.2vw, 3rem);
 }
 
 .section-heading h2 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.5rem;
-  color: var(--paper);
-  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
 }
 
 .section-heading a {
   font-family: var(--font-mono);
   font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.section-heading a:hover,
+.section-heading a:focus-visible {
+  color: var(--paper);
 }
 
 /* ---------- Gallery category tiles ---------- */
@@ -344,9 +516,21 @@ a { color: var(--copper-glaze); }
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 2rem 1.6rem;
-  padding: 1rem clamp(1rem, 4vw, 3rem) 4rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: 2.75rem 1.75rem;
+  padding: 1rem var(--page-x) 5rem;
+}
+
+/* Home's teaser: one fixed row (two on narrow screens) rather than auto-fill, so a short list
+   of categories never wraps into a stray half-row. */
+.category-grid--teaser {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .category-grid--teaser {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .category-tile {
@@ -358,7 +542,7 @@ a { color: var(--copper-glaze); }
 }
 
 .category-photo {
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
   background: var(--shelf);
   border: 1px solid var(--shelf-line);
   overflow: hidden;
@@ -377,21 +561,35 @@ a { color: var(--copper-glaze); }
   transform: scale(1.045);
 }
 
+.category-tile:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 6px;
+}
+
 .category-name {
   display: block;
-  margin-top: 0.9rem;
-  font-family: var(--font-body);
+  margin-top: 1rem;
+  font-family: var(--font-display);
   font-weight: 500;
-  font-size: 0.92rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.005em;
   color: var(--paper);
+  transition: color 0.15s ease;
+}
+
+.category-tile:hover .category-name,
+.category-tile:focus-visible .category-name {
+  color: var(--copper-glaze);
 }
 
 .category-count {
   display: block;
   font-family: var(--font-mono);
   font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--bisque-dark);
-  margin-top: 0.15rem;
+  margin-top: 0.3rem;
 }
 
 /* ---------- lightbox (shared base) ----------
@@ -456,8 +654,8 @@ a { color: var(--copper-glaze); }
   position: fixed;
   top: clamp(0.75rem, 3vw, 1.75rem);
   right: clamp(0.75rem, 3vw, 1.75rem);
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   background: none;
   border: 1px solid var(--shelf-line);
   color: var(--paper);
@@ -498,16 +696,24 @@ a { color: var(--copper-glaze); }
 /* ---------- static content pages (FAQ / About) ---------- */
 
 .content-page {
-  max-width: 720px;
-  padding: 3rem clamp(1rem, 4vw, 3rem) 5rem;
+  padding: clamp(2.5rem, 5vw, 4rem) var(--page-x) 5rem;
+}
+
+/* The measure is capped on the children rather than the page box: --page-x grows past a fixed
+   box width on wide screens, which would crush the content instead of constraining it. */
+.content-page > * {
+  max-width: 42rem;
 }
 
 .content-page h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(2rem, 4.2vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--paper);
-  margin-bottom: 1.5rem;
+  margin: 0 0 1.5rem;
 }
 
 .content-page p {
@@ -522,9 +728,10 @@ a { color: var(--copper-glaze); }
 .faq-item:last-child { border-bottom: 1px solid var(--shelf-line); }
 
 .faq-question {
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.2rem;
+  line-height: 1.3;
   color: var(--paper);
   margin: 0 0 0.5rem;
 }
@@ -551,5 +758,164 @@ a { color: var(--copper-glaze); }
 }
 
 .contact-list li { margin-bottom: 0.4rem; }
+
+/* ---------- month calendar shell (shared: Events calendar view, Classes date picker) ---------- */
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-mono);
+}
+
+.calendar-nav button {
+  background: none;
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  border-radius: 999px;
+  width: 2.75rem;
+  height: 2.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.calendar-nav button:hover {
+  border-color: var(--copper-glaze-dim);
+  color: var(--copper-glaze);
+}
+
+.calendar-nav button:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.calendar-month-label {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--paper);
+  min-width: 10rem;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--shelf-line);
+  border: 1px solid var(--shelf-line);
+}
+
+.calendar-weekday {
+  background: var(--shelf);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bisque-dark);
+  padding: 0.5rem 0;
+}
+
+.calendar-day {
+  background: var(--kiln-char);
+  min-height: 5rem;
+  padding: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--bisque-dark);
+}
+
+.calendar-day.outside-month { opacity: 0.35; }
+
+.calendar-day-number { display: block; margin-bottom: 0.3rem; }
+
+/* ---------- shared simple form (Classes booking form, Contact Us) ---------- */
+
+.form-status-message {
+  margin: 1rem var(--page-x) 0;
+  padding: 0.75rem 1rem;
+  background: var(--shelf);
+  border: 1px solid var(--copper-glaze-dim);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+/* Inside a content page the page gutter is already applied by the page box. */
+.content-page .form-status-message {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.simple-form {
+  padding: 1.5rem clamp(1.25rem, 4vw, 2rem);
+  max-width: 32rem;
+  background: var(--shelf);
+  border: 1px solid var(--shelf-line);
+}
+
+.simple-form h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.simple-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.simple-form-field label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bisque-dark);
+}
+
+.simple-form-field input,
+.simple-form-field textarea {
+  background: var(--kiln-char);
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  font: inherit;
+  padding: 0.55rem 0.7rem;
+}
+
+.simple-form-field input:focus-visible,
+.simple-form-field textarea:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 1px;
+  border-color: var(--copper-glaze);
+}
+
+.simple-form-submit {
+  background: var(--copper-glaze);
+  color: var(--kiln-char);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-height: 44px;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.simple-form-submit:hover,
+.simple-form-submit:focus-visible {
+  background: var(--copper-glaze-bright);
+}
+
+.simple-form-submit:focus-visible {
+  outline: 2px solid var(--paper);
+  outline-offset: 2px;
+}
 
 .hidden { display: none !important; }

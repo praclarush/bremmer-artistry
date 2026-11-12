@@ -53,6 +53,30 @@
     </div>
   </div>
 
+  <div class="row mb-3">
+    <div class="col-sm-4">
+      <label class="form-label" for="recurrenceFrequency">Repeats</label>
+      <select class="form-select" id="recurrenceFrequency" asp-for="Event.RecurrenceFrequency" data-recurrence-toggle="recurrenceFields">
+        <option value="None">Does not repeat</option>
+        <option value="Daily">Daily</option>
+        <option value="Weekly">Weekly</option>
+        <option value="Monthly">Monthly</option>
+      </select>
+    </div>
+    <div id="recurrenceFields" class="col-sm-8 row g-3">
+      <div class="col-sm-6">
+        <label class="form-label" for="recurrenceInterval">Every</label>
+        <input type="number" class="form-control" id="recurrenceInterval" asp-for="Event.RecurrenceInterval" min="1">
+        <div class="form-text">E.g. 2 with Weekly means every 2 weeks.</div>
+      </div>
+      <div class="col-sm-6">
+        <label class="form-label" for="recurrenceEndDate">Repeat until (optional)</label>
+        <input type="date" class="form-control" id="recurrenceEndDate" name="Event.RecurrenceEndDate"
+               value="@(Model.Event.RecurrenceEndDate?.ToString("yyyy-MM-dd"))">
+      </div>
+    </div>
+  </div>
+
   <div class="mb-3">
     <label class="form-label" for="externalLinkUrl">External link (optional)</label>
     <input type="url" class="form-control" id="externalLinkUrl" asp-for="Event.ExternalLinkUrl">

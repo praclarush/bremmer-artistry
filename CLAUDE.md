@@ -6,8 +6,9 @@ This file provides guidance to Claude Code when working in this repository.
 
 The Bremmer Artistry site -- ASP.NET Core (net8.0) + EF Core + Postgres. Successor to the static
 [`Pottery`](../Pottery) project: same look/feel/interaction for the piece catalog, now data-driven
-and expanded into a full site (Home, Gallery, Pottery Journal, Events, FAQ, About) with an
-internally-authenticated admin area. See [README.md](README.md) for the directory layout and setup.
+and expanded into a full site (Home, Gallery, Pottery Journal, Events, Classes, FAQ, About,
+Contact) with an internally-authenticated admin area. See [README.md](README.md) for the directory
+layout and setup.
 
 ## Design Context
 
@@ -85,9 +86,166 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `IPieceHandler.GetFeaturedCollectionAsync()` (null when nothing is featured or the featured
   collection has no photographed pieces); `wwwroot/js/featured-collection.js` auto-advances the
   crossfade and explicitly no-ops under `prefers-reduced-motion` rather than relying solely on the
-  global CSS override.
+  global CSS override. The same script updates the "1 / N" position counter under the photo
+  (`[data-featured-position]`), which Razor only renders when the collection has more than one
+  piece.
+- **Home is server-rendered end to end and ordered for a walk-up visitor: hero + featured
+  collection photo -> upcoming events -> statement band -> Gallery teaser -> footer.** `IndexModel`
+  makes three handler calls (`GetUpcomingAsync`, `GetFeaturedCollectionAsync`,
+  `GetGalleryCategoriesAsync`) and `Index.cshtml` renders all of it -- no client-side fetch, unlike
+  Gallery/Events/Classes/Journal. The next event renders as one wide `.event-feature` card and any
+  later ones as `.event-ledger-row` rows (styles in `events.css`, Home-only); the Events page keeps
+  its JS-built `.event-card` grid. The statement band and the hero paragraph are the original hero
+  copy split in two, not new copy -- PRODUCT.md rules out invented proof or marketing filler, so
+  don't pad Home with any.
+- **`IPieceHandler.GetGalleryCategoriesAsync` and `gallery.js`'s `buildCategories` are two
+  implementations of the same grouping and must agree.** The handler method groups
+  `GetGalleryPiecesAsync`'s output into `GalleryCategoryModel` (name, piece count, cover photo) for
+  Home's teaser; the Gallery page still fetches `/gallery/data` and groups client-side because it
+  needs every photo for the lightbox. Both sort by name and both take the cover from the first
+  photo of the newest piece in the group -- change one and the same category shows a different
+  cover on Home than on `/gallery`. Home's tiles link to `/gallery#category/<name>`, the hash route
+  `gallery.js` already handles. Home shows the first four (`IndexModel.TeaserCategoryCount`) in a
+  fixed single row (`.category-grid--teaser`), so a short list never wraps into a stray half-row.
+- **An event card's DOM id is `event-<id>-<start as Unix milliseconds>`, and that key is built in
+  two places.** `events.js`'s `occurrenceKey` builds it from the JSON date
+  (`new Date(evt.startDateTime).getTime()`); `Index.cshtml` builds the same key server-side
+  (`StartDateTime.ToUnixTimeMilliseconds()`) for Home's event links. Unix milliseconds were chosen
+  over the raw date string precisely so the two sides don't have to match a serializer's text
+  format -- keep it numeric. The id alone isn't enough: a recurring event's `Id` repeats across
+  every expanded occurrence. Because cards are built after the data fetch, the browser's own
+  fragment scroll finds nothing at load time; `scrollToLinkedEvent` (run after `renderCards`, and
+  on `hashchange`) scrolls to the linked card and marks it `.is-linked` (copper border) so it's
+  identifiable in a row of several. `HomeTests` pins the server-side half of this contract.
+- **`Event` recurrence is expanded dynamically on read, never persisted as occurrence rows.** `Event`
+  carries `RecurrenceFrequency`/`RecurrenceInterval`/`RecurrenceEndDate` and is expanded by
+  `IRecurrenceExpander`/`RecurrenceExpander` (`Infrastructure/Services/`), which wraps Ical.Net's
+  `RecurrencePattern`/`CalendarEvent.GetOccurrences(...)` -- the same library already used for `.ics`
+  export -- rather than a hand-rolled recurrence implementation. `RecurrenceFrequencyMapper` maps the
+  local enum to Ical.Net's `FrequencyType` in one place, shared by both the expander and
+  `IcsGenerator` (a recurring event's `.ics` download emits a real `RRULE`, not a flat single date).
+  Because occurrences are virtual, deleting a recurring `Event` row always removes the whole series --
+  there's no per-occurrence edit/delete, and no orphaned rows to clean up either way. `EventsHandler`
+  exposes three shapes over the same data: `GetAllAsync` (series-level, unexpanded -- the admin CRUD
+  list, since edit/delete act on the whole series) `GetUpcomingAsync` (expands recurring events
+  forward, bounded by an internal window so indefinite recurrence can't generate unbounded lists;
+  non-recurring events stay unbounded, unchanged from before recurrence existed) and
+  `GetOccurrencesInRangeAsync` (same expansion, but a caller-supplied range instead of an internal
+  window, so the admin calendar can page arbitrarily far back or forward). `ClassAvailability` does
+  **not** use this engine or these fields -- see the class-scheduling note below, its recurrence
+  shape is deliberately different (weekly day-of-week template, not an anchor-date/frequency rule).
+- **Email is MailKit-backed, added from scratch for class booking and Contact Us -- nothing else
+  sends email.** `IEmailSender`/`SmtpEmailSender` (`Infrastructure/Services/`) wrap MailKit;
+  `SmtpOptions` binds SMTP host/port/credentials from the `Smtp:*` config section, wired the same way
+  `ConnectionStrings:PotteryJournal` already is (`Smtp__*` env vars in `docker-compose.yml`, sourced
+  from `.env`; `Smtp:*` user-secrets for local debugging -- see README). A failed send is caught and
+  returned as a `HandlerResponse` error, never thrown -- email is an external I/O boundary that
+  shouldn't crash whatever triggered it.
+- **Settings vs. config: `AdminSettings` (a DB table) holds business-level values the studio owner
+  edits from `/admin/settings`; `Smtp:*` (env-var config) holds deployment secrets a developer edits
+  by redeploying.** `AdminSettings` has exactly two fields today --
+  `NotificationRecipientEmail` (where class-booking and Contact-Us notifications go) and
+  `MinimumBookingLeadDays` (how many days ahead a class must be booked) -- deliberately not a
+  generic key-value settings system, since nothing else needs one yet.
+  `AdminSettingsHandler.GetAsync()` creates the single row with defaults on first read if the table
+  is empty, mirroring `EnsureBootstrapAdminAsync`'s idempotent-seed pattern.
+- **`ClassAvailability` is a weekly day-of-week template, not a date-anchored recurrence rule, and
+  can offer more than one block a day.** Each row is `ClassTypeId` + `DaysOfWeek` (a `[Flags]`
+  bitmask of weekdays, e.g. Mon/Wed/Fri) + `StartTime` + `LastStartTime` + `IntervalHours` -- there's
+  no anchor date and no end date. The rule recurs indefinitely; `ClassesHandler.ExpandWeeklyRule`
+  walks every calendar day in the caller's query range and, on a matching weekday, emits an
+  occurrence at `StartTime`, then every `IntervalHours` after that up to and including
+  `LastStartTime` (11am start, every 2 hours, until 6pm -> 11, 1, 3, 5). When a class only runs once
+  a day, `LastStartTime` simply equals `StartTime` (`CreateAvailabilityRuleAsync` forces this when
+  the admin form's `RepeatsMultipleTimesPerDay` checkbox is unchecked, ignoring whatever was
+  submitted in the now-hidden interval/last-time fields) and `IntervalHours` is irrelevant since the
+  inner loop runs exactly once. `BlackoutPeriod` is the *only* mechanism for excluding a specific
+  date or time range (a holiday, a one-off closure) -- it isn't specific to availability rules, so it
+  also blocks any `ClassBooking` request that would otherwise land in that window. This intentionally
+  does not reuse `IRecurrenceExpander`/`RecurrenceFrequency` (the `Event` engine above) -- classes
+  only ever need "these weekdays, these times," never Ical.Net's fuller
+  daily/every-N-weeks/monthly vocabulary, and forcing that engine's date-anchored shape onto a weekly
+  template made "offer this class on Mon/Wed/Fri" require three separate rules instead of one. The
+  admin checkbox toggle reuses `admin-forms.js`'s `[data-recurrence-toggle]` hook (originally built
+  for Event's recurrence-frequency `<select>`), generalized to also collapse/expand a target based on
+  a checkbox's `checked` state instead of only a select's value.
+- **The public `/classes` page is a two-step picker, not one flat list; its date/time picker is a
+  one-week-at-a-time strip, not a month grid; and picking a time opens the booking form in a modal,
+  not inline on the page.** Step 1 (`#classTypeList`) shows every class type that currently has at
+  least one bookable slot, derived client-side from `/classes/data` (no separate endpoint) --
+  clicking a tile is a hash navigation to `#type/<classTypeId>`, mirroring `pottery-journal.js`'s
+  `#piece/<n>` list/detail routing exactly (a `route()` function keyed off `location.hash`,
+  `hashchange` listener, `window.scrollTo(0, 0)` on each transition). Step 2 (`#bookingView`) filters
+  the same fetched slot list down to that one class type and renders it as seven day columns
+  (`.class-week-day`, always Sun-Sat) with that day's available start times listed directly
+  underneath each header (`renderClassWeek` in `classes.js`) -- no intermediate "pick a date, then
+  see times" click, both are visible at once, closer to the reference booking UX (SimplyBook.it) than
+  a full month view would be. `classWeekCursor` (a week-start `Date`, not a month) initializes to the
+  week of that class type's earliest available slot, so opening a type whose next opening is weeks
+  out doesn't land on a blank week the visitor has to page forward through; prev/next shift by 7 days.
+  An unrecognized or now-empty `classTypeId` in the hash bounces back to the list
+  (`location.hash = ""`), same graceful-degradation behavior as an unknown piece number in the
+  Pottery Journal. The nav chrome (`.calendar-nav`/`.calendar-month-label`, reused verbatim from
+  Events' month view via `site.css`) is the only piece shared with Events' calendar -- the day-grid
+  itself is Classes-only (`.class-week-grid`/`.class-week-day` in `classes.css`) since Events has no
+  week view to share it with. Clicking a time slot opens `#bookingModal` (built on the same
+  `.lightbox` scrim/open/close CSS mechanics `site.css` already ships for Gallery's photo viewer and
+  Events' flyer viewer) instead of revealing the form inline -- `openBookingModal`/`closeBookingModal`
+  in `classes.js` mirror `events.js`'s `openFlyerLightbox`/`closeFlyerLightbox` pattern exactly
+  (remove-hidden, forced reflow, add-open to trigger the CSS transition; `inert` on every other
+  `.site-main` child plus the nav/footer while open; restore focus to the previously-focused element
+  on close), with one deliberate deviation: focus lands on the Name field instead of the close button
+  on open, since the modal's whole purpose is filling out the form, not dismissing it. Phone is a
+  required field on this form (`bookingPhone` has `required`, matching the server-side check in
+  `ClassesHandler.CreateBookingAsync` -- never trust client-only validation).
+- **Class booking is a two-step approval flow, and a booking is independent of the
+  `ClassAvailability` rule that produced its slot.** A public submission
+  (`ClassesHandler.CreateBookingAsync`) re-validates lead time, blackout periods, and party-size-vs-
+  `ClassType.MaxCapacity` server-side (never trusts the client's already-filtered slot list), inserts
+  as `ClassBookingStatus.Tentative`, and emails `AdminSettings.NotificationRecipientEmail` -- the
+  customer gets nothing yet. An admin approving it from `/admin/classes/bookings`
+  (`ApproveBookingAsync`) is what emails the customer a confirmation and flips it to `Confirmed`;
+  declining frees the slot. A partial unique index on `(ClassTypeId, StartDateTime)` excluding
+  `Declined` rows enforces "one active booking per class type per slot" at the DB level (a Wheel
+  Throw and a Hand-Building booking can share a slot; two Wheel Throws can't) -- since `ClassBooking`
+  has no FK to `ClassAvailability`, editing or deleting the availability rule that originally
+  produced a slot never touches bookings already made against it.
+- **`/admin/classes/bookings/create` ("Schedule a Class") is a third booking-creation path, for
+  call-based/in-person scheduling, and it's a deliberate one-step alternative to the two-step public
+  flow above, not a shortcut through it.** `CreateManualBookingAsync` and the public
+  `CreateBookingAsync` both funnel through a shared `ValidateAndBuildBookingAsync(model,
+  enforceMinimumLeadTime)` -- capacity, blackout periods, and the slot-conflict check always run for
+  both; only `AdminSettings.MinimumBookingLeadDays` is conditional, skipped for the manual path since
+  an admin scheduling a call-in booking *is* the deliberate override of that guardrail, not a bypass
+  of the physical constraints under it. A manual booking is inserted as `Confirmed` directly (with
+  `DecisionDate` set immediately) and emails the customer a confirmation right away
+  (`SendBookingConfirmationEmailAsync`, the same helper `ApproveBookingAsync` now calls) -- there's no
+  Tentative interim step and no studio notification email, since the admin creating it already knows
+  about it. The date/time field is a free-form `datetime-local` input, not constrained to an existing
+  `ClassAvailability` slot, so an admin can schedule a one-off session outside the normal recurring
+  pattern when a caller needs something custom.
 
 ## Editing Notes
+
+- **Page gutters come from `--page-x` (`site.css`), and it is not a plain clamp.** It's fluid up
+  to 3rem, then grows so content never runs wider than `--page-max` (82rem); borders and rules
+  stay full-bleed. Two consequences, both of which have already caused real bugs here: (1) never
+  pair `padding: 0 var(--page-x)` with a bare `max-width` on the same box -- on a wide monitor the
+  gutter alone exceeds a small max-width and crushes the content to nothing. Cap the measure on
+  the children instead (`.content-page > *`), or use `calc(<measure> + 2 * var(--page-x))`
+  (`.gallery-intro`). (2) A component that carries its own page gutter must drop it when nested in
+  a view that already has one -- `.gallery` is top-level on the Pottery Journal but nested inside
+  `.gallery-category-view` on Gallery, hence the override in `gallery.css`. Check any new layout
+  at 1920px wide, not just 1440px, since neither failure shows below `--page-max`.
+- **Only these font weights are loaded** (`_Layout.cshtml`): Fraunces 400-600, Inter 400/500/600,
+  IBM Plex Mono 400/500/600. Asking for anything else (e.g. Inter 700) silently renders as
+  browser-synthesized faux bold. Add the weight to the Google Fonts URL first if one is really
+  needed.
+- **Every public page has exactly one `h1`.** Home's is the hero headline; Gallery, Events, and
+  Classes put theirs in `.section-heading` (the same component Home uses with an `h2` for section
+  titles -- `site.css` scales the two differently); the Journal's is in `.journal-header`; FAQ,
+  About, and Contact use `.content-page h1`. All but Home's share one "page title" scale, see
+  DESIGN.md.
 
 - **Pottery Journal page** (`Pages/PotteryJournal.cshtml` + `wwwroot/js/pottery-journal.js`) is a
   near-verbatim port of the old static site's `index.html`/`app.js`: same DOM-building style (no
@@ -130,6 +288,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   using them (`Npgsql.NpgsqlException: Failed to connect to 127.0.0.1:55432`, or images 404ing).
   This has recurred multiple times from rebuilding the app image for verification with the base file
   only -- the container needing rebuilt is almost never a reason to drop the `-f` flags.
+- **Every `.cshtml` with a code-behind `.cshtml.cs` must declare `@model`.** Omitting it (as
+  `Classes.cshtml` did while being built) doesn't break the page visibly -- it still compiles, `OnGet`
+  still renders correctly, and the form's antiforgery token still shows up -- but Razor Pages fails
+  to associate the compiled view with its `PageModel` class for POST **handler dispatch**: every POST
+  silently falls through to re-rendering the GET view (200, no handler code runs at all, no exception,
+  no log line) instead of invoking `OnPost*Async`. This is essentially undetectable by inspection or
+  by manually clicking through the page in a browser during dev (it looks like the form "did nothing"
+  or "didn't save," easy to blame on the handler logic instead) -- it only surfaced here via an
+  integration test asserting the POST's redirect status. Confirmed no other page with a code-behind
+  in this repo is missing `@model` except `Gallery.cshtml` (GET-only, so harmless there, left alone).
 
 ## Testing
 
@@ -141,6 +309,17 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `Results.Json(...)` -- `Results.Json`'s PipeWriter fast path throws under `WebApplicationFactory`'s
   TestServer (`PipeWriter.UnflushedBytes` not implemented). Keep using `JsonResult<T>` for any new
   data endpoint rather than reintroducing `Results.Json`.
+- `HomeTests` covers Home's server-rendered sections (empty state, Gallery teaser tiles, the event
+  feature/ledger split, and the event link's occurrence key). It seeds through `AppDbContext`
+  resolved from `_factory.Services`, since Home has no JSON endpoint to assert against.
+- **Checking a UI change visually when Docker/Postgres isn't running**: the real app can't start
+  without a database, but the test host can render it. A throwaway `[Explicit]` test in
+  `Web.Tests` can seed the in-memory database (real file names from `./uploads` make the photos
+  resolve), `GetStringAsync` each page and data endpoint, and write the responses to a temp
+  folder; any static server that maps those files plus `wwwroot/` and `uploads/` then gives a
+  browsable copy with the real Razor output and the real CSS/JS. Delete the test afterward -- it's
+  a verification aid, not a fixture. Seeded data won't match production content, so this checks
+  layout and behavior, not copy.
 
 ## Deployment
 

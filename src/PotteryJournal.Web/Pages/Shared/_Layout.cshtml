@@ -8,10 +8,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@ViewData["Title"] - Bremmer Artistry</title>
 <meta name="description" content="Handmade pottery, the Pottery Journal catalog, and upcoming shows and events.">
+<meta name="theme-color" content="#0c2435">
 <link rel="icon" href="~/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -31,8 +32,10 @@
     <li><a href="/gallery" aria-current="@(activeNav == "Gallery" ? "page" : null)">Gallery</a></li>
     <li><a href="/pottery-journal" aria-current="@(activeNav == "PotteryJournal" ? "page" : null)">Pottery Journal</a></li>
     <li><a href="/events" aria-current="@(activeNav == "Events" ? "page" : null)">Events</a></li>
+    <li><a href="/classes" aria-current="@(activeNav == "Classes" ? "page" : null)">Classes</a></li>
     <li><a href="/faq" aria-current="@(activeNav == "Faq" ? "page" : null)">FAQ</a></li>
     <li><a href="/about" aria-current="@(activeNav == "About" ? "page" : null)">About</a></li>
+    <li><a href="/contact" aria-current="@(activeNav == "Contact" ? "page" : null)">Contact</a></li>
   </ul>
 </header>
 
@@ -41,12 +44,35 @@
 </main>
 
 <footer class="site-footer">
-  <span>&copy; @DateTime.UtcNow.Year Bremmer Artistry</span>
-  <span>
-    <a href="mailto:info@bremmer-artistry.art">info@bremmer-artistry.art</a>
-    &middot;
-    <a href="https://www.instagram.com/bremmerArtistry" target="_blank" rel="noopener">@@bremmerArtistry</a>
-  </span>
+  <div class="footer-brand">
+    <a class="wordmark" href="/">Bremmer <span>Artistry</span></a>
+    <p>A ceramic studio creating handmade pottery, from functional pieces to artistic forms.</p>
+  </div>
+  <nav aria-labelledby="footerExploreHeading">
+    <h2 class="footer-heading" id="footerExploreHeading">Explore</h2>
+    <ul class="footer-links">
+      <li><a href="/gallery">Gallery</a></li>
+      <li><a href="/pottery-journal">Pottery Journal</a></li>
+      <li><a href="/events">Events</a></li>
+      <li><a href="/classes">Classes</a></li>
+    </ul>
+  </nav>
+  <nav aria-labelledby="footerStudioHeading">
+    <h2 class="footer-heading" id="footerStudioHeading">Studio</h2>
+    <ul class="footer-links">
+      <li><a href="/about">About</a></li>
+      <li><a href="/faq">FAQ</a></li>
+      <li><a href="/contact">Contact</a></li>
+    </ul>
+  </nav>
+  <div class="footer-follow">
+    <h2 class="footer-heading">Follow</h2>
+    <ul class="footer-links">
+      <li><a href="mailto:info@bremmer-artistry.art">info@bremmer-artistry.art</a></li>
+      <li><a href="https://www.instagram.com/bremmerArtistry" target="_blank" rel="noopener">@@bremmerArtistry</a></li>
+    </ul>
+  </div>
+  <p class="footer-legal">&copy; @DateTime.UtcNow.Year Bremmer Artistry</p>
 </footer>
 
 @await RenderSectionAsync("Scripts", required: false)

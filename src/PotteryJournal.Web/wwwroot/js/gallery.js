@@ -2,6 +2,14 @@ const PIECE_IMAGE_BASE = "/uploads/pieces/";
 const PHOTO_SWAP_MS = 130;
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const STAGGER_CAP = 15;
+// Chrome/Edge/Safari (no Firefox yet, per caniuse) get a shared-element morph: the tile a visitor
+// clicked grows directly into the lightbox photo, and paging prev/next crossfades between photos
+// natively instead of the manual opacity-timeout swap below. Everything falls back to today's
+// existing behavior when unsupported or under reduced motion -- see PHOTO_MORPH_NAME's static CSS
+// rule in gallery.css and its `@media (prefers-reduced-motion: reduce)` kill-switch.
+const VIEW_TRANSITIONS_SUPPORTED = typeof document.startViewTransition === "function";
+const USE_PHOTO_MORPH = VIEW_TRANSITIONS_SUPPORTED && !REDUCED_MOTION;
+const PHOTO_MORPH_NAME = "gallery-lightbox-photo";
 
 let CATEGORIES = [];
 let activeCategory = null;
@@ -215,16 +223,41 @@ function openLightbox(category, index) {
   const isFirstOpen = !lightbox.classList.contains("open");
   activeCategory = category;
   activeIndex = index;
-  showLightboxPhoto(isFirstOpen);
 
-  if (isFirstOpen) {
-    lastFocusedElement = document.activeElement;
-    lightbox.classList.remove("hidden");
-    void lightbox.offsetWidth; // force a reflow so the "hidden" -> visible state is committed before "open" triggers the transition
-    lightbox.classList.add("open");
-    lightboxClose.focus();
-    setBackgroundInert(true);
+  if (!isFirstOpen) {
+    showLightboxPhoto(false);
+    return;
   }
+
+  if (USE_PHOTO_MORPH) {
+    const sourceImg = categoryGrid.children[index]?.querySelector(".tile-photo img");
+    if (sourceImg) {
+      sourceImg.style.viewTransitionName = PHOTO_MORPH_NAME;
+    }
+    const transition = document.startViewTransition(() => {
+      showLightboxPhoto(true);
+      lastFocusedElement = document.activeElement;
+      lightbox.classList.remove("hidden");
+      lightbox.classList.add("open");
+      setBackgroundInert(true);
+      // Clear the tile's name before the "after" snapshot is captured -- #lightboxImage carries
+      // this name permanently (see gallery.css), so leaving it on both elements at once would be
+      // a duplicate view-transition-name, which throws.
+      if (sourceImg) {
+        sourceImg.style.viewTransitionName = "";
+      }
+    });
+    transition.finished.finally(() => lightboxClose.focus());
+    return;
+  }
+
+  showLightboxPhoto(true);
+  lastFocusedElement = document.activeElement;
+  lightbox.classList.remove("hidden");
+  void lightbox.offsetWidth; // force a reflow so the "hidden" -> visible state is committed before "open" triggers the transition
+  lightbox.classList.add("open");
+  lightboxClose.focus();
+  setBackgroundInert(true);
 }
 
 function setBackgroundInert(isInert) {
@@ -254,19 +287,29 @@ function showLightboxPhoto(skipFade) {
     pendingSwapTimeout = null;
   }
 
-  if (skipFade || REDUCED_MOTION) {
+  const applyImage = () => {
     lightboxImage.alt = photo.pieceTitle;
     lightboxImage.src = photo.url;
+  };
+
+  if (skipFade || REDUCED_MOTION) {
+    applyImage();
     return;
   }
 
-  // Briefly fade the current photo out before swapping src, so stepping between photos reads
-  // as paging through the work rather than an instant pop. The lightbox's own open transition
-  // already handles the first-appearance reveal, so this only runs for Next/Prev steps.
+  if (USE_PHOTO_MORPH) {
+    // #lightboxImage carries PHOTO_MORPH_NAME permanently (gallery.css) -- the same element
+    // persisting across the transition with only its src changing gets a native crossfade
+    // between the old and new photo, no manual opacity timing needed.
+    document.startViewTransition(applyImage);
+    return;
+  }
+
+  // Fallback for browsers without View Transitions: briefly fade the current photo out before
+  // swapping src, so stepping between photos still reads as paging rather than an instant pop.
   lightboxImage.classList.add("is-swapping");
   pendingSwapTimeout = window.setTimeout(() => {
-    lightboxImage.alt = photo.pieceTitle;
-    lightboxImage.src = photo.url;
+    applyImage();
     lightboxImage.classList.remove("is-swapping");
     pendingSwapTimeout = null;
   }, PHOTO_SWAP_MS);
@@ -287,19 +330,44 @@ function closeLightbox(opts) {
     return;
   }
 
-  lightbox.classList.remove("open");
-  lightbox.addEventListener(
-    "transitionend",
-    () => {
+  if (USE_PHOTO_MORPH && activeCategory) {
+    const targetImg = categoryGrid.children[activeIndex]?.querySelector(".tile-photo img");
+    const transition = document.startViewTransition(() => {
+      lightbox.classList.remove("open");
+      lightbox.classList.add("hidden");
+      // Set the tile's name only now, inside the callback -- at this point #lightboxImage's
+      // permanent name is what the "before" snapshot captured, so there's no collision yet.
+      if (targetImg) {
+        targetImg.style.viewTransitionName = PHOTO_MORPH_NAME;
+      }
+    });
+    transition.finished.finally(() => {
+      if (targetImg) {
+        targetImg.style.viewTransitionName = "";
+      }
+    });
+  } else {
+    lightbox.classList.remove("open");
+    let closeFinished = false;
+    const finishClose = () => {
+      if (closeFinished) {
+        return;
+      }
+      closeFinished = true;
       // Closing strips the photo index from the hash, which triggers a second route() pass
-      // that calls closeLightbox() again -- if a photo is reopened before this listener fires,
-      // only hide if the lightbox is still meant to be closed, not whatever got reopened since.
+      // that calls closeLightbox() again -- if a photo is reopened before this fires, only hide
+      // if the lightbox is still meant to be closed, not whatever got reopened since.
       if (!lightbox.classList.contains("open")) {
         lightbox.classList.add("hidden");
       }
-    },
-    { once: true }
-  );
+    };
+    // transitionend isn't guaranteed to fire (an interrupted transition, a backgrounded tab) --
+    // without a fallback, a missed event leaves the lightbox as an invisible, click-swallowing
+    // overlay forever.
+    lightbox.addEventListener("transitionend", finishClose, { once: true });
+    window.setTimeout(finishClose, 250);
+  }
+
   activeCategory = null;
   setBackgroundInert(false);
 
