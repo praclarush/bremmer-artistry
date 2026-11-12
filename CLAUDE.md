@@ -6,8 +6,9 @@ This file provides guidance to Claude Code when working in this repository.
 
 The Bremmer Artistry site -- ASP.NET Core (net8.0) + EF Core + Postgres. Successor to the static
 [`Pottery`](../Pottery) project: same look/feel/interaction for the piece catalog, now data-driven
-and expanded into a full site (Home, Gallery, Pottery Journal, Events, FAQ, About) with an
-internally-authenticated admin area. See [README.md](README.md) for the directory layout and setup.
+and expanded into a full site (Home, Gallery, Pottery Journal, Events, Classes, FAQ, About,
+Contact) with an internally-authenticated admin area. See [README.md](README.md) for the directory
+layout and setup.
 
 ## Design Context
 
@@ -85,7 +86,37 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `IPieceHandler.GetFeaturedCollectionAsync()` (null when nothing is featured or the featured
   collection has no photographed pieces); `wwwroot/js/featured-collection.js` auto-advances the
   crossfade and explicitly no-ops under `prefers-reduced-motion` rather than relying solely on the
-  global CSS override.
+  global CSS override. The same script updates the "1 / N" position counter under the photo
+  (`[data-featured-position]`), which Razor only renders when the collection has more than one
+  piece.
+- **Home is server-rendered end to end and ordered for a walk-up visitor: hero + featured
+  collection photo -> upcoming events -> statement band -> Gallery teaser -> footer.** `IndexModel`
+  makes three handler calls (`GetUpcomingAsync`, `GetFeaturedCollectionAsync`,
+  `GetGalleryCategoriesAsync`) and `Index.cshtml` renders all of it -- no client-side fetch, unlike
+  Gallery/Events/Classes/Journal. The next event renders as one wide `.event-feature` card and any
+  later ones as `.event-ledger-row` rows (styles in `events.css`, Home-only); the Events page keeps
+  its JS-built `.event-card` grid. The statement band and the hero paragraph are the original hero
+  copy split in two, not new copy -- PRODUCT.md rules out invented proof or marketing filler, so
+  don't pad Home with any.
+- **`IPieceHandler.GetGalleryCategoriesAsync` and `gallery.js`'s `buildCategories` are two
+  implementations of the same grouping and must agree.** The handler method groups
+  `GetGalleryPiecesAsync`'s output into `GalleryCategoryModel` (name, piece count, cover photo) for
+  Home's teaser; the Gallery page still fetches `/gallery/data` and groups client-side because it
+  needs every photo for the lightbox. Both sort by name and both take the cover from the first
+  photo of the newest piece in the group -- change one and the same category shows a different
+  cover on Home than on `/gallery`. Home's tiles link to `/gallery#category/<name>`, the hash route
+  `gallery.js` already handles. Home shows the first four (`IndexModel.TeaserCategoryCount`) in a
+  fixed single row (`.category-grid--teaser`), so a short list never wraps into a stray half-row.
+- **An event card's DOM id is `event-<id>-<start as Unix milliseconds>`, and that key is built in
+  two places.** `events.js`'s `occurrenceKey` builds it from the JSON date
+  (`new Date(evt.startDateTime).getTime()`); `Index.cshtml` builds the same key server-side
+  (`StartDateTime.ToUnixTimeMilliseconds()`) for Home's event links. Unix milliseconds were chosen
+  over the raw date string precisely so the two sides don't have to match a serializer's text
+  format -- keep it numeric. The id alone isn't enough: a recurring event's `Id` repeats across
+  every expanded occurrence. Because cards are built after the data fetch, the browser's own
+  fragment scroll finds nothing at load time; `scrollToLinkedEvent` (run after `renderCards`, and
+  on `hashchange`) scrolls to the linked card and marks it `.is-linked` (copper border) so it's
+  identifiable in a row of several. `HomeTests` pins the server-side half of this contract.
 - **`Event` recurrence is expanded dynamically on read, never persisted as occurrence rows.** `Event`
   carries `RecurrenceFrequency`/`RecurrenceInterval`/`RecurrenceEndDate` and is expanded by
   `IRecurrenceExpander`/`RecurrenceExpander` (`Infrastructure/Services/`), which wraps Ical.Net's
@@ -196,6 +227,26 @@ component). Read them before any `/impeccable` design work or UI changes to the 
 
 ## Editing Notes
 
+- **Page gutters come from `--page-x` (`site.css`), and it is not a plain clamp.** It's fluid up
+  to 3rem, then grows so content never runs wider than `--page-max` (82rem); borders and rules
+  stay full-bleed. Two consequences, both of which have already caused real bugs here: (1) never
+  pair `padding: 0 var(--page-x)` with a bare `max-width` on the same box -- on a wide monitor the
+  gutter alone exceeds a small max-width and crushes the content to nothing. Cap the measure on
+  the children instead (`.content-page > *`), or use `calc(<measure> + 2 * var(--page-x))`
+  (`.gallery-intro`). (2) A component that carries its own page gutter must drop it when nested in
+  a view that already has one -- `.gallery` is top-level on the Pottery Journal but nested inside
+  `.gallery-category-view` on Gallery, hence the override in `gallery.css`. Check any new layout
+  at 1920px wide, not just 1440px, since neither failure shows below `--page-max`.
+- **Only these font weights are loaded** (`_Layout.cshtml`): Fraunces 400-600, Inter 400/500/600,
+  IBM Plex Mono 400/500/600. Asking for anything else (e.g. Inter 700) silently renders as
+  browser-synthesized faux bold. Add the weight to the Google Fonts URL first if one is really
+  needed.
+- **Every public page has exactly one `h1`.** Home's is the hero headline; Gallery, Events, and
+  Classes put theirs in `.section-heading` (the same component Home uses with an `h2` for section
+  titles -- `site.css` scales the two differently); the Journal's is in `.journal-header`; FAQ,
+  About, and Contact use `.content-page h1`. All but Home's share one "page title" scale, see
+  DESIGN.md.
+
 - **Pottery Journal page** (`Pages/PotteryJournal.cshtml` + `wwwroot/js/pottery-journal.js`) is a
   near-verbatim port of the old static site's `index.html`/`app.js`: same DOM-building style (no
   `innerHTML` for data-driven content, hash-based routing via `#piece/<n>`), just fetching
@@ -258,6 +309,17 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `Results.Json(...)` -- `Results.Json`'s PipeWriter fast path throws under `WebApplicationFactory`'s
   TestServer (`PipeWriter.UnflushedBytes` not implemented). Keep using `JsonResult<T>` for any new
   data endpoint rather than reintroducing `Results.Json`.
+- `HomeTests` covers Home's server-rendered sections (empty state, Gallery teaser tiles, the event
+  feature/ledger split, and the event link's occurrence key). It seeds through `AppDbContext`
+  resolved from `_factory.Services`, since Home has no JSON endpoint to assert against.
+- **Checking a UI change visually when Docker/Postgres isn't running**: the real app can't start
+  without a database, but the test host can render it. A throwaway `[Explicit]` test in
+  `Web.Tests` can seed the in-memory database (real file names from `./uploads` make the photos
+  resolve), `GetStringAsync` each page and data endpoint, and write the responses to a temp
+  folder; any static server that maps those files plus `wwwroot/` and `uploads/` then gives a
+  browsable copy with the real Razor output and the real CSS/JS. Delete the test afterward -- it's
+  a verification aid, not a fixture. Seeded data won't match production content, so this checks
+  layout and behavior, not copy.
 
 ## Deployment
 

@@ -17,16 +17,22 @@ colors:
 typography:
   display:
     fontFamily: "Fraunces, serif"
-    fontSize: "clamp(2rem, 5vw, 3.2rem)"
-    fontWeight: 600
-    lineHeight: 1.1
-    letterSpacing: normal
+    fontSize: "clamp(2.4rem, 4.4vw, 4.25rem)"
+    fontWeight: 400
+    lineHeight: 1.04
+    letterSpacing: "-0.02em"
+  page-title:
+    fontFamily: "Fraunces, serif"
+    fontSize: "clamp(2rem, 4.2vw, 3rem)"
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: "-0.01em"
   headline:
     fontFamily: "Fraunces, serif"
     fontSize: "clamp(1.5rem, 3vw, 2.2rem)"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: normal
+    fontWeight: 500
+    lineHeight: 1.15
+    letterSpacing: "-0.01em"
   title:
     fontFamily: "Inter, system-ui, sans-serif"
     fontSize: "1.1rem"
@@ -54,7 +60,8 @@ spacing:
   sm: "0.75rem"
   md: "1.5rem"
   lg: "2.5rem"
-  page-x: "clamp(1rem, 4vw, 3rem)"
+  page-x: "max(clamp(1rem, 4vw, 3rem), calc((100vw - 82rem) / 2))"
+  page-max: "82rem"
 components:
   button-primary:
     backgroundColor: transparent
@@ -161,17 +168,25 @@ marks anything procedural (nav, dates, filters, field labels) as workshop-ledger
 tracked out, quietly technical.
 
 ### Hierarchy
-- **Display** (600, `clamp(2rem, 5vw, 3.2rem)`, 1.1): Hero headline only (Home page `h1`).
-- **Headline** (600, `clamp(1.5rem, 3vw, 2.2rem)`, 1.2): Section headings, Pottery Journal page
-  title, content-page `h1`.
-- **Title** (500–700, 0.92–1.2rem, 1.3): Card/tile titles — event card `h3`, gallery tile title.
-  Weight varies by context (500 for gallery tiles, 700 for event cards) but size and role stay
-  consistent.
+- **Display** (400, `clamp(2.4rem, 4.4vw, 4.25rem)`, 1.04, -0.02em): Hero headline only (Home page
+  `h1`). Large and light rather than small and bold; one phrase may be set in italic for emphasis,
+  never in a second color.
+- **Page title** (500, `clamp(2rem, 4.2vw, 3rem)`, 1.15, -0.01em): The `h1` of every page other
+  than Home — Gallery, Pottery Journal, Events, Classes, FAQ, About, Contact.
+- **Headline** (500, `clamp(1.5rem, 3vw, 2.2rem)`, 1.15, -0.01em): Section headings within a page
+  (Home's "Upcoming events" / "From the gallery"), the Home event feature title, the statement
+  band (at weight 400).
+- **Title** (500–600, 1.2rem, 1.3): Card/tile/row titles — event card `h3`, gallery category name,
+  Home event ledger row, FAQ question. Fraunces, since each names something.
 - **Body** (400, 0.85–1rem, 1.6–1.85): Paragraph copy — hero intro, FAQ answers, worksheet notes.
   Cap prose measure at 65–75ch; the existing `.content-page` max-width (720px) already enforces
   this.
 - **Label** (400, 0.65–0.85rem, letter-spacing 0.02–0.1em, uppercase where used): Nav links, filter
   labels, chips, dates, event tags, worksheet field labels/values.
+
+Only load-bearing weights are requested from Google Fonts: Fraunces 400–600, Inter 400/500/600,
+IBM Plex Mono 400/500/600. Don't set a weight outside those ranges — the browser fakes it by
+smearing the nearest face.
 
 ### Named Rules
 **The Ledger-Language Rule.** Anything that records a fact rather than makes a statement (a date, a
@@ -239,6 +254,36 @@ what makes the accent color mean something when it does appear.
 - Mono, uppercase, 0.06em tracked, Bisque Dark at rest. Hover brightens to Bisque/Paper. The active
   page gets Copper Glaze text with a matching Copper Glaze underline (`border-bottom`) — the only
   sanctioned underline-as-indicator in the system; don't add underlines elsewhere as decoration.
+
+### Page width
+Content is held to `--page-max` (82rem) by `--page-x`, a gutter that is fluid up to 3rem and then
+grows with the viewport. Rules and borders stay full-bleed; only content is held in. Because the
+gutter can exceed a small fixed width on wide screens, a block that also caps its own measure does
+it on its children (`.content-page > *`) or with `calc(<measure> + 2 * var(--page-x))`, never with
+a bare `max-width` beside `padding: 0 var(--page-x)`. A component that carries its own page gutter
+drops it when nested inside a view that already has one.
+
+### Home page sequence
+Photo-led, in the order a walk-up visitor decides: hero with the featured collection photo (the
+photo takes the wider column and comes first when stacked) → upcoming events → the statement band
+→ gallery category teaser → footer.
+
+- **Event feature + ledger rows:** Home shows the next event as one wide Shelf card (photo beside
+  date, title, venue) and any later events as plain dated rows separated by Shelf Line rules — a
+  ledger, not three identical cards. The Events page keeps the full card grid. A card reached
+  from one of Home's event links takes a Copper Glaze border (`.is-linked`) so the visitor can
+  tell which card in the row they came for — the accent used as an outline marking a selected
+  state, per the One Accent Rule.
+- **Statement band:** One sentence about the work at Headline scale, between full-bleed Shelf Line
+  rules, with its mono label in the margin column. One per page at most.
+- **Category tiles:** 4:5 photo, Fraunces name, mono uppercase count. No card chrome — the photo's
+  1px Shelf Line border is the only edge. Home's teaser is a fixed single row; the Gallery page
+  auto-fills.
+
+### Footer
+Wordmark and a one-line studio description, then three short mono link lists (Explore, Studio,
+Follow) under Copper Glaze labels, and a ruled legal line. Factual links only — no newsletter
+capture, hours, or address until those exist.
 
 ### The Worksheet (signature component)
 The piece detail view is the system's one deliberately physical object: a Bisque/Paper card with a

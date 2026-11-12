@@ -15,10 +15,14 @@
     return;
   }
 
+  var position = stage.querySelector('[data-featured-position]');
   var current = 0;
   setInterval(function () {
     slides[current].classList.remove('is-active');
     current = (current + 1) % slides.length;
     slides[current].classList.add('is-active');
+    if (position) {
+      position.textContent = current + 1;
+    }
   }, ROTATION_INTERVAL_MS);
 })();

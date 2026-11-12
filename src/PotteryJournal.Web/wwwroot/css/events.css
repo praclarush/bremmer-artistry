@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  padding: 0 clamp(1rem, 4vw, 3rem);
+  padding: 0 var(--page-x);
 }
 
 .view-toggle {
@@ -51,7 +51,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 2rem;
-  padding: 1.5rem clamp(1rem, 4vw, 3rem) 4rem;
+  padding: 1.5rem var(--page-x) 4rem;
 }
 
 .event-card {
@@ -73,6 +73,12 @@
 .event-card:focus-visible {
   outline: 2px solid var(--copper-glaze);
   outline-offset: 2px;
+}
+
+/* The card a visitor followed a link to (Home's event links) -- marks which one in a row of
+   several is the event they came for. */
+.event-card.is-linked {
+  border-color: var(--copper-glaze);
 }
 
 .event-card-photo {
@@ -193,13 +199,182 @@
   outline-offset: 2px;
 }
 
+/* ---------- Home: next event feature + ledger rows ----------
+   Home shows what's coming differently from the Events page's card grid: the next event gets
+   one wide feature (photo beside details), and anything after it is a plain dated row -- a
+   ledger, not a second and third copy of the same card. */
+
+.home-events {
+  padding: 0 var(--page-x);
+}
+
+.event-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  border: 1px solid var(--shelf-line);
+  background: var(--shelf);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.event-feature--no-photo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.event-feature:hover,
+.event-feature:focus-visible {
+  border-color: var(--copper-glaze-dim);
+}
+
+.event-feature:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+.event-feature-photo {
+  aspect-ratio: 16 / 10;
+  background: var(--kiln-char);
+  overflow: hidden;
+}
+
+.event-feature-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+
+.event-feature:hover .event-feature-photo img,
+.event-feature:focus-visible .event-feature-photo img {
+  transform: scale(1.045);
+}
+
+.event-feature-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.event-feature h3 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+  margin: 0;
+}
+
+.event-feature .event-venue {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.event-feature-cta {
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--copper-glaze-bright);
+  transition: color 0.15s ease;
+}
+
+.event-feature:hover .event-feature-cta,
+.event-feature:focus-visible .event-feature-cta {
+  color: var(--paper);
+}
+
+.event-ledger {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.event-ledger-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 3fr) minmax(0, 2fr) auto;
+  align-items: baseline;
+  gap: 0.25rem 1.5rem;
+  min-height: 44px;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--shelf-line);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* On Kiln Char rather than Shelf, base Copper Glaze already clears AA at this size. */
+.event-ledger-row .event-date {
+  color: var(--copper-glaze);
+  font-variant-numeric: tabular-nums;
+}
+
+.event-ledger-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: var(--paper);
+  transition: color 0.15s ease;
+}
+
+.event-ledger-arrow {
+  font-family: var(--font-mono);
+  color: var(--bisque-dark);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.event-ledger-row:hover .event-ledger-title,
+.event-ledger-row:focus-visible .event-ledger-title,
+.event-ledger-row:hover .event-ledger-arrow,
+.event-ledger-row:focus-visible .event-ledger-arrow {
+  color: var(--copper-glaze);
+}
+
+.event-ledger-row:hover .event-ledger-arrow,
+.event-ledger-row:focus-visible .event-ledger-arrow {
+  transform: translateX(3px);
+}
+
+.event-ledger-row:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+@media (max-width: 800px) {
+  .event-feature {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .event-ledger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .event-ledger-row .event-date,
+  .event-ledger-row .event-ledger-title,
+  .event-ledger-row .event-venue {
+    grid-column: 1;
+  }
+
+  .event-ledger-arrow {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+  }
+}
+
 /* ---------- calendar grid ---------- */
 /* The month-grid shell (.calendar-nav/.calendar-grid/.calendar-weekday/.calendar-day) is shared
    with Classes' date picker and lives in site.css; this file only adds the Events-specific pieces
    (page padding, event pills) layered on top of it. */
 
 .calendar {
-  padding: 1.5rem clamp(1rem, 4vw, 3rem) 4rem;
+  padding: 1.5rem var(--page-x) 4rem;
 }
 
 .calendar-event {

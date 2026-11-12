@@ -2,10 +2,13 @@
    request form (step 2), toggled client-side via #type/<id> hash routing (classes.js). */
 
 .classes-intro {
-  padding: 0 clamp(1rem, 4vw, 3rem);
-  max-width: 60ch;
+  padding: 0 var(--page-x);
   color: var(--bisque-dark);
   line-height: 1.6;
+}
+
+.classes-intro p {
+  max-width: 60ch;
 }
 
 .classes-intro strong {
@@ -18,7 +21,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.5rem;
-  padding: 1.5rem clamp(1rem, 4vw, 3rem) 3rem;
+  padding: 1.5rem var(--page-x) 3rem;
 }
 
 .class-type-tile {
@@ -86,7 +89,7 @@
   background: none;
   border: none;
   padding: 0;
-  margin: 1.75rem clamp(1rem, 4vw, 3rem) 0;
+  margin: 1.75rem var(--page-x) 0;
   cursor: pointer;
 }
 
@@ -95,7 +98,7 @@
   font-weight: 600;
   font-size: 1.5rem;
   color: var(--paper);
-  padding: 0 clamp(1rem, 4vw, 3rem);
+  padding: 0 var(--page-x);
   margin: 1.25rem 0 1.5rem;
 }
 
@@ -103,7 +106,7 @@
    month view); the week grid below is Classes-specific since Events has no week view. */
 
 .class-week {
-  padding: 0 clamp(1rem, 4vw, 3rem) 3rem;
+  padding: 0 var(--page-x) 3rem;
 }
 
 .class-week-grid {

@@ -7,13 +7,16 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem 2rem;
-  padding: 1.5rem clamp(1rem, 4vw, 3rem) 0;
+  padding: clamp(2.5rem, 5vw, 4rem) var(--page-x) 0;
 }
 
 .journal-header h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-size: clamp(2rem, 4.2vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--paper);
   margin: 0;
 }
@@ -55,7 +58,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 1.4rem 2.5rem;
-  padding: 1.2rem clamp(1rem, 4vw, 3rem);
+  padding: 1.2rem var(--page-x);
   border-bottom: 1px solid var(--shelf-line);
 }
 
@@ -116,7 +119,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 2.4rem 1.6rem;
-  padding: 2.5rem clamp(1rem, 4vw, 3rem) 4rem;
+  padding: 2.5rem var(--page-x) 4rem;
 }
 
 .tile {
@@ -232,7 +235,7 @@
 /* ---------- detail / worksheet ---------- */
 
 .detail-view {
-  padding: 1rem clamp(1rem, 4vw, 3rem) 5rem;
+  padding: 1rem var(--page-x) 5rem;
 }
 
 .detail-inner {
@@ -402,7 +405,7 @@
 }
 
 .ws-notes-box .note-title {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .ws-notes-box .empty,

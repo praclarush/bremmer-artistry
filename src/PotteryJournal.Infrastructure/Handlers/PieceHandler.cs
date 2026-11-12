@@ -134,6 +134,33 @@ namespace PotteryJournal.Infrastructure.Handlers
         }
 
         /// <inheritdoc />
+        public async Task<DataHandlerResponse<List<GalleryCategoryModel>>> GetGalleryCategoriesAsync()
+        {
+            DataHandlerResponse<List<GalleryCategoryModel>> response = new DataHandlerResponse<List<GalleryCategoryModel>>();
+
+            DataHandlerResponse<List<GalleryPieceModel>> piecesResponse = await GetGalleryPiecesAsync();
+            response.Concat(piecesResponse);
+            if (!piecesResponse.IsSuccess || piecesResponse.Data is null)
+            {
+                response.IsSuccess = false;
+                return response;
+            }
+
+            response.Data = piecesResponse.Data
+                .GroupBy(p => p.Category)
+                .Select(g => new GalleryCategoryModel
+                {
+                    Name = g.Key,
+                    PieceCount = g.Count(),
+                    CoverImageFileName = g.SelectMany(p => p.ImageFileNames).FirstOrDefault(),
+                })
+                .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            response.IsSuccess = true;
+            return response;
+        }
+
+        /// <inheritdoc />
         public async Task<DataHandlerResponse<PieceDetailModel>> GetByNumberAsync(int pieceNumber)
         {
             Piece? piece = await _context.Pieces

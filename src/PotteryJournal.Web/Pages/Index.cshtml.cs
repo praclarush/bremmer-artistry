@@ -11,6 +11,7 @@ namespace PotteryJournal.Web.Pages
     public class IndexModel : PageModel
     {
         private const int TeaserEventCount = 3;
+        private const int TeaserCategoryCount = 4;
 
         private readonly IEventsHandler _eventsHandler;
         private readonly IPieceHandler _pieceHandler;
@@ -25,6 +26,8 @@ namespace PotteryJournal.Web.Pages
 
         public FeaturedCollectionModel? FeaturedCollection { get; private set; }
 
+        public List<GalleryCategoryModel> GalleryCategories { get; private set; } = new List<GalleryCategoryModel>();
+
         public async Task OnGetAsync()
         {
             DataHandlerResponse<List<EventModel>> eventsResponse = await _eventsHandler.GetUpcomingAsync();
@@ -37,6 +40,12 @@ namespace PotteryJournal.Web.Pages
             if (featuredResponse.IsSuccess)
             {
                 FeaturedCollection = featuredResponse.Data;
+            }
+
+            DataHandlerResponse<List<GalleryCategoryModel>> categoriesResponse = await _pieceHandler.GetGalleryCategoriesAsync();
+            if (categoriesResponse.IsSuccess && categoriesResponse.Data is not null)
+            {
+                GalleryCategories = categoriesResponse.Data.Take(TeaserCategoryCount).ToList();
             }
         }
     }

@@ -48,6 +48,8 @@ async function init() {
 
   renderCards();
   renderCalendar();
+  scrollToLinkedEvent();
+  window.addEventListener("hashchange", scrollToLinkedEvent);
 
   listViewBtn.addEventListener("click", () => showView("list"));
   calendarViewBtn.addEventListener("click", () => showView("calendar"));
@@ -139,8 +141,25 @@ function renderCards() {
 // A recurring event's Id repeats across every expanded occurrence, so the DOM id / calendar-pill
 // link has to be scoped to the specific occurrence (id + startDateTime), not just the series id --
 // otherwise two occurrences of the same recurring event collide on the same "event-<id>" element id.
+// The start is keyed as Unix milliseconds rather than the raw JSON date string, so the Home page
+// can build the same key server-side (Index.cshtml) without matching a serializer's text format.
 function occurrenceKey(evt) {
-  return `${evt.id}-${evt.startDateTime.replace(/[^0-9]/g, "")}`;
+  return `${evt.id}-${new Date(evt.startDateTime).getTime()}`;
+}
+
+// Cards are rendered after the data fetch, so the browser's own fragment scroll has nothing to
+// land on at load time -- do it here once the linked card exists.
+function scrollToLinkedEvent() {
+  document.querySelector(".event-card.is-linked")?.classList.remove("is-linked");
+  if (!location.hash.startsWith("#event-")) {
+    return;
+  }
+  const card = document.getElementById(location.hash.slice(1));
+  if (!card) {
+    return;
+  }
+  card.classList.add("is-linked");
+  card.scrollIntoView({ block: "center" });
 }
 
 function buildCard(evt) {
