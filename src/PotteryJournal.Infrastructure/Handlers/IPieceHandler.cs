@@ -21,8 +21,8 @@ namespace PotteryJournal.Infrastructure.Handlers
         Task<PagedHandlerResponse<PieceSummaryModel>> GetSummariesPagedAsync(string? sortColumn, bool sortDescending, int pageNumber, int pageSize);
 
         /// <summary>
-        /// Gets the full worksheet detail for every piece, newest first, optionally filtered to a
-        /// single category. Used by the Pottery Journal page's single data fetch, which needs both
+        /// Gets the full worksheet detail for every public piece (Show in Pottery Journal set and at
+        /// least one glaze recorded), newest first, optionally filtered to a single category. Used by the Pottery Journal page's single data fetch, which needs both
         /// grid and worksheet fields for every piece up front.
         /// </summary>
         /// <param name="category">When supplied, only pieces tagged with this category are returned.</param>

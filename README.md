@@ -41,18 +41,36 @@ Home (`/`), Gallery (`/gallery`), Pottery Journal (`/pottery-journal`), Events (
   the work needs it: the headline beside the featured collection's rotating photo, upcoming events
   (the next one as a wide feature, later ones as dated rows), a one-sentence statement about the
   work, a row of Gallery category tiles, then the footer. Each section drops out cleanly when its
-  data is missing -- no featured collection, no events, or no Gallery pieces.
+  data is missing -- no featured collection, no events, or no Gallery pieces. With no upcoming
+  events, the hero's main button points to the Gallery instead, and the events section offers
+  Instagram and Contact links rather than an empty heading.
 - **Gallery** shows category tiles, a per-category photo grid, and a lightbox. A piece appears
-  only when it is marked "show in gallery" and has a category or a collection.
+  only when it is marked "show in gallery" and has a category or a collection. A piece titled
+  with a camera file name (e.g. "Bowls — 20250924_110013", from the bulk import) displays as its
+  category and month instead; retitle it in the admin to replace the fallback.
 - **Pottery Journal** carries over the old static site's grid, filter chips, search, and
   hash-routed (`#piece/<n>`) worksheet detail view -- same look, feel, and interaction, now backed
-  by Postgres instead of a checked-in `pieces.json`.
+  by Postgres instead of a checked-in `pieces.json`. A piece shows here only when it has at least
+  one glaze application and "Show in Pottery Journal" is checked (on by default), so test and
+  practice pieces can be logged without going public. Newest pieces come first.
 - **Events** offers a card list and a month calendar. Home's event links open this page scrolled
   to the specific event, with that card outlined.
 - **Classes** is a two-step picker (class type, then a week of open times) that submits a
-  tentative booking request for the studio to approve.
+  tentative booking request for the studio to approve. It is **hidden by default**: with
+  `Site:ShowClasses` false or unset, the nav and footer links disappear, Contact's intro drops the
+  mention of classes, and `/classes`, its booking POST, and `/classes/data` all return 404. Turn
+  it on with `Site__ShowClasses=true` as an environment variable (compose `environment:`, or an
+  `envVars` entry in `render.yaml`) or `dotnet user-secrets set "Site:ShowClasses" "true"` for
+  local debugging. The admin side (`/admin/classes`, bookings, availability) stays available
+  either way, so classes can be set up before they go public.
+- **FAQ** is hidden the same way behind `Site:ShowFaq` (off by default; `/faq` returns 404 and the
+  links disappear) until it has real questions in it.
+- **Contact** re-displays the form with everything the visitor typed when a send fails, plus a
+  plain-language error and a mailto fallback. SMTP details go to the log, never to the page.
 
-The footer on every page links the main sections plus email and Instagram.
+The footer on every page links the main sections plus email and Instagram. On phones the main
+nav collapses behind a Menu button (`wwwroot/js/site-nav.js`); without JavaScript the links simply
+wrap.
 
 ### Design
 
@@ -167,6 +185,41 @@ Both test projects run against EF Core's in-memory provider, so no Postgres or D
 Same homelab pattern as the old `Pottery` project: built via `docker/Dockerfile`, deployed behind
 Nginx Proxy Manager (TLS termination happens there, not in this app). Uploaded photos and Postgres
 data persist in the `uploads` and `pgdata` named volumes.
+
+### Deploying to Render
+
+`render.yaml` is a [Render Blueprint](https://render.com/docs/infrastructure-as-code) that creates
+everything the site needs: the Docker web service (built from `docker/Dockerfile`), a Postgres
+database, and a persistent disk mounted at `/app/uploads` for photos.
+
+1. Push the repo to GitHub, then in the Render dashboard choose **New > Blueprint** and select it.
+2. Render prompts once for the secret values: the bootstrap admin email and password (same meaning
+   as in [First-time setup](#first-time-setup)) and the `Smtp__*` settings. SMTP can be left blank
+   and filled in later from the service's Environment tab; emails fail gracefully until then.
+3. Apply. Render builds the image, runs migrations on first start, and seeds the admin account.
+   Sign in at `/admin/login` and change the password.
+
+Things to know:
+
+- **Region** (`ohio`) is set on both the service and the database and can't be changed after
+  creation -- edit it in `render.yaml` before the first apply if another region suits your visitors
+  better. They must share a region to talk over Render's private network.
+- **Plans** are the smallest available (`0.5c-512mb` web, `0.1c-256mb` Postgres). Photo uploads
+  are resized in memory, so move the web service up a plan if large uploads time out or the
+  service restarts under memory pressure. The disk is 2 GB and can be grown but never shrunk.
+- **One instance only**: a service with a disk can't be scaled out, and each deploy has a short
+  gap while the disk moves to the new instance.
+- **Secrets** are set with `sync: false`, so they live only in Render, never in the repo, and
+  later edits to `render.yaml` don't overwrite them.
+- **The database URL**: Render supplies a `postgresql://` URL, which Npgsql can't read directly.
+  `ConnectionStringNormalizer` converts it at startup; key/value strings (Docker, user-secrets)
+  pass through untouched.
+- **Backups**: check your Postgres plan's backup retention on Render, and take your own copy of
+  the uploads disk -- it is the only place the photos live.
+
+The deploy sets `ASPNETCORE_FORWARDEDHEADERS_ENABLED` because Render terminates TLS in front of
+the app; without it, auth cookies lose their `Secure` flag and the per-IP login rate limit sees
+Render's proxy address for every visitor.
 
 **Known gap**: ASP.NET Core's cookie auth Data Protection keys aren't currently persisted outside
 the container (a startup warning flags this). Every container restart invalidates existing admin

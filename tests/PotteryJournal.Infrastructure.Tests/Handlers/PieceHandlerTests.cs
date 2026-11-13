@@ -96,6 +96,25 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
         }
 
         [Test]
+        public async Task GetAllDetailsAsync_HiddenFromJournal_ExcludesPiece()
+        {
+            PieceSaveModel shown = BuildSaveModel("Finished Vase");
+            shown.GlazeApplications.Add(new GlazeApplicationModel { Location = "Exterior", GlazeId = _glazeId, Coats = 2 });
+            PieceSaveModel hidden = BuildSaveModel("Test 1");
+            hidden.ShowInJournal = false;
+            hidden.GlazeApplications.Add(new GlazeApplicationModel { Location = "Exterior", GlazeId = _glazeId, Coats = 1 });
+            await _sut.CreateAsync(shown, "admin@example.com");
+            DataHandlerResponse<Guid> hiddenResponse = await _sut.CreateAsync(hidden, "admin@example.com");
+
+            DataHandlerResponse<List<PieceDetailModel>> response = await _sut.GetAllDetailsAsync(null);
+            DataHandlerResponse<PieceDetailModel> hiddenDetail = await _sut.GetByIdAsync(hiddenResponse.Data);
+
+            Assert.That(response.Data, Has.Count.EqualTo(1));
+            Assert.That(response.Data![0].Title, Is.EqualTo("Finished Vase"));
+            Assert.That(hiddenDetail.Data!.ShowInJournal, Is.False);
+        }
+
+        [Test]
         public async Task UpdateAsync_ReplacesNotesAndGlazeApplications()
         {
             DataHandlerResponse<Guid> createResponse = await _sut.CreateAsync(BuildSaveModel("Mug"), "admin@example.com");

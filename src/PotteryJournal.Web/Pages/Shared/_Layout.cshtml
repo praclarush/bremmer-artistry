@@ -1,5 +1,8 @@
+@inject Microsoft.Extensions.Options.IOptions<PotteryJournal.Web.SiteFeaturesOptions> SiteFeatures
 @{
     string activeNav = ViewData["ActiveNav"] as string ?? string.Empty;
+    bool showClasses = SiteFeatures.Value.ShowClasses;
+    bool showFaq = SiteFeatures.Value.ShowFaq;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -27,16 +30,25 @@
     </svg>
     Bremmer <span>Artistry</span>
   </a>
-  <ul class="nav-links">
+  <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="siteNavLinks">Menu</button>
+  <nav class="site-nav-menu" aria-label="Main">
+  <ul class="nav-links" id="siteNavLinks">
     <li><a href="/" aria-current="@(activeNav == "Home" ? "page" : null)">Home</a></li>
     <li><a href="/gallery" aria-current="@(activeNav == "Gallery" ? "page" : null)">Gallery</a></li>
     <li><a href="/pottery-journal" aria-current="@(activeNav == "PotteryJournal" ? "page" : null)">Pottery Journal</a></li>
     <li><a href="/events" aria-current="@(activeNav == "Events" ? "page" : null)">Events</a></li>
-    <li><a href="/classes" aria-current="@(activeNav == "Classes" ? "page" : null)">Classes</a></li>
-    <li><a href="/faq" aria-current="@(activeNav == "Faq" ? "page" : null)">FAQ</a></li>
+    @if (showClasses)
+    {
+      <li><a href="/classes" aria-current="@(activeNav == "Classes" ? "page" : null)">Classes</a></li>
+    }
+    @if (showFaq)
+    {
+      <li><a href="/faq" aria-current="@(activeNav == "Faq" ? "page" : null)">FAQ</a></li>
+    }
     <li><a href="/about" aria-current="@(activeNav == "About" ? "page" : null)">About</a></li>
     <li><a href="/contact" aria-current="@(activeNav == "Contact" ? "page" : null)">Contact</a></li>
   </ul>
+  </nav>
 </header>
 
 <main class="site-main" id="main-content">
@@ -46,7 +58,7 @@
 <footer class="site-footer">
   <div class="footer-brand">
     <a class="wordmark" href="/">Bremmer <span>Artistry</span></a>
-    <p>A ceramic studio creating handmade pottery, from functional pieces to artistic forms.</p>
+    <p>Handmade pottery, documented piece by piece.</p>
   </div>
   <nav aria-labelledby="footerExploreHeading">
     <h2 class="footer-heading" id="footerExploreHeading">Explore</h2>
@@ -54,14 +66,20 @@
       <li><a href="/gallery">Gallery</a></li>
       <li><a href="/pottery-journal">Pottery Journal</a></li>
       <li><a href="/events">Events</a></li>
-      <li><a href="/classes">Classes</a></li>
+      @if (showClasses)
+      {
+        <li><a href="/classes">Classes</a></li>
+      }
     </ul>
   </nav>
   <nav aria-labelledby="footerStudioHeading">
     <h2 class="footer-heading" id="footerStudioHeading">Studio</h2>
     <ul class="footer-links">
       <li><a href="/about">About</a></li>
-      <li><a href="/faq">FAQ</a></li>
+      @if (showFaq)
+      {
+        <li><a href="/faq">FAQ</a></li>
+      }
       <li><a href="/contact">Contact</a></li>
     </ul>
   </nav>
@@ -75,6 +93,7 @@
   <p class="footer-legal">&copy; @DateTime.UtcNow.Year Bremmer Artistry</p>
 </footer>
 
+<script src="~/js/site-nav.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

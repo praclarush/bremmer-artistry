@@ -48,6 +48,25 @@ namespace PotteryJournal.Web.Tests
         }
 
         [Test]
+        public async Task GetHome_NoUpcomingEvents_HeroLeadsWithGallery()
+        {
+            string html = await _client.GetStringAsync("/");
+
+            Assert.That(html, Does.Contain("<a class=\"btn\" href=\"/gallery\">"));
+            Assert.That(html, Does.Not.Contain("See Upcoming Events"));
+        }
+
+        [Test]
+        public async Task GetHome_UpcomingEvents_HeroLeadsWithEvents()
+        {
+            await SeedEventsAsync("Spring Kiln Opening", "Holiday Market");
+
+            string html = await _client.GetStringAsync("/");
+
+            Assert.That(html, Does.Contain("<a class=\"btn\" href=\"/events\">See Upcoming Events</a>"));
+        }
+
+        [Test]
         public async Task GetHome_GalleryPieceExists_RendersCategoryTileLinkedToGallery()
         {
             await SeedGalleryPieceAsync("Tea Bowls", "cover.jpg");

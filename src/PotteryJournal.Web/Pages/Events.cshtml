@@ -12,7 +12,7 @@
   <h1>Events</h1>
 </div>
 
-<div class="events-toolbar">
+<div class="events-toolbar hidden" id="eventsToolbar">
   <div class="view-toggle">
     <button type="button" id="listViewBtn" class="active">List</button>
     <button type="button" id="calendarViewBtn">Calendar</button>
@@ -20,7 +20,19 @@
 </div>
 
 <div id="eventCards" class="event-cards"></div>
-<p id="eventsEmptyState" class="empty-state hidden">No upcoming events right now -- check back soon.</p>
+<div id="eventsEmptyState" class="events-empty hidden">
+  <p>No upcoming events right now. Follow along on Instagram, or ask about the next show.</p>
+  <ul class="events-empty-links">
+    <li><a class="hero-secondary-link" href="https://www.instagram.com/bremmerArtistry" target="_blank" rel="noopener">Follow @@bremmerArtistry &rarr;</a></li>
+    <li><a class="hero-secondary-link" href="/contact">Ask about the next show &rarr;</a></li>
+    <li><a class="hero-secondary-link" href="/gallery">Browse the Gallery &rarr;</a></li>
+  </ul>
+</div>
+<p id="eventsLoading" class="empty-state">Loading events&hellip;</p>
+<p id="eventsError" class="empty-state hidden">
+  We couldn't load events right now.
+  <button id="eventsRetryBtn" class="hero-secondary-link" type="button">Try again</button>
+</p>
 
 <div id="calendarContainer" class="calendar hidden">
   <div class="calendar-nav">

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using PotteryJournal.Infrastructure.Handlers;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.SharedKernel.Core;
@@ -13,21 +14,29 @@ namespace PotteryJournal.Web.Pages
     public class ClassesModel : PageModel
     {
         private readonly IClassesHandler _classesHandler;
+        private readonly SiteFeaturesOptions _siteFeatures;
 
-        public ClassesModel(IClassesHandler classesHandler)
+        public ClassesModel(IClassesHandler classesHandler, IOptions<SiteFeaturesOptions> siteFeatures)
         {
             _classesHandler = classesHandler;
+            _siteFeatures = siteFeatures.Value;
         }
 
         [BindProperty]
         public ClassBookingSaveModel Booking { get; set; } = new ClassBookingSaveModel();
 
-        public void OnGet()
+        public IActionResult OnGet()
         {
+            return _siteFeatures.ShowClasses ? Page() : NotFound();
         }
 
         public async Task<IActionResult> OnPostBookAsync()
         {
+            if (!_siteFeatures.ShowClasses)
+            {
+                return NotFound();
+            }
+
             DataHandlerResponse<Guid> response = await _classesHandler.CreateBookingAsync(Booking);
             if (!response.IsSuccess)
             {

@@ -1,0 +1,80 @@
+# Render Blueprint for the Bremmer Artistry site: one Docker web service, one Postgres database,
+# and a persistent disk for uploaded photos. See README.md "Deploying to Render".
+#
+# Render does not support variable interpolation in Blueprint files, so nothing here is built from
+# other values. Secrets use `sync: false`: Render prompts for them once, when the Blueprint is first
+# created, and never stores them in this file.
+#
+# Region can't be changed after creation, and the web service and database must share one region
+# to reach each other over Render's private network. Pick the one nearest your visitors.
+
+databases:
+  - name: potteryjournal-db
+    databaseName: potteryjournal
+    user: potteryjournal
+    region: ohio
+    plan: 0.1c-256mb
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: potteryjournal-web
+    runtime: docker
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    region: ohio
+    plan: 0.5c-512mb
+    autoDeployTrigger: commit
+    # /about is static -- it never touches the database, so a database blip can't fail a deploy.
+    healthCheckPath: /about
+
+    # Photos land in Uploads:RootPath. Without a disk they would vanish on every deploy.
+    # A service with a disk can't be scaled past one instance and redeploys with a short gap.
+    disk:
+      name: uploads
+      mountPath: /app/uploads
+      sizeGB: 2
+
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # The Dockerfile binds 8080; tell Render to look there instead of its default.
+      - key: PORT
+        value: "8080"
+      # Render terminates TLS and forwards plain HTTP. Without this the app sees every request as
+      # http: auth cookies lose their Secure flag, and the per-IP login rate limit sees Render's
+      # proxy address instead of the visitor's.
+      - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+        value: "true"
+
+      # Render hands out a postgresql:// URL; ConnectionStringNormalizer converts it for Npgsql.
+      - key: ConnectionStrings__PotteryJournal
+        fromDatabase:
+          name: potteryjournal-db
+          property: connectionString
+      - key: Uploads__RootPath
+        value: /app/uploads
+
+      # Seeds the first admin when the AllowedAdmins table is empty. Change the password after
+      # first sign-in; further admins are managed from /admin/allowed-admins.
+      - key: POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+
+      # Outbound email (class booking notifications, Contact Us). Use a transactional provider;
+      # leave these blank to deploy first and wire email up later.
+      - key: Smtp__Host
+        sync: false
+      - key: Smtp__Port
+        value: "587"
+      - key: Smtp__User
+        sync: false
+      - key: Smtp__Password
+        sync: false
+      - key: Smtp__FromAddress
+        sync: false
+      - key: Smtp__FromName
+        value: Bremmer Artistry
+      - key: Smtp__UseStartTls
+        value: "true"

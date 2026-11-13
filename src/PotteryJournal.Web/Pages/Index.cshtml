@@ -19,8 +19,18 @@
       teapots, cups, and bowls to artistic forms.
     </p>
     <div class="hero-actions">
-      <a class="btn" href="/events">See Upcoming Events</a>
-      <a class="hero-secondary-link" href="/gallery">View Gallery &rarr;</a>
+      @* Events lead only when one is scheduled; otherwise the primary action would land on an
+         empty page, so the work leads instead. *@
+      @if (Model.UpcomingEvents.Count > 0)
+      {
+        <a class="btn" href="/events">See Upcoming Events</a>
+        <a class="hero-secondary-link" href="/gallery">View Gallery &rarr;</a>
+      }
+      else
+      {
+        <a class="btn" href="/gallery">View the Gallery</a>
+        <a class="hero-secondary-link" href="/pottery-journal">Read the Pottery Journal &rarr;</a>
+      }
     </div>
   </section>
 
@@ -48,7 +58,7 @@
           </p>
         }
       </div>
-      <a class="hero-secondary-link" href="/gallery#category/@Uri.EscapeDataString(Model.FeaturedCollection.CollectionName)">See the full @Model.FeaturedCollection.CollectionName &rarr;</a>
+      <a class="hero-secondary-link" href="/gallery#category/@Uri.EscapeDataString(Model.FeaturedCollection.CollectionName)">See the collection &rarr;</a>
     </section>
   }
 </div>
@@ -61,9 +71,12 @@
 
   @if (Model.UpcomingEvents.Count == 0)
   {
-    <div class="home-events-empty">
-      <p class="empty-state">No events scheduled right now -- check back soon.</p>
-      <a class="hero-secondary-link" href="/pottery-journal">Browse the Pottery Journal &rarr;</a>
+    <div class="events-empty">
+      <p>No events scheduled right now. Follow along on Instagram, or ask about the next show.</p>
+      <ul class="events-empty-links">
+        <li><a class="hero-secondary-link" href="https://www.instagram.com/bremmerArtistry" target="_blank" rel="noopener">Follow @@bremmerArtistry &rarr;</a></li>
+        <li><a class="hero-secondary-link" href="/contact">Ask about the next show &rarr;</a></li>
+      </ul>
     </div>
   }
   else

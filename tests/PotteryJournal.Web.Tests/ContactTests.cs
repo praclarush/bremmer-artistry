@@ -44,7 +44,7 @@ namespace PotteryJournal.Web.Tests
         }
 
         [Test]
-        public async Task PostContact_MissingMessage_RedirectsWithErrorAndDoesNotThrow()
+        public async Task PostContact_MissingMessage_RedisplaysFormWithInputPreserved()
         {
             using HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
@@ -64,8 +64,12 @@ namespace PotteryJournal.Web.Tests
             });
 
             HttpResponseMessage response = await client.SendAsync(postRequest);
+            string responseHtml = await response.Content.ReadAsStringAsync();
 
-            Assert.That((int)response.StatusCode, Is.EqualTo(302));
+            Assert.That((int)response.StatusCode, Is.EqualTo(200));
+            Assert.That(responseHtml, Does.Contain("role=\"alert\""));
+            Assert.That(responseHtml, Does.Contain("value=\"Jane Doe\""));
+            Assert.That(responseHtml, Does.Contain("value=\"customer@example.com\""));
         }
 
         private static string ExtractAntiForgeryToken(string html)

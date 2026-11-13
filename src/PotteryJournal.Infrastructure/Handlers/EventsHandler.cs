@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PotteryJournal.Infrastructure.Data;
 using PotteryJournal.Infrastructure.Data.Entities;
 using PotteryJournal.Infrastructure.Models;
+using PotteryJournal.Infrastructure.Options;
 using PotteryJournal.Infrastructure.Services;
 using PotteryJournal.SharedKernel.Core;
 
@@ -28,16 +30,26 @@ namespace PotteryJournal.Infrastructure.Handlers
 
         private readonly AppDbContext _context;
         private readonly IRecurrenceExpander _recurrenceExpander;
+        private readonly TimeProvider _timeProvider;
+        private readonly TimeZoneInfo _studioTimeZone;
 
         /// <summary>
         /// Initializes a new instance of <see cref="EventsHandler"/>.
         /// </summary>
         /// <param name="context">The application database context.</param>
         /// <param name="recurrenceExpander">Expands recurring events into concrete occurrences.</param>
-        public EventsHandler(AppDbContext context, IRecurrenceExpander recurrenceExpander)
+        /// <param name="timeProvider">Supplies the current time.</param>
+        /// <param name="studioTimeOptions">The studio's time zone, which decides where "today" begins.</param>
+        public EventsHandler(
+            AppDbContext context,
+            IRecurrenceExpander recurrenceExpander,
+            TimeProvider timeProvider,
+            IOptions<StudioTimeOptions> studioTimeOptions)
         {
             _context = context;
             _recurrenceExpander = recurrenceExpander;
+            _timeProvider = timeProvider;
+            _studioTimeZone = TimeZoneInfo.FindSystemTimeZoneById(studioTimeOptions.Value.TimeZone);
         }
 
         /// <inheritdoc />
@@ -45,8 +57,8 @@ namespace PotteryJournal.Infrastructure.Handlers
         {
             DataHandlerResponse<List<EventModel>> response = new DataHandlerResponse<List<EventModel>>();
 
-            DateTimeOffset now = DateTimeOffset.UtcNow;
-            DateTimeOffset startOfToday = new DateTimeOffset(now.Date, TimeSpan.Zero);
+            DateTimeOffset now = _timeProvider.GetUtcNow();
+            DateTimeOffset startOfToday = GetStartOfStudioDay(now);
             DateTimeOffset forwardWindowEnd = now.Add(_recurringForwardWindow);
 
             static bool IsUpcoming(DateTimeOffset? endDateTime, DateTimeOffset startDateTime, DateTimeOffset upcomingNow, DateTimeOffset upcomingStartOfToday)
@@ -103,7 +115,7 @@ namespace PotteryJournal.Infrastructure.Handlers
         {
             DataHandlerResponse<List<EventModel>> response = new DataHandlerResponse<List<EventModel>>();
 
-            DateTimeOffset now = DateTimeOffset.UtcNow;
+            DateTimeOffset now = _timeProvider.GetUtcNow();
             DateTimeOffset windowStart = now.Subtract(_recurringPastWindow);
             DateTimeOffset windowEnd = now.Add(_recurringForwardWindow);
 
@@ -177,7 +189,7 @@ namespace PotteryJournal.Infrastructure.Handlers
 
             Event eventEntity = new Event
             {
-                CreatedDate = DateTimeOffset.UtcNow,
+                CreatedDate = _timeProvider.GetUtcNow(),
                 CreatedByEmail = createdByEmail,
             };
             ApplySaveModel(eventEntity, model);
@@ -306,6 +318,16 @@ namespace PotteryJournal.Infrastructure.Handlers
                 RecurrenceInterval = eventEntity.RecurrenceInterval,
                 RecurrenceEndDate = eventEntity.RecurrenceEndDate,
             };
+        }
+
+        // The instant (as UTC) at which the studio's local calendar day containing `now` began.
+        // "Today" is the studio's day, not the UTC day: for a US Central studio the UTC day rolls
+        // over at 6 or 7 PM local, which would drop an event that started that morning.
+        private DateTimeOffset GetStartOfStudioDay(DateTimeOffset now)
+        {
+            DateTime localMidnight = TimeZoneInfo.ConvertTime(now, _studioTimeZone).Date;
+            TimeSpan offsetAtMidnight = _studioTimeZone.GetUtcOffset(localMidnight);
+            return new DateTimeOffset(localMidnight, offsetAtMidnight).ToUniversalTime();
         }
 
         // Expands a recurring event into one EventModel per occurrence within [windowStart, windowEnd].

@@ -72,7 +72,8 @@ namespace PotteryJournal.Infrastructure.Handlers
         {
             DataHandlerResponse<List<PieceDetailModel>> response = new DataHandlerResponse<List<PieceDetailModel>>();
 
-            // Public Pottery Journal endpoint only -- pieces with no glaze recorded yet aren't
+            // Public Pottery Journal endpoint only -- pieces with no glaze recorded yet, and pieces
+            // the admin unchecked "Show in Pottery Journal" on (tests, practice pieces), aren't
             // shown outside the admin portal. Admin screens use GetByIdAsync/GetSummariesAsync
             // instead, which are unfiltered.
             IQueryable<Piece> query = _context.Pieces
@@ -83,7 +84,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 .Include(p => p.Category)
                 .AsSplitQuery()
                 .AsNoTracking()
-                .Where(p => p.GlazeApplications.Any());
+                .Where(p => p.ShowInJournal && p.GlazeApplications.Any());
 
             if (!string.IsNullOrWhiteSpace(category))
             {
@@ -381,6 +382,7 @@ namespace PotteryJournal.Infrastructure.Handlers
             piece.Title = model.Title;
             piece.CategoryId = model.CategoryId;
             piece.ShowInGallery = model.ShowInGallery;
+            piece.ShowInJournal = model.ShowInJournal;
             piece.ClayBodyId = model.ClayBodyId;
             piece.CollectionId = model.CollectionId;
             piece.StartedDate = model.StartedDate;
@@ -445,6 +447,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 Clay = piece.ClayBody?.Name ?? "—",
                 Category = piece.Category?.Name,
                 ShowInGallery = piece.ShowInGallery,
+                ShowInJournal = piece.ShowInJournal,
                 StartedDate = piece.StartedDate,
                 PrimaryImageFileName = piece.Images.OrderBy(i => i.SortOrder).Select(i => i.FileName).FirstOrDefault(),
             };
@@ -460,6 +463,7 @@ namespace PotteryJournal.Infrastructure.Handlers
                 CategoryId = piece.CategoryId,
                 Category = piece.Category?.Name,
                 ShowInGallery = piece.ShowInGallery,
+                ShowInJournal = piece.ShowInJournal,
                 ClayBodyId = piece.ClayBodyId,
                 Clay = piece.ClayBody?.Name ?? "—",
                 CollectionId = piece.CollectionId,

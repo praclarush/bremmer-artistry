@@ -20,6 +20,8 @@ namespace PotteryJournal.Infrastructure.Data.Entities
 
         public bool ShowInGallery { get; set; }
 
+        public bool ShowInJournal { get; set; } = true;
+
         public Guid? ClayBodyId { get; set; }
 
         public ClayBody? ClayBody { get; set; }

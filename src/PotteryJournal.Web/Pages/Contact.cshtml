@@ -1,5 +1,6 @@
 @page "/contact"
 @model PotteryJournal.Web.Pages.ContactModel
+@inject Microsoft.Extensions.Options.IOptions<PotteryJournal.Web.SiteFeaturesOptions> SiteFeatures
 @{
     ViewData["Title"] = "Contact";
     ViewData["ActiveNav"] = "Contact";
@@ -8,23 +9,38 @@
 <div class="content-page">
   <h1>Contact Us</h1>
   <p>
-    Have a question about a piece, a class, or an event? Send a message and we'll get back to you.
+    @(SiteFeatures.Value.ShowClasses ? "Have a question about a piece, a class, or an event?" : "Have a question about a piece or an event?")
+    Send a message and we'll get back to you.
   </p>
 
   @if (TempData["StatusMessage"] is string statusMessage && !string.IsNullOrEmpty(statusMessage))
   {
-    <p class="form-status-message">@statusMessage</p>
+    <p class="form-status-message" role="status">@statusMessage</p>
   }
 
-  <form method="post" asp-page="/Contact" class="simple-form">
+  @if (Model.ErrorMessages.Count > 0)
+  {
+    <div class="form-status-message form-status-message--error" id="contactErrors" role="alert">
+      <p>Your message wasn't sent yet. Everything you typed is still below.</p>
+      <ul>
+        @foreach (string error in Model.ErrorMessages)
+        {
+          <li>@error</li>
+        }
+      </ul>
+      <p>You can also email <a href="mailto:info@bremmer-artistry.art">info@bremmer-artistry.art</a> directly.</p>
+    </div>
+  }
+
+  <form method="post" asp-page="/Contact" class="simple-form" aria-describedby="@(Model.ErrorMessages.Count > 0 ? "contactErrors" : null)">
     <div class="simple-form-field">
       <label for="contactName">Name</label>
-      <input type="text" id="contactName" asp-for="Name" maxlength="200" required>
+      <input type="text" id="contactName" asp-for="Name" maxlength="200" required pattern=".*\S.*" title="Please enter your name." autocomplete="name">
     </div>
 
     <div class="simple-form-field">
       <label for="contactEmail">Email</label>
-      <input type="email" id="contactEmail" asp-for="Email" maxlength="320" required>
+      <input type="email" id="contactEmail" asp-for="Email" maxlength="320" required autocomplete="email">
     </div>
 
     <div class="simple-form-field">
@@ -32,6 +48,6 @@
       <textarea id="contactMessage" asp-for="Message" rows="5" maxlength="1000" required></textarea>
     </div>
 
-    <button type="submit" class="simple-form-submit">Send Message</button>
+    <button type="submit" class="btn">Send Message</button>
   </form>
 </div>

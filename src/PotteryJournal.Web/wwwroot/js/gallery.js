@@ -10,6 +10,12 @@ const STAGGER_CAP = 15;
 const VIEW_TRANSITIONS_SUPPORTED = typeof document.startViewTransition === "function";
 const USE_PHOTO_MORPH = VIEW_TRANSITIONS_SUPPORTED && !REDUCED_MOTION;
 const PHOTO_MORPH_NAME = "gallery-lightbox-photo";
+// Bulk-imported pieces were titled "<Category> — <camera file name>" (e.g. "Bowls — 20250924_110013").
+// A title like that is a camera roll, not a name, so it gets replaced on display with the
+// category and month. Retitling the piece in the admin removes the fallback with no code change.
+const CAMERA_FILENAME_PATTERN = /\d{8}[_-]\d{6}/;
+// A horizontal drag at least this long (px), and more sideways than vertical, pages the lightbox.
+const SWIPE_MIN_PX = 50;
 
 let CATEGORIES = [];
 let activeCategory = null;
@@ -17,6 +23,10 @@ let activeIndex = 0;
 let lastFocusedElement = null;
 let renderedCategoryName = null;
 let pendingSwapTimeout = null;
+// True when this page pushed the lightbox's history entry (a tile click), so closing can step back
+// to the grid's entry instead of stacking another one. Paging photos replaces the entry in place:
+// Back from the lightbox leaves it, rather than replaying every photo viewed.
+let lightboxPushedHistory = false;
 
 const galleryIntro = document.getElementById("galleryIntro");
 const categoriesView = document.getElementById("categoriesView");
@@ -47,6 +57,7 @@ lightbox.addEventListener("click", (e) => {
     closeLightbox();
   }
 });
+onHorizontalSwipe(lightbox, (direction) => stepLightbox(direction));
 document.addEventListener("keydown", onKeydown);
 window.addEventListener("hashchange", route);
 categoriesRetryBtn.addEventListener("click", () => init());
@@ -87,11 +98,15 @@ function buildCategories(pieces) {
       name,
       pieces: categoryPieces,
       photos: categoryPieces.flatMap((piece) =>
-        piece.imageFileNames.map((fileName) => ({
-          pieceTitle: piece.title,
-          url: imageUrl(fileName),
-          startedDate: piece.startedDate,
-        }))
+        piece.imageFileNames.map((fileName) => {
+          const hasRealTitle = !CAMERA_FILENAME_PATTERN.test(piece.title);
+          return {
+            pieceTitle: hasRealTitle ? piece.title : `${name}, ${monthYear(piece.startedDate)}`,
+            hasRealTitle,
+            url: imageUrl(fileName),
+            startedDate: piece.startedDate,
+          };
+        })
       ),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -146,6 +161,7 @@ function renderCategoryGrid(category) {
     btn.style.setProperty("--i", Math.min(index, STAGGER_CAP));
     btn.setAttribute("aria-label", `View larger photo of ${photo.pieceTitle}`);
     btn.addEventListener("click", () => {
+      lightboxPushedHistory = true;
       location.hash = `#category/${encodeURIComponent(category.name)}/${index}`;
     });
 
@@ -155,19 +171,22 @@ function renderCategoryGrid(category) {
     img.src = photo.url;
     img.loading = "lazy";
     img.alt = photo.pieceTitle;
-    photoDiv.appendChild(img);
+    photoDiv.appendChild(frameFor(img));
 
     const tag = document.createElement("span");
     tag.className = "tag";
     tag.textContent = monthYear(photo.startedDate);
     photoDiv.appendChild(tag);
 
-    const title = document.createElement("span");
-    title.className = "tile-title";
-    title.textContent = photo.pieceTitle;
-
     btn.appendChild(photoDiv);
-    btn.appendChild(title);
+    // A fallback title would only repeat the grid heading and the date tag, so it stays out of
+    // the visible tile (it still labels the button and image for screen readers).
+    if (photo.hasRealTitle) {
+      const title = document.createElement("span");
+      title.className = "tile-title";
+      title.textContent = photo.pieceTitle;
+      btn.appendChild(title);
+    }
     frag.appendChild(btn);
   });
   categoryGrid.appendChild(frag);
@@ -280,7 +299,7 @@ function setBackgroundInert(isInert) {
 
 function showLightboxPhoto(skipFade) {
   const photo = activeCategory.photos[activeIndex];
-  lightboxCaption.textContent = `${photo.pieceTitle} — ${activeIndex + 1} of ${activeCategory.photos.length}`;
+  lightboxCaption.textContent = `${photo.pieceTitle} · ${activeIndex + 1} of ${activeCategory.photos.length}`;
 
   if (pendingSwapTimeout) {
     window.clearTimeout(pendingSwapTimeout);
@@ -301,7 +320,9 @@ function showLightboxPhoto(skipFade) {
     // #lightboxImage carries PHOTO_MORPH_NAME permanently (gallery.css) -- the same element
     // persisting across the transition with only its src changing gets a native crossfade
     // between the old and new photo, no manual opacity timing needed.
-    document.startViewTransition(applyImage);
+    // Paging faster than the crossfade skips the previous transition, which rejects its `ready`
+    // promise. That's expected (the newer photo wins), so it shouldn't surface as a console error.
+    document.startViewTransition(applyImage).ready.catch(() => {});
     return;
   }
 
@@ -321,7 +342,9 @@ function stepLightbox(delta) {
   }
   const total = activeCategory.photos.length;
   const nextIndex = (activeIndex + delta + total) % total;
-  location.hash = `#category/${encodeURIComponent(activeCategory.name)}/${nextIndex}`;
+  // replaceState doesn't fire hashchange, so route explicitly.
+  history.replaceState(null, "", `#category/${encodeURIComponent(activeCategory.name)}/${nextIndex}`);
+  route();
 }
 
 function closeLightbox(opts) {
@@ -368,20 +391,30 @@ function closeLightbox(opts) {
     window.setTimeout(finishClose, 250);
   }
 
+  // Focus the tile of the photo last viewed, not the one first clicked: after paging through a
+  // category, keyboard users land where they left off instead of back at the start.
+  const lastViewedTile = activeCategory ? categoryGrid.children[activeIndex] : null;
   activeCategory = null;
   setBackgroundInert(false);
 
-  if (lastFocusedElement) {
-    lastFocusedElement.focus();
-    lastFocusedElement = null;
+  const focusTarget = lastViewedTile || lastFocusedElement;
+  if (focusTarget) {
+    focusTarget.focus();
   }
+  lastFocusedElement = null;
 
   if (!opts || !opts.skipHashClear) {
     const match = location.hash.match(/^#category\/([^/]+)\/\d+$/);
     if (match) {
-      location.hash = `#category/${match[1]}`;
+      if (lightboxPushedHistory) {
+        history.back();
+      } else {
+        // Deep-linked straight to a photo: there's no grid entry behind it to go back to.
+        location.hash = `#category/${match[1]}`;
+      }
     }
   }
+  lightboxPushedHistory = false;
 }
 
 function onKeydown(e) {
@@ -406,4 +439,30 @@ function trapLightboxFocus(e) {
   const nextIndex = currentIndex === -1 ? 0 : (currentIndex + delta + focusable.length) % focusable.length;
   e.preventDefault();
   focusable[nextIndex].focus();
+}
+
+// Calls onSwipe(1) for a swipe left (next) and onSwipe(-1) for a swipe right (previous).
+function onHorizontalSwipe(element, onSwipe) {
+  let startX = 0;
+  let startY = 0;
+  element.addEventListener("touchstart", (e) => {
+    startX = e.changedTouches[0].clientX;
+    startY = e.changedTouches[0].clientY;
+  }, { passive: true });
+  element.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) >= SWIPE_MIN_PX && Math.abs(dx) > Math.abs(dy)) {
+      onSwipe(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+}
+
+// Wraps a tile photo in the clipping frame: the frame crops the hover zoom, while the date tag
+// (a sibling, outside the frame) is free to hang past the photo's edge.
+function frameFor(img) {
+  const frame = document.createElement("div");
+  frame.className = "tile-photo-frame";
+  frame.appendChild(img);
+  return frame;
 }

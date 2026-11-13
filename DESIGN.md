@@ -5,6 +5,7 @@ colors:
   kiln-char: "#0c2435"
   shelf: "#122c39"
   shelf-line: "#2c4b5c"
+  control-line: "#687c87"
   bisque: "#ffffff"
   bisque-dark: "#9aabb3"
   copper-glaze: "#a6885c"
@@ -133,6 +134,10 @@ exists only for the worksheet detail view.
   photo placeholders before an image loads.
 - **Shelf Line** (`#2c4b5c`): Borders and dividers on the dark register — nav underline, filter bar
   rule, card outlines.
+- **Control Line** (`#687c87`): The border of a text field on the dark register (Journal search,
+  Contact form). Shelf Line reads at only 1.7:1, too faint to show where a field is; Control Line
+  clears WCAG 1.4.11's 3:1 against both Kiln Char and Shelf. Buttons and chips keep Shelf Line,
+  since their text already identifies them.
 - **Bisque** (`#ffffff`): Primary text color on the dark register (headings, wordmark) and,
   identically, the worksheet's paper background — same hex, deliberately dual-purpose: light text
   on dark surfaces, and the light surface itself when the register flips.
@@ -246,7 +251,7 @@ what makes the accent color mean something when it does appear.
   image bleeds to the tile edge.
 
 ### Inputs / Fields
-- **Style:** Shelf background, 1px Shelf Line border, Bisque/Paper text, mono type, 2px radius.
+- **Style:** Shelf background, 1px Control Line border, Bisque/Paper text, mono type, 2px radius.
 - **Focus:** Border shifts to Copper Glaze plus a soft `0 0 0 2px rgba(175, 137, 88, 0.35)` glow —
   the only place a glow effect is used in the system; reserve it for input focus, not decoration.
 
