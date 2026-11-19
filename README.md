@@ -189,8 +189,21 @@ data persist in the `uploads` and `pgdata` named volumes.
 ### Deploying to Render
 
 `render.yaml` is a [Render Blueprint](https://render.com/docs/infrastructure-as-code) that creates
-everything the site needs: the Docker web service (built from `docker/Dockerfile`), a Postgres
-database, and a persistent disk mounted at `/app/uploads` for photos.
+everything the site needs: the Docker web service (built from `docker/Dockerfile`) and a Postgres
+database.
+
+**It currently targets Render's free plans, as a trial.** That costs nothing but is not fit for
+real use:
+
+- Uploaded photos are lost on every redeploy, restart, or idle spin-down. Free services can't
+  have a persistent disk, so `/app/uploads` lives only in the container.
+- The web service sleeps after 15 minutes without traffic and takes about a minute to wake.
+- The free database expires 30 days after creation and is deleted 14 days later unless upgraded.
+  It has no backups, and a workspace gets only one.
+
+To move to the paid setup, edit `render.yaml`: set the database `plan` to `0.1c-256mb`, the web
+service `plan` to `0.5c-512mb`, and uncomment the `disk` block (2 GB at `/app/uploads`). Push,
+and Render applies the change. Upgrade the database before the 30 days run out to keep its data.
 
 1. Push the repo to GitHub, then in the Render dashboard choose **New > Blueprint** and select it.
 2. Render prompts once for the secret values: the bootstrap admin email and password (same meaning
@@ -204,11 +217,11 @@ Things to know:
 - **Region** (`ohio`) is set on both the service and the database and can't be changed after
   creation -- edit it in `render.yaml` before the first apply if another region suits your visitors
   better. They must share a region to talk over Render's private network.
-- **Plans** are the smallest available (`0.5c-512mb` web, `0.1c-256mb` Postgres). Photo uploads
-  are resized in memory, so move the web service up a plan if large uploads time out or the
-  service restarts under memory pressure. The disk is 2 GB and can be grown but never shrunk.
-- **One instance only**: a service with a disk can't be scaled out, and each deploy has a short
-  gap while the disk moves to the new instance.
+- **Paid plans** are the smallest available (`0.5c-512mb` web, `0.1c-256mb` Postgres). Photo
+  uploads are resized in memory, so move the web service up a plan if large uploads time out or
+  the service restarts under memory pressure. The disk is 2 GB and can be grown but never shrunk.
+- **One instance only** (once the disk is on): a service with a disk can't be scaled out, and
+  each deploy has a short gap while the disk moves to the new instance.
 - **Secrets** are set with `sync: false`, so they live only in Render, never in the repo, and
   later edits to `render.yaml` don't overwrite them.
 - **The database URL**: Render supplies a `postgresql://` URL, which Npgsql can't read directly.
@@ -216,9 +229,15 @@ Things to know:
   pass through untouched.
 - **Backups**: check your Postgres plan's backup retention on Render, and take your own copy of
   the uploads disk -- it is the only place the photos live.
+- **Search engines and bots**: `/robots.txt` lets search engines crawl everything but the admin
+  area and points them at `/sitemap.xml`; it asks AI-training crawlers (GPTBot, CCBot,
+  Google-Extended and others) and SEO crawlers (AhrefsBot, SemrushBot and others) to stay out.
+  Robots.txt is voluntary, so every client is also capped at 600 requests a minute, photos
+  included. Once the site has a domain, submit the sitemap in Google Search Console and Bing
+  Webmaster Tools.
 
 The deploy sets `ASPNETCORE_FORWARDEDHEADERS_ENABLED` because Render terminates TLS in front of
-the app; without it, auth cookies lose their `Secure` flag and the per-IP login rate limit sees
+the app; without it, auth cookies lose their `Secure` flag and the per-IP rate limits see
 Render's proxy address for every visitor.
 
 **Known gap**: ASP.NET Core's cookie auth Data Protection keys aren't currently persisted outside

@@ -37,6 +37,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `[EnableRateLimiting]` on `LoginModel`) since there's no external identity provider absorbing
   brute-force attempts anymore. Any new unauthenticated POST endpoint that takes user-supplied
   credentials should get the same treatment.
+- **Bot and bandwidth controls.** `SearchEngineEndpointExtensions` serves `/robots.txt` and
+  `/sitemap.xml`, both generated per request so absolute URLs follow the serving host; the
+  sitemap honors `ShowClasses`/`ShowFaq`. Robots.txt blocks AI-training and SEO crawlers but must
+  never disallow the `/.../data` endpoints: Gallery, Journal and Events render client-side from
+  them, so Google couldn't index those pages. `Program.cs` sets a `GlobalLimiter` of 600
+  requests/min per client IP, and `UseRouting`/`UseRateLimiter` sit *before* `UseStaticFiles` so
+  that limit covers `/uploads` photos; moving them back below the static file middleware silently
+  exempts every file. `DataEndpoints` and `LoginAttempts` are partitioned per IP (`AddPolicy` +
+  `ClientPartitionKey`); `ClassBooking` and `ContactForm` are still single shared buckets
+  (`AddFixedWindowLimiter`), not per IP.
 - **SharedKernel's `HandlerResponse`/`DataHandlerResponse<T>`/`PagedHandlerResponse<T>`** were
   built fresh in this repo (`PotteryJournal.SharedKernel/Core/`) -- there was no existing shared
   NuGet package to reference. All `PotteryJournal.Infrastructure` handler methods return one of
@@ -370,15 +380,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
 
 ## Deployment
 
-`render.yaml` is the Render Blueprint (web service + Postgres + a disk at `/app/uploads`); see
-README "Deploying to Render". Three things in it are load-bearing and not obvious from the file:
+`render.yaml` is the Render Blueprint (web service + Postgres); see README "Deploying to Render".
+It is currently on the free plans as a trial, with the `/app/uploads` disk commented out because
+free services can't have one -- uploads are ephemeral until the paid plans and disk are restored. Three things in it are load-bearing and not obvious from the file:
 (1) Render's `fromDatabase` `connectionString` is a `postgresql://` URL, which Npgsql 8 rejects
 (`ArgumentException`), so `Program.cs` passes the configured string through
 `ConnectionStringNormalizer.Normalize` -- keep that call if you touch the `UseNpgsql` line, or the
 Render deploy dies at startup while Docker/user-secrets setups (key/value strings, passed through
 unchanged) keep working and hide the problem. (2) `ASPNETCORE_FORWARDEDHEADERS_ENABLED` is what
 makes the app see HTTPS behind Render's proxy; there is no `UseForwardedHeaders` in code, so this
-env var is the only thing doing it. (3) Plan IDs (`0.5c-512mb`, `0.1c-256mb`) are Render's
+env var is the only thing doing it. (3) Paid plan IDs (`0.5c-512mb`, `0.1c-256mb`) are Render's
 current naming; the old `starter`/`basic-256mb` names are rejected by its schema. Validate edits
 against `https://render.com/schema/render.yaml.json` (any JSON-schema validator after parsing the
 YAML) or `render blueprints validate render.yaml`. Note the Blueprint spec has no variable

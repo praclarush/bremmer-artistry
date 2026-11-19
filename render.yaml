@@ -1,5 +1,11 @@
-# Render Blueprint for the Bremmer Artistry site: one Docker web service, one Postgres database,
-# and a persistent disk for uploaded photos. See README.md "Deploying to Render".
+# Render Blueprint for the Bremmer Artistry site: one Docker web service and one Postgres database.
+# See README.md "Deploying to Render".
+#
+# TRIAL SETUP: both run on Render's free plans. That means uploaded photos are lost on every
+# redeploy, restart or idle spin-down (free services can't have a disk), the web service sleeps
+# after 15 idle minutes, and the free database expires 30 days after creation (deleted 14 days
+# later unless upgraded). To go to the paid setup: set the database plan to 0.1c-256mb, the web
+# plan to 0.5c-512mb, and uncomment the disk block below.
 #
 # Render does not support variable interpolation in Blueprint files, so nothing here is built from
 # other values. Secrets use `sync: false`: Render prompts for them once, when the Blueprint is first
@@ -13,7 +19,7 @@ databases:
     databaseName: potteryjournal
     user: potteryjournal
     region: ohio
-    plan: 0.1c-256mb
+    plan: free # paid: 0.1c-256mb
     postgresMajorVersion: "16"
 
 services:
@@ -23,17 +29,18 @@ services:
     dockerfilePath: ./docker/Dockerfile
     dockerContext: .
     region: ohio
-    plan: 0.5c-512mb
+    plan: free # paid: 0.5c-512mb
     autoDeployTrigger: commit
     # /about is static -- it never touches the database, so a database blip can't fail a deploy.
     healthCheckPath: /about
 
-    # Photos land in Uploads:RootPath. Without a disk they would vanish on every deploy.
+    # Photos land in Uploads:RootPath. Without a disk they vanish on every deploy, restart or
+    # spin-down. Free services can't have one; uncomment this once on a paid plan.
     # A service with a disk can't be scaled past one instance and redeploys with a short gap.
-    disk:
-      name: uploads
-      mountPath: /app/uploads
-      sizeGB: 2
+    # disk:
+    #   name: uploads
+    #   mountPath: /app/uploads
+    #   sizeGB: 2
 
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
