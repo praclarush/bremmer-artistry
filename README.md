@@ -246,6 +246,27 @@ The deploy sets `ASPNETCORE_FORWARDEDHEADERS_ENABLED` because Render terminates 
 the app; without it, auth cookies lose their `Secure` flag and the per-IP rate limits see
 Render's proxy address for every visitor.
 
+#### Custom domain and Cloudflare
+
+DNS for the domain lives in Cloudflare. In Render, add both `example.com` and `www.example.com`
+under the service's **Settings > Custom Domains**. In Cloudflare, CNAME `@` and `www` to the
+service's `onrender.com` host name, starting as **DNS only** (grey cloud) so Render can verify the
+domain and issue its certificate. A subdomain (e.g. `pottery.example.com`) works the same way
+with a single domain in Render and a single CNAME (`pottery`), leaving the root domain free for
+other uses. Then:
+
+1. Set `Site__CanonicalHost` to the domain (e.g. `example.com`) in the service's environment.
+   From then on the `onrender.com` address and the www/non-www twin 301-redirect to it, so search
+   engines index one address.
+2. In Cloudflare, set **SSL/TLS** to **Full (strict)** (Flexible causes a redirect loop with the
+   app's HTTPS redirect) and switch both records to **Proxied**.
+
+Behind Cloudflare, `UseCloudflareClientIp` takes the visitor's IP from the `CF-Connecting-IP`
+header, but only for connections from Cloudflare's published ranges (`Cloudflare:ProxyRanges` in
+`appsettings.json`), so a client hitting the origin directly can't spoof it. Without it, every
+visitor behind the same Cloudflare edge server would share one rate-limit bucket. Cloudflare
+changes its ranges rarely; refresh the list from <https://www.cloudflare.com/ips/> if it does.
+
 **Known gap**: ASP.NET Core's cookie auth Data Protection keys aren't currently persisted outside
 the container (a startup warning flags this). Every container restart invalidates existing admin
 sessions, forcing a re-login -- not a security issue, just an occasional inconvenience. Worth
