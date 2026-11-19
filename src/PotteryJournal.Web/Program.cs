@@ -136,6 +136,13 @@ using (IServiceScope startupScope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// First, so everything after it (rate limits, logs) sees the visitor's IP rather than a Cloudflare
+// edge server's. ASPNETCORE_FORWARDEDHEADERS_ENABLED has already peeled off Render's hop by now.
+app.UseCloudflareClientIp(app.Configuration.GetSection("Cloudflare:ProxyRanges").Get<List<string>>() ?? new List<string>());
+// Site:CanonicalHost stays blank until the custom domain is live; RENDER_EXTERNAL_HOSTNAME is set
+// by Render to the service's onrender.com name.
+app.UseCanonicalHostRedirect(app.Configuration["Site:CanonicalHost"], app.Configuration["RENDER_EXTERNAL_HOSTNAME"]);
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -246,7 +253,8 @@ static IResult JsonResult<T>(T data)
 }
 
 // The client's IP address. Behind Render's proxy this is the real visitor only because
-// ASPNETCORE_FORWARDEDHEADERS_ENABLED is set (see render.yaml).
+// ASPNETCORE_FORWARDEDHEADERS_ENABLED is set (see render.yaml), and behind Cloudflare only because
+// UseCloudflareClientIp runs first.
 static string ClientPartitionKey(HttpContext context)
 {
     const string unknownClient = "unknown";

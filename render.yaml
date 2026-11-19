@@ -53,6 +53,11 @@ services:
       # proxy address instead of the visitor's.
       - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
         value: "true"
+      # The public domain (e.g. example.com). Leave blank until Render has verified the custom
+      # domain and issued its certificate; once set, the onrender.com address and the www/non-www
+      # twin 301-redirect here.
+      - key: Site__CanonicalHost
+        sync: false
 
       # Render hands out a postgresql:// URL; ConnectionStringNormalizer converts it for Npgsql.
       - key: ConnectionStrings__PotteryJournal

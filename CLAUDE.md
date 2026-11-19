@@ -47,6 +47,14 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   exempts every file. `DataEndpoints` and `LoginAttempts` are partitioned per IP (`AddPolicy` +
   `ClientPartitionKey`); `ClassBooking` and `ContactForm` are still single shared buckets
   (`AddFixedWindowLimiter`), not per IP.
+- **Client IP behind Cloudflare.** `UseCloudflareClientIp` runs first in the pipeline and swaps
+  `RemoteIpAddress` for `CF-Connecting-IP`, but only when the connection comes from a
+  `Cloudflare:ProxyRanges` address (after `ASPNETCORE_FORWARDEDHEADERS_ENABLED` has removed
+  Render's hop). Trusting the header unconditionally would let anyone reaching the origin rotate
+  fake IPs past every per-IP limit. `UseCanonicalHostRedirect` 301s only *alias* hosts
+  (`RENDER_EXTERNAL_HOSTNAME` and the www/non-www twin of `Site:CanonicalHost`) rather than every
+  non-canonical host, because Render's health check arrives on an internal host and must not be
+  redirected. Both no-op in dev and tests (blank `CanonicalHost`, no Cloudflare connections).
 - **SharedKernel's `HandlerResponse`/`DataHandlerResponse<T>`/`PagedHandlerResponse<T>`** were
   built fresh in this repo (`PotteryJournal.SharedKernel/Core/`) -- there was no existing shared
   NuGet package to reference. All `PotteryJournal.Infrastructure` handler methods return one of
