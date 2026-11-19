@@ -22,6 +22,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=publish /app/publish .
 
+# render-trial only: bakes the local photo set into the image so it survives restarts and
+# spin-downs on Render's free plan, which has no disk. Photos uploaded at runtime are still lost.
+COPY uploads/ /app/uploads/
+
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 

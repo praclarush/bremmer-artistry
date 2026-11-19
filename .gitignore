@@ -1,6 +1,8 @@
 bin/
 obj/
-uploads/
+# render-trial: the root uploads/ photos are committed and baked into the image.
+src/**/uploads/
+*.tmp
 *.user
 .vs/
 .env

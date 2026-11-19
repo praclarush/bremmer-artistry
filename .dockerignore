@@ -1,6 +1,6 @@
 **/bin/
 **/obj/
-**/uploads/
+src/**/uploads/
 .git/
 .vs/
 *.user
