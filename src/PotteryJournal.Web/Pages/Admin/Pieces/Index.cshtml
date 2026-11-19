@@ -51,7 +51,13 @@
     {
       <tr>
         <td>#@piece.PieceNumber.ToString("000")</td>
-        <td>@piece.Title</td>
+        <td>
+          @piece.Title
+          @if (!piece.ShowInJournal)
+          {
+            <span class="badge text-bg-secondary">Hidden from Journal</span>
+          }
+        </td>
         <td>@piece.Clay</td>
         <td>@piece.Category</td>
         <td>

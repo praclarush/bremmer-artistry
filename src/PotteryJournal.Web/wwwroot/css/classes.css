@@ -214,7 +214,7 @@
 /* ---------- booking form modal ---------- */
 /* Reuses the shared .lightbox scrim/open/close mechanics from site.css (also used by Events'
    flyer viewer and Gallery's photo viewer); field/label/submit styling is shared via
-   .simple-form/.simple-form-field/.simple-form-submit (also used by Contact Us). */
+   .simple-form/.simple-form-field and the shared .btn (also used by Contact Us). */
 
 .booking-modal-panel {
   width: 100%;

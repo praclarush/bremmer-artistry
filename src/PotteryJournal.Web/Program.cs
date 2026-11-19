@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using PotteryJournal.Infrastructure.Data;
 using PotteryJournal.Infrastructure.Data.Entities;
 using PotteryJournal.Infrastructure.Handlers;
@@ -25,10 +26,13 @@ builder.Services.AddRazorPages(options =>
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PotteryJournal")));
+    options.UseNpgsql(ConnectionStringNormalizer.Normalize(builder.Configuration.GetConnectionString("PotteryJournal"))));
 
 builder.Services.Configure<UploadsOptions>(builder.Configuration.GetSection("Uploads"));
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<SiteFeaturesOptions>(builder.Configuration.GetSection("Site"));
+builder.Services.Configure<StudioTimeOptions>(builder.Configuration.GetSection("Site"));
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddScoped<IPieceHandler, PieceHandler>();
 builder.Services.AddScoped<IReferenceDataHandler, ReferenceDataHandler>();
@@ -172,8 +176,13 @@ app.MapGet("/events/data/all", async (IEventsHandler eventsHandler) =>
     return JsonResult(response.Data ?? new List<EventModel>());
 }).RequireRateLimiting(RateLimiterPolicies.DataEndpoints);
 
-app.MapGet("/classes/data", async (IClassesHandler classesHandler) =>
+app.MapGet("/classes/data", async (IClassesHandler classesHandler, IOptions<SiteFeaturesOptions> siteFeatures) =>
 {
+    if (!siteFeatures.Value.ShowClasses)
+    {
+        return Results.NotFound();
+    }
+
     // A fixed 90-day public booking window -- generous for planning ahead without ever needing to
     // expand indefinite recurrence unboundedly.
     DateTimeOffset now = DateTimeOffset.UtcNow;

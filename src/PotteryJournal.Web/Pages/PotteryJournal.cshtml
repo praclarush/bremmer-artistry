@@ -10,13 +10,14 @@
 
 <header class="journal-header">
   <h1>Pottery Journal</h1>
-  <div class="header-tools">
-    <span><span id="pieceCount">0</span> pieces on the shelf</span>
-    <input id="searchInput" type="search" placeholder="Search title or clay&hellip;" aria-label="Search pieces">
+  <div class="header-tools" id="headerTools">
+    <span role="status"><span id="pieceCount">&hellip;</span> pieces on the shelf</span>
+    <input id="searchInput" type="search" placeholder="Search title, clay, or glaze&hellip;" aria-label="Search pieces by title, clay, or glaze">
+    <button type="button" class="filter-toggle" id="filterToggle" aria-expanded="false" aria-controls="filterBar">Filters</button>
   </div>
 </header>
 
-<div class="filter-bar">
+<div class="filter-bar" id="filterBar">
   <div class="filter-group" data-group="clay">
     <span class="filter-label">CLAY</span>
     <div class="chip-row" id="clayChips"></div>
@@ -27,9 +28,17 @@
   </div>
 </div>
 
-<div id="galleryView" class="gallery" aria-live="polite"></div>
+<div id="galleryView" class="gallery"></div>
 
-<p id="emptyState" class="empty-state hidden">Nothing matches that search. Try another name or clay body.</p>
+<div id="emptyState" class="empty-state hidden">
+  <p id="emptyStateText">No pieces on the shelf yet.</p>
+  <button id="clearFiltersBtn" class="hero-secondary-link hidden" type="button">Clear filters</button>
+</div>
+<p id="journalLoading" class="empty-state">Loading the journal&hellip;</p>
+<p id="journalError" class="empty-state hidden">
+  We couldn't load the journal right now.
+  <button id="journalRetryBtn" class="hero-secondary-link" type="button">Try again</button>
+</p>
 
 <section id="detailView" class="detail-view hidden">
   <div class="detail-inner">

@@ -3,6 +3,7 @@
   --kiln-char: #0c2435;
   --shelf: #122c39;
   --shelf-line: #2c4b5c;
+  --control-line: #687c87; /* text-field borders: 3:1 against Kiln Char and Shelf */
   --bisque: #ffffff;
   --bisque-dark: #9aabb3;
   --copper-glaze: #a6885c;
@@ -100,7 +101,7 @@ a { color: var(--copper-glaze); }
   margin: 0;
   font-family: var(--font-display);
   font-optical-sizing: auto;
-  font-weight: 700;
+  font-weight: 600;
   font-size: clamp(1.5rem, 3vw, 2rem);
   letter-spacing: -0.01em;
   color: var(--paper);
@@ -149,6 +150,78 @@ a { color: var(--copper-glaze); }
 .nav-links a[aria-current="page"] {
   color: var(--copper-glaze);
   border-bottom-color: var(--copper-glaze);
+}
+
+/* The Menu button only exists on phones, and only once site-nav.js has run (.has-toggle):
+   without the script the links wrap as before rather than disappearing. */
+.nav-toggle {
+  display: none;
+  min-height: 44px;
+  padding: 0 1rem;
+  background: none;
+  border: 1px solid var(--shelf-line);
+  border-radius: 2px;
+  color: var(--bisque);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-toggle:hover,
+.nav-toggle:focus-visible,
+.site-nav.is-open .nav-toggle {
+  border-color: var(--copper-glaze);
+  color: var(--copper-glaze);
+}
+
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .site-nav.has-toggle {
+    align-items: center;
+    padding-top: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .site-nav.has-toggle .nav-toggle {
+    display: inline-block;
+  }
+
+  .site-nav.has-toggle .site-nav-menu {
+    flex-basis: 100%;
+  }
+
+  .site-nav.has-toggle:not(.is-open) .site-nav-menu {
+    display: none;
+  }
+
+  .site-nav.has-toggle .nav-links {
+    flex-direction: column;
+    gap: 0;
+    font-size: 0.85rem;
+  }
+
+  .site-nav.has-toggle .nav-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+    border-bottom: 1px solid var(--shelf-line);
+  }
+
+  .site-nav.has-toggle .nav-links li:last-child a {
+    border-bottom-color: transparent;
+  }
+
+  .site-nav.has-toggle .nav-links a[aria-current="page"] {
+    border-bottom-color: var(--shelf-line);
+  }
 }
 
 /* ---------- footer ---------- */
@@ -209,6 +282,12 @@ a { color: var(--copper-glaze); }
   display: inline-block;
   padding: 0.35rem 0;
   overflow-wrap: anywhere;
+}
+
+@media (pointer: coarse) {
+  .footer-links a {
+    padding: 0.75rem 0;
+  }
 }
 
 .footer-legal {
@@ -288,6 +367,14 @@ a { color: var(--copper-glaze); }
 .hero-secondary-link:hover,
 .hero-secondary-link:focus-visible {
   color: var(--paper);
+}
+
+/* Touch screens: pad the standalone text links to a 44px-tall target. */
+@media (pointer: coarse) {
+  .hero-secondary-link {
+    display: inline-block;
+    padding: 0.85rem 0;
+  }
 }
 
 /* ---------- home intro layout (hero + featured collection) ---------- */
@@ -383,10 +470,25 @@ a { color: var(--copper-glaze); }
   }
 
   /* Photo first when stacked, so the first mobile screen shows pottery instead of only type. */
+  /* Centered rather than start-aligned: at tablet widths the height-capped photo is narrower
+     than the column, and left-aligned it left a lopsided empty band down the right side. */
   .home-intro .featured-collection {
     order: -1;
-    justify-self: start;
+    justify-self: center;
+    width: 100%;
     max-width: min(100%, calc(62dvh * 0.8));
+  }
+}
+
+/* Phones keep the photo first (the work is the pitch), but squared so the headline still
+   lands inside the first screen instead of below a portrait-height photo. */
+@media (max-width: 600px) {
+  .featured-collection-stage {
+    aspect-ratio: 1 / 1;
+  }
+
+  .home-intro .featured-collection {
+    max-width: min(100%, 52dvh);
   }
 }
 
@@ -432,10 +534,12 @@ a { color: var(--copper-glaze); }
   text-transform: uppercase;
   text-decoration: none;
   color: var(--paper);
+  background: none;
   border: 1px solid var(--copper-glaze);
   min-height: 44px;
   padding: 0.65rem 1.2rem;
   border-radius: 2px;
+  cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
@@ -452,6 +556,14 @@ a { color: var(--copper-glaze); }
 
 .btn:active {
   transform: translateY(1px);
+}
+
+.btn:disabled {
+  border-color: var(--shelf-line);
+  background: none;
+  color: var(--bisque-dark);
+  cursor: default;
+  transform: none;
 }
 
 /* ---------- section heading, shared across pages ----------
@@ -684,13 +796,25 @@ a { color: var(--copper-glaze); }
   padding: 4rem 1rem;
 }
 
-.home-events-empty {
-  text-align: center;
-  padding: 1rem 1rem 4rem;
+/* No-events state on Home and Events. Left-aligned on the page gutter like the event ledger it
+   stands in for, and it always offers somewhere to go next instead of "check back soon". */
+.events-empty {
+  padding: 0.5rem var(--page-x) 4rem;
 }
 
-.home-events-empty .empty-state {
-  padding: 0 0 1rem;
+.events-empty p {
+  margin: 0 0 1rem;
+  max-width: 60ch;
+  color: var(--bisque-dark);
+}
+
+.events-empty-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.75rem;
 }
 
 /* ---------- static content pages (FAQ / About) ---------- */
@@ -827,7 +951,22 @@ a { color: var(--copper-glaze); }
   color: var(--bisque-dark);
 }
 
-.calendar-day.outside-month { opacity: 0.35; }
+/* Days of the current month read in Bisque; spill-over days drop to Bisque Dark on a Shelf
+   tint. Both stay readable (the old 0.35 opacity fell to 2:1), and any event pill in a
+   spill-over day keeps full strength. */
+.calendar-day:not(.outside-month) .calendar-day-number {
+  color: var(--bisque);
+}
+
+.calendar-day.outside-month {
+  background: var(--shelf);
+}
+
+.calendar-day.is-today .calendar-day-number {
+  display: inline-block;
+  color: var(--copper-glaze);
+  border-bottom: 1px solid var(--copper-glaze);
+}
 
 .calendar-day-number { display: block; margin-bottom: 0.3rem; }
 
@@ -841,6 +980,27 @@ a { color: var(--copper-glaze); }
   color: var(--paper);
   font-family: var(--font-mono);
   font-size: 0.88rem;
+}
+
+/* No error hue exists in the palette (one accent, by design), so an error is told apart from a
+   success by its brighter border and its wording, not by a new color. */
+.form-status-message--error {
+  border-color: var(--copper-glaze-bright);
+  font-family: var(--font-body);
+}
+
+.form-status-message--error p,
+.form-status-message--error ul {
+  margin: 0;
+}
+
+.form-status-message--error ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.form-status-message--error a {
+  color: var(--copper-glaze-bright);
 }
 
 /* Inside a content page the page gutter is already applied by the page box. */
@@ -881,7 +1041,7 @@ a { color: var(--copper-glaze); }
 .simple-form-field input,
 .simple-form-field textarea {
   background: var(--kiln-char);
-  border: 1px solid var(--shelf-line);
+  border: 1px solid var(--control-line);
   color: var(--paper);
   font: inherit;
   padding: 0.55rem 0.7rem;
@@ -892,30 +1052,6 @@ a { color: var(--copper-glaze); }
   outline: 2px solid var(--copper-glaze);
   outline-offset: 1px;
   border-color: var(--copper-glaze);
-}
-
-.simple-form-submit {
-  background: var(--copper-glaze);
-  color: var(--kiln-char);
-  border: none;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  min-height: 44px;
-  padding: 0.7rem 1.5rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.simple-form-submit:hover,
-.simple-form-submit:focus-visible {
-  background: var(--copper-glaze-bright);
-}
-
-.simple-form-submit:focus-visible {
-  outline: 2px solid var(--paper);
-  outline-offset: 2px;
 }
 
 .hidden { display: none !important; }

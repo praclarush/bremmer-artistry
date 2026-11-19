@@ -139,16 +139,9 @@
   color: var(--copper-glaze-bright);
 }
 
-.event-tag {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.06em;
-  color: var(--bisque-dark);
-}
-
 .event-card h3 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 1.2rem;
   color: var(--paper);
   margin: 0;

@@ -71,6 +71,18 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   surfaces outside the admin portal -- `PieceHandler.GetAllDetailsAsync` (used by the public
   `/pottery-journal/data` endpoint) filters on `GlazeApplications.Any()`; admin-only reads
   (`GetByIdAsync`, `GetSummariesPagedAsync`) are unfiltered.
+- **`Piece.ShowInJournal` (default true) curates the public Journal**, the same way
+  `ShowInGallery` curates the Gallery: `GetAllDetailsAsync` filters on it alongside
+  `GlazeApplications.Any()`, and the admin piece list badges hidden pieces. Its EF mapping is
+  `.HasDefaultValue(true).HasSentinel(true)` plus an entity initializer `= true`. Without the
+  sentinel, EF treats an explicit `false` as "unset" and lets the database default overwrite it,
+  so unchecking the box silently does nothing. Keep all three if you add another default-true
+  bool.
+- **Gallery's camera-file-name fallback is display-only, in `gallery.js`.** The bulk import
+  titled 88 pieces "<Category>, a dash, then a camera file name" (`20250924_110013`);
+  `buildCategories` swaps any title matching `CAMERA_FILENAME_PATTERN` for
+  "<Category>, <Month Year>" and hides the tile caption (the lightbox still shows it). The data
+  is unchanged, so retitling a piece in the admin removes the fallback with no code change.
 - **Collection is a separate concept from Category, not a synonym for it -- but it's a Gallery
   fallback, not fully independent of it.** Category groups pieces by form/type on the Gallery;
   Collection (`Collections` table, `Piece.CollectionId`) groups pieces by a named body of work
@@ -198,6 +210,31 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   on open, since the modal's whole purpose is filling out the form, not dismissing it. Phone is a
   required field on this form (`bookingPhone` has `required`, matching the server-side check in
   `ClassesHandler.CreateBookingAsync` -- never trust client-only validation).
+- **The public Classes section is behind `Site:ShowClasses` (`SiteFeaturesOptions`), off by
+  default.** When false, `_Layout.cshtml` omits the nav/footer links, `Contact.cshtml` swaps its
+  intro sentence, `ClassesModel.OnGet`/`OnPostBookAsync` return `NotFound()`, and the
+  `/classes/data` endpoint returns 404. The admin area is deliberately not gated. A new public
+  surface that mentions or links to classes must check the same flag, and
+  `ClassesVisibilityTests` should get a case for it. `PotteryJournalWebApplicationFactory`
+  defaults the flag to true so the existing Classes tests keep exercising the page; pass
+  `showClasses: false` (or `null` for "unset") to test the hidden state. The hidden-POST test
+  borrows an antiforgery token from `/contact`, because without one antiforgery returns 400
+  before the handler's gate ever runs.
+- **FAQ is gated the same way by `Site:ShowFaq` (off by default)**: `FaqModel.OnGet` returns
+  `NotFound()` and `_Layout.cshtml` drops both links; `FaqVisibilityTests` covers it. The test
+  factory has three constructors: `(db)` turns both flags on, `(db, showClasses)` leaves ShowFaq
+  unset, and `(db, showClasses, showFaq)` sets both (`null` means "unset" for either).
+- **"Today" is the studio's local day, set by `Site:TimeZone` (`StudioTimeOptions`, IANA id,
+  default `America/Chicago`).** `EventsHandler.GetUpcomingAsync` keeps an event with no end time
+  until the studio's local midnight, not UTC midnight; the UTC version dropped same-day morning
+  events from Home and /events after 6 PM Central. The handler reads the clock from an injected
+  `TimeProvider` (`TimeProvider.System` in `Program.cs`), so `EventsHandlerTests` pins a fixed
+  instant with a mocked `TimeProvider`; keep any new day-boundary test on that clock instead of
+  `DateTimeOffset.UtcNow`. An unknown zone id throws when the handler is first constructed.
+- **Contact re-renders instead of redirecting when a send fails.** `ContactModel` returns
+  `Page()` with `ErrorMessages`, so the visitor's input survives; only success redirects (with a
+  TempData status). `ContactHandler` logs the raw sender error and returns a generic
+  `SEND_FAILED_MESSAGE`, so SMTP details never reach the page.
 - **Class booking is a two-step approval flow, and a booking is independent of the
   `ClassAvailability` rule that produced its slot.** A public submission
   (`ClassesHandler.CreateBookingAsync`) re-validates lead time, blackout periods, and party-size-vs-
@@ -241,6 +278,16 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   IBM Plex Mono 400/500/600. Asking for anything else (e.g. Inter 700) silently renders as
   browser-synthesized faux bold. Add the weight to the Google Fonts URL first if one is really
   needed.
+- **Text-field borders use `--control-line`, not `--shelf-line`.** Shelf Line reads at 1.7:1
+  against the page, too faint to show where a field is (WCAG 1.4.11 needs 3:1). Buttons and chips
+  keep Shelf Line, since their text identifies them. See DESIGN.md "Control Line".
+- **A tile's date tag must sit outside `.tile-photo-frame`.** The frame clips the hover zoom; the
+  `.tag` is its sibling inside `.tile-photo` so it can hang past the photo's edge. Both
+  `gallery.js` and `pottery-journal.js` build tiles through a `frameFor(img)` helper; putting the
+  tag inside the frame, or `overflow: hidden` back on `.tile-photo`, clips it again.
+- **The phone nav is progressive enhancement.** `site-nav.js` adds `.has-toggle` to `.site-nav`,
+  and only that class lets `site.css` hide the links at 640px and below. Without the script the
+  links wrap as they always did, so never hide `.site-nav-menu` without the class.
 - **Every public page has exactly one `h1`.** Home's is the hero headline; Gallery, Events, and
   Classes put theirs in `.section-heading` (the same component Home uses with an `h2` for section
   titles -- `site.css` scales the two differently); the Journal's is in `.journal-header`; FAQ,
@@ -323,7 +370,21 @@ component). Read them before any `/impeccable` design work or UI changes to the 
 
 ## Deployment
 
-Same homelab pattern as the old `Pottery` project (`docker/Dockerfile`, behind Nginx Proxy Manager
-for TLS). See [README.md](README.md) for required environment variables --
+`render.yaml` is the Render Blueprint (web service + Postgres + a disk at `/app/uploads`); see
+README "Deploying to Render". Three things in it are load-bearing and not obvious from the file:
+(1) Render's `fromDatabase` `connectionString` is a `postgresql://` URL, which Npgsql 8 rejects
+(`ArgumentException`), so `Program.cs` passes the configured string through
+`ConnectionStringNormalizer.Normalize` -- keep that call if you touch the `UseNpgsql` line, or the
+Render deploy dies at startup while Docker/user-secrets setups (key/value strings, passed through
+unchanged) keep working and hide the problem. (2) `ASPNETCORE_FORWARDEDHEADERS_ENABLED` is what
+makes the app see HTTPS behind Render's proxy; there is no `UseForwardedHeaders` in code, so this
+env var is the only thing doing it. (3) Plan IDs (`0.5c-512mb`, `0.1c-256mb`) are Render's
+current naming; the old `starter`/`basic-256mb` names are rejected by its schema. Validate edits
+against `https://render.com/schema/render.yaml.json` (any JSON-schema validator after parsing the
+YAML) or `render blueprints validate render.yaml`. Note the Blueprint spec has no variable
+interpolation, so don't try to build the connection string from parts.
+
+Otherwise the same homelab pattern as the old `Pottery` project applies (`docker/Dockerfile`,
+behind Nginx Proxy Manager for TLS). See [README.md](README.md) for required environment variables --
 `POTTERYJOURNAL_BOOTSTRAP_ADMIN_EMAIL`/`POTTERYJOURNAL_BOOTSTRAP_ADMIN_PASSWORD` seed the first
 admin account on first startup when `AllowedAdmins` is empty.

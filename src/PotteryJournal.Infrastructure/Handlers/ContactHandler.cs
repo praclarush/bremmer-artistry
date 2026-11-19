@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using PotteryJournal.Infrastructure.Models;
 using PotteryJournal.Infrastructure.Services;
 using PotteryJournal.SharedKernel.Core;
@@ -13,17 +14,20 @@ namespace PotteryJournal.Infrastructure.Handlers
         private const int MAX_NAME_LENGTH = 200;
         private const int MAX_EMAIL_LENGTH = 320;
         private const int MAX_MESSAGE_LENGTH = 1000;
+        private const string SEND_FAILED_MESSAGE = "We couldn't send your message right now. Please try again in a few minutes.";
 
         private readonly IEmailSender _emailSender;
         private readonly IAdminSettingsHandler _adminSettingsHandler;
+        private readonly ILogger<ContactHandler> _logger;
 
         /// <summary>
         /// Initializes a new instance of <see cref="ContactHandler"/>.
         /// </summary>
-        public ContactHandler(IEmailSender emailSender, IAdminSettingsHandler adminSettingsHandler)
+        public ContactHandler(IEmailSender emailSender, IAdminSettingsHandler adminSettingsHandler, ILogger<ContactHandler> logger)
         {
             _emailSender = emailSender;
             _adminSettingsHandler = adminSettingsHandler;
+            _logger = logger;
         }
 
         /// <inheritdoc />
@@ -82,7 +86,10 @@ namespace PotteryJournal.Infrastructure.Handlers
             HandlerResponse emailResponse = await _emailSender.SendAsync(recipient, subject, body);
             if (!emailResponse.IsSuccess)
             {
-                response.AddError($"Could not send your message: {string.Join(" ", emailResponse.Errors)}");
+                // The sender's errors carry raw SMTP/exception text -- useful in the log, never
+                // something to show a visitor.
+                _logger.LogWarning("Contact Us email failed to send: {Errors}", string.Join(" ", emailResponse.Errors));
+                response.AddError(SEND_FAILED_MESSAGE);
                 response.IsSuccess = false;
                 return response;
             }

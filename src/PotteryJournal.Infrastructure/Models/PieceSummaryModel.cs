@@ -19,6 +19,8 @@ namespace PotteryJournal.Infrastructure.Models
 
         public bool ShowInGallery { get; set; }
 
+        public bool ShowInJournal { get; set; }
+
         public DateOnly StartedDate { get; set; }
 
         public string? PrimaryImageFileName { get; set; }

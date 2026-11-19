@@ -6,6 +6,7 @@ let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1
 
 const eventCardsEl = document.getElementById("eventCards");
 const eventsEmptyState = document.getElementById("eventsEmptyState");
+const eventsToolbar = document.getElementById("eventsToolbar");
 const calendarContainer = document.getElementById("calendarContainer");
 const calendarGrid = document.getElementById("calendarGrid");
 const calendarMonthLabel = document.getElementById("calendarMonthLabel");
@@ -37,24 +38,44 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+const eventsLoading = document.getElementById("eventsLoading");
+const eventsError = document.getElementById("eventsError");
+
+window.addEventListener("hashchange", scrollToLinkedEvent);
+listViewBtn.addEventListener("click", () => showView("list"));
+calendarViewBtn.addEventListener("click", () => showView("calendar"));
+document.getElementById("calendarPrev").addEventListener("click", () => shiftMonth(-1));
+document.getElementById("calendarNext").addEventListener("click", () => shiftMonth(1));
+document.getElementById("eventsRetryBtn").addEventListener("click", () => init());
+
 init();
 
 async function init() {
-  const response = await fetch("/events/data");
-  EVENTS = await response.json();
-
-  const allResponse = await fetch("/events/data/all");
-  ALL_EVENTS = await allResponse.json();
+  eventsLoading.classList.remove("hidden");
+  eventsError.classList.add("hidden");
+  try {
+    // The two feeds are independent, so fetch them together rather than one after the other.
+    const [upcoming, all] = await Promise.all([fetchJson("/events/data"), fetchJson("/events/data/all")]);
+    EVENTS = upcoming;
+    ALL_EVENTS = all;
+  } catch (err) {
+    eventsError.classList.remove("hidden");
+    return;
+  } finally {
+    eventsLoading.classList.add("hidden");
+  }
 
   renderCards();
   renderCalendar();
   scrollToLinkedEvent();
-  window.addEventListener("hashchange", scrollToLinkedEvent);
+}
 
-  listViewBtn.addEventListener("click", () => showView("list"));
-  calendarViewBtn.addEventListener("click", () => showView("calendar"));
-  document.getElementById("calendarPrev").addEventListener("click", () => shiftMonth(-1));
-  document.getElementById("calendarNext").addEventListener("click", () => shiftMonth(1));
+async function fetchJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Unexpected response: ${response.status}`);
+  }
+  return response.json();
 }
 
 function showView(view) {
@@ -132,6 +153,9 @@ function shiftMonth(delta) {
 function renderCards() {
   eventCardsEl.innerHTML = "";
   eventsEmptyState.classList.toggle("hidden", EVENTS.length > 0);
+  // A List/Calendar switch over nothing upcoming is a control with no purpose; the empty state
+  // carries the page instead. It stays hidden through loading and load failures too.
+  eventsToolbar.classList.toggle("hidden", EVENTS.length === 0);
 
   EVENTS.forEach((evt) => {
     eventCardsEl.appendChild(buildCard(evt));
@@ -187,11 +211,6 @@ function buildCard(evt) {
 
   const body = document.createElement("div");
   body.className = "event-card-body";
-
-  const tag = document.createElement("span");
-  tag.className = "event-tag";
-  tag.textContent = "[Events]";
-  body.appendChild(tag);
 
   const date = document.createElement("span");
   date.className = "event-date";
@@ -249,7 +268,7 @@ function buildCard(evt) {
 
   const ics = document.createElement("a");
   ics.href = `/events/${evt.id}/ics`;
-  ics.textContent = "Download .ics";
+  ics.textContent = "Add to Apple or Outlook calendar";
   actions.appendChild(ics);
 
   if (evt.externalLinkUrl) {
@@ -329,6 +348,10 @@ function renderCalendar() {
     cell.className = "calendar-day";
     if (day.getMonth() !== calendarCursor.getMonth()) {
       cell.classList.add("outside-month");
+    }
+    if (dayKey(day) === dayKey(new Date())) {
+      cell.classList.add("is-today");
+      cell.setAttribute("aria-current", "date");
     }
 
     const dayNumber = document.createElement("span");

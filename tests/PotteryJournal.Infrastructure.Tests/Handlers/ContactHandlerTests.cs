@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using Moq;
 using PotteryJournal.Infrastructure.Data;
 using PotteryJournal.Infrastructure.Handlers;
@@ -34,7 +35,7 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
                 .Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(new HandlerResponse { IsSuccess = true });
 
-            _sut = new ContactHandler(_emailSenderMock.Object, _adminSettingsHandler);
+            _sut = new ContactHandler(_emailSenderMock.Object, _adminSettingsHandler, Mock.Of<ILogger<ContactHandler>>());
         }
 
         [TearDown]
@@ -113,11 +114,20 @@ namespace PotteryJournal.Infrastructure.Tests.Handlers
             });
             _emailSenderMock
                 .Setup(e => e.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-                .ReturnsAsync(new HandlerResponse { IsSuccess = false });
+                .ReturnsAsync(BuildFailedSend("SMTP 535: authentication failed"));
 
             HandlerResponse response = await _sut.SubmitAsync("Jane Doe", "customer@example.com", "Hello there.");
 
             Assert.That(response.IsSuccess, Is.False);
+            Assert.That(string.Join(" ", response.Errors), Does.Not.Contain("SMTP"));
+        }
+
+        private static HandlerResponse BuildFailedSend(string error)
+        {
+            HandlerResponse response = new HandlerResponse();
+            response.AddError(error);
+            response.IsSuccess = false;
+            return response;
         }
     }
 }

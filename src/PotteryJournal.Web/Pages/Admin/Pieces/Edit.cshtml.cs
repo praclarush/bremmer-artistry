@@ -67,6 +67,7 @@ namespace PotteryJournal.Web.Pages.Admin.Pieces
                 Title = existing.Title,
                 CategoryId = existing.CategoryId,
                 ShowInGallery = existing.ShowInGallery,
+                ShowInJournal = existing.ShowInJournal,
                 ClayBodyId = existing.ClayBodyId,
                 CollectionId = existing.CollectionId,
                 StartedDate = existing.StartedDate,

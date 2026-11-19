@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -26,6 +28,8 @@ namespace PotteryJournal.Web.Pages
         [BindProperty]
         public string Message { get; set; } = string.Empty;
 
+        public List<string> ErrorMessages { get; private set; } = new List<string>();
+
         public void OnGet()
         {
         }
@@ -33,9 +37,15 @@ namespace PotteryJournal.Web.Pages
         public async Task<IActionResult> OnPostAsync()
         {
             HandlerResponse response = await _contactHandler.SubmitAsync(Name, Email, Message);
-            TempData["StatusMessage"] = response.IsSuccess
-                ? "Thanks! Your message has been sent."
-                : string.Join(" ", response.Errors);
+            if (!response.IsSuccess)
+            {
+                // Re-render rather than redirect so the visitor's name, email, and message stay
+                // in the form -- a redirect would throw away a carefully written inquiry.
+                ErrorMessages = response.Errors.ToList();
+                return Page();
+            }
+
+            TempData["StatusMessage"] = "Thanks! Your message has been sent. We'll reply by email.";
             return RedirectToPage();
         }
     }

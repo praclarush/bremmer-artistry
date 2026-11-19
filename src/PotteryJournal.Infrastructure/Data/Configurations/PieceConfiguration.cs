@@ -42,6 +42,15 @@ namespace PotteryJournal.Infrastructure.Data.Configurations
                 .HasDefaultValue(false)
                 .HasComment("Whether this piece is curated for public display on the Gallery page. The Gallery is independent of the Pottery Journal -- a piece can be logged for record-keeping without ever appearing here.");
 
+            // HasSentinel(true): EF omits a column from an INSERT when its value equals the sentinel
+            // and lets the database default apply. With the CLR default (false) as the sentinel, an
+            // explicit "hide from Journal" would be silently overwritten by the true default.
+            builder.Property(p => p.ShowInJournal)
+                .IsRequired()
+                .HasDefaultValue(true)
+                .HasSentinel(true)
+                .HasComment("Whether this piece appears on the public Pottery Journal. Unchecked for test tiles and practice pieces that stay in the admin record only.");
+
             builder.Property(p => p.ClayBodyId)
                 .HasComment("Managed clay body assigned to this piece, if known.");
 

@@ -34,7 +34,7 @@
 
 #searchInput {
   background: var(--shelf);
-  border: 1px solid var(--shelf-line);
+  border: 1px solid var(--control-line);
   color: var(--paper);
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -45,7 +45,7 @@
   outline: none;
 }
 
-#searchInput::placeholder { color: var(--bisque-dark); opacity: 0.7; }
+#searchInput::placeholder { color: var(--bisque-dark); opacity: 1; }
 
 #searchInput:focus-visible {
   border-color: var(--copper-glaze);
@@ -113,6 +113,64 @@
   outline-offset: 2px;
 }
 
+/* Touch screens: grow the chips to a 44px row without changing how they look with a mouse. */
+@media (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+    padding: 0 0.9rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Less-used glazes wait behind "More glazes"; an active one stays visible regardless. */
+.chip-row:not(.is-expanded) .chip--overflow:not(.active) {
+  display: none;
+}
+
+.chip-more {
+  border-style: dashed;
+  color: var(--copper-glaze-bright);
+}
+
+/* Phones only: the filter bar collapses behind this toggle so the first pots sit near the top
+   of the screen instead of under ~770px of chips. */
+.filter-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--shelf-line);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.filter-toggle[aria-expanded="true"] {
+  border-color: var(--copper-glaze-dim);
+}
+
+.filter-toggle:focus-visible {
+  outline: 2px solid var(--copper-glaze);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .filter-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .filter-bar:not(.is-open) {
+    display: none;
+  }
+}
+
+.empty-state p {
+  margin: 0 0 1rem;
+}
+
 /* ---------- gallery grid ---------- */
 
 .gallery {
@@ -120,6 +178,15 @@
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 2.4rem 1.6rem;
   padding: 2.5rem var(--page-x) 4rem;
+}
+
+/* The 180px minimum made phones a single column of full-width squares (270 screens of
+   scrolling). Two columns keep the shelf scannable at thumb distance. */
+@media (max-width: 640px) {
+  .gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.8rem 1rem;
+  }
 }
 
 .tile {
@@ -136,9 +203,14 @@
 .tile-photo {
   position: relative;
   aspect-ratio: 1 / 1;
-  overflow: hidden;
   background: var(--shelf);
   border: 1px solid var(--shelf-line);
+}
+
+/* The frame, not .tile-photo, clips the hover zoom, so the date tag can hang past the edge. */
+.tile-photo-frame {
+  height: 100%;
+  overflow: hidden;
 }
 
 .tile-photo img {
@@ -146,33 +218,12 @@
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.5s ease;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .tile:hover .tile-photo img,
 .tile:focus-visible .tile-photo img {
   transform: scale(1.045);
-}
-
-.tile-photo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.16) 50%,
-    transparent 60%
-  );
-  background-size: 250% 250%;
-  background-position: 120% -20%;
-  pointer-events: none;
-  transition: background-position 0.7s ease;
-}
-
-.tile:hover .tile-photo::after,
-.tile:focus-visible .tile-photo::after {
-  background-position: -20% 120%;
 }
 
 .tag {
@@ -212,7 +263,8 @@
 
 .tile-title {
   display: block;
-  margin-top: 1.1rem;
+  /* Clears the date tag, which now hangs past the photo's bottom edge. */
+  margin-top: 1.6rem;
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 0.92rem;
@@ -344,35 +396,45 @@
 
 .ws-photo-nav {
   position: absolute;
-  bottom: 0.9rem;
+  bottom: 0.15rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 0.4rem;
 }
 
+/* The button is the tap target (32px, past WCAG's 24px minimum); the 8px dot is drawn by
+   ::before so the visual stays small. */
 .ws-photo-nav button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.ws-photo-nav button::before {
+  content: "";
   width: 0.5rem;
   height: 0.5rem;
-  padding: 0;
   border-radius: 50%;
   border: 1px solid var(--ink);
-  background: transparent;
-  cursor: pointer;
   transition: border-color 0.15s ease;
 }
 
-.ws-photo-nav button[aria-current="true"] {
+.ws-photo-nav button[aria-current="true"]::before {
   background: var(--ink);
 }
 
-.ws-photo-nav button:hover {
+.ws-photo-nav button:hover::before {
   border-color: var(--copper-glaze);
 }
 
 .ws-photo-nav button:focus-visible {
   outline: 2px solid var(--copper-glaze);
-  outline-offset: 2px;
+  outline-offset: -4px;
 }
 
 .ws-photo-arrow {
@@ -385,7 +447,9 @@
   font-size: 1.4rem;
   cursor: pointer;
   color: var(--ink-soft);
-  padding: 0.3rem 0.6rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
   transition: color 0.15s ease;
 }
 .ws-photo-arrow:hover { color: var(--ink); }
@@ -393,8 +457,8 @@
   outline: 2px solid var(--copper-glaze);
   outline-offset: 2px;
 }
-.ws-photo-arrow.prev { left: 0.2rem; }
-.ws-photo-arrow.next { right: 0.2rem; }
+.ws-photo-arrow.prev { left: 0; }
+.ws-photo-arrow.next { right: 0; }
 
 .ws-notes-box {
   padding: 1.1rem 1.4rem 1.4rem;
@@ -408,8 +472,12 @@
   font-weight: 600;
 }
 
-.ws-notes-box .empty,
-.ws-glaze-box .empty {
+.ws-notes-box p {
+  max-width: 70ch;
+}
+
+.ws-notes-box.empty,
+.ws-glaze-box.empty {
   color: var(--ink-soft);
   font-style: italic;
   background: none;

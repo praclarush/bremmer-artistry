@@ -15,6 +15,8 @@ namespace PotteryJournal.Infrastructure.Models
 
         public bool ShowInGallery { get; set; }
 
+        public bool ShowInJournal { get; set; } = true;
+
         public Guid? ClayBodyId { get; set; }
 
         public Guid? CollectionId { get; set; }

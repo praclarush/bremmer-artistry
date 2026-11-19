@@ -3,9 +3,9 @@
    grid reuses pottery-journal.css's .tile/.tile-photo/.tile-title "specimen card" component. */
 
 .gallery-intro {
-  /* 42rem of text plus the page gutters -- see --page-x in site.css for why the gutter can't
-     simply sit inside a fixed max-width. */
-  max-width: calc(42rem + 2 * var(--page-x));
+  /* A ~65-character measure plus the page gutters -- see --page-x in site.css for why the gutter
+     can't simply sit inside a fixed max-width. (42rem ran about 100 characters a line.) */
+  max-width: calc(65ch + 2 * var(--page-x));
   padding: 0 var(--page-x);
   margin: 0 0 2rem;
   line-height: 1.8;
