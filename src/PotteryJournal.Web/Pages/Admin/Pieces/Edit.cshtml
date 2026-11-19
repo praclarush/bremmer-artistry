@@ -235,7 +235,7 @@
     @foreach (PotteryJournal.Infrastructure.Models.PieceImageModel image in Model.Images)
     {
       <div class="col-auto text-center">
-        <img class="admin-thumb d-block mb-1" src="/uploads/pieces/@image.FileName" alt="Piece photo">
+        <img class="admin-thumb d-block mb-1" src="/uploads/pieces/thumbs/@image.FileName" alt="Piece photo">
         <form method="post" asp-page-handler="RemoveImage" asp-route-id="@Model.Id" asp-route-imageId="@image.Id"
               onsubmit="return confirm('Remove this photo?');">
           <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>

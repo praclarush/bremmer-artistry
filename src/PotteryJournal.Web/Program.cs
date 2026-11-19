@@ -46,6 +46,7 @@ builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton<IPasswordHasher<AllowedAdmin>, PasswordHasher<AllowedAdmin>>();
+builder.Services.AddHostedService<ThumbnailBackfillService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -59,20 +60,37 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddRateLimiter(options =>
 {
+    // Every request, static files and photos included, counts against one per-client budget. It
+    // only stops clients hammering the site -- a visitor scrolling the whole Journal stays well
+    // under it -- and is the backstop for scrapers that ignore robots.txt.
+    const int requestsPerClientPerMinute = 600;
+
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter(RateLimiterPolicies.DataEndpoints, limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 120;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
-    });
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientPartitionKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = requestsPerClientPerMinute,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+    // Per client, so one scraper exhausting its budget can't lock real visitors out of the pages
+    // that render from these endpoints.
+    options.AddPolicy(RateLimiterPolicies.DataEndpoints, context =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientPartitionKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 120,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
     // Blunts password-guessing against /admin/login now that Google is no longer fronting sign-in.
-    options.AddFixedWindowLimiter(RateLimiterPolicies.LoginAttempts, limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
-    });
+    // Per client, so a bot guessing passwords can't lock the real admin out of signing in.
+    options.AddPolicy(RateLimiterPolicies.LoginAttempts, context =>
+        RateLimitPartition.GetFixedWindowLimiter(ClientPartitionKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
     // Public, unauthenticated POST that writes to the database -- same treatment as LoginAttempts.
     options.AddFixedWindowLimiter(RateLimiterPolicies.ClassBooking, limiterOptions =>
     {
@@ -126,10 +144,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Routing and rate limiting run before the static file middleware so the global per-client limit
+// covers /uploads photos, the site's main bandwidth cost.
+app.UseRouting();
+app.UseRateLimiter();
+
 app.UseStaticFiles();
 
 string uploadsRootPath = Path.Combine(app.Environment.ContentRootPath, app.Configuration["Uploads:RootPath"] ?? "uploads");
 Directory.CreateDirectory(uploadsRootPath);
+app.UseThumbnailFallback(uploadsRootPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsRootPath),
@@ -138,17 +163,16 @@ app.UseStaticFiles(new StaticFileOptions
     {
         // Uploaded file names are unique per upload and never reused, so cache aggressively --
         // matches the original static site's nginx.conf treatment of piece photos.
-        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        context.Context.Response.Headers.CacheControl =
+            ThumbnailFallbackExtensions.UploadsCacheControl(context.Context, "public, max-age=31536000, immutable");
     },
 });
-
-app.UseRouting();
-app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapSearchEngineEndpoints();
 
 // Plain JSON endpoints backing this site's own pages -- not a public API. They replace the
 // old static site's checked-in pieces.json with server-generated data from Postgres.
@@ -219,6 +243,14 @@ static IResult JsonResult<T>(T data)
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
     return Results.Content(JsonSerializer.Serialize(data, options), "application/json");
+}
+
+// The client's IP address. Behind Render's proxy this is the real visitor only because
+// ASPNETCORE_FORWARDEDHEADERS_ENABLED is set (see render.yaml).
+static string ClientPartitionKey(HttpContext context)
+{
+    const string unknownClient = "unknown";
+    return context.Connection.RemoteIpAddress?.ToString() ?? unknownClient;
 }
 
 // Exposes the top-level statements' implicit Program class to PotteryJournal.Web.Tests for

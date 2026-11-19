@@ -8,5 +8,11 @@ namespace PotteryJournal.Infrastructure.Constants
         public const string Pieces = "pieces";
 
         public const string Events = "events";
+
+        /// <summary>
+        /// The folder inside each photo subfolder that holds its thumbnails, saved under the same
+        /// file name as the full-size photo (e.g. <c>pieces/thumbs/abc.jpg</c> for <c>pieces/abc.jpg</c>).
+        /// </summary>
+        public const string Thumbnails = "thumbs";
     }
 }

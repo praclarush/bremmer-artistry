@@ -1,5 +1,8 @@
 const DASH = "—";
 const PIECE_IMAGE_BASE = "/uploads/pieces/";
+// Tiles load the small copy; the worksheet loads full photos. A thumbnail that doesn't exist yet
+// is answered with the full photo by the server, so this never shows a broken image.
+const PIECE_THUMB_BASE = "/uploads/pieces/thumbs/";
 // 40+ glazes as one chip wall pushed the first pot below the fold. The most-used glazes stay
 // visible (chips are sorted by count); the rest sit behind a "More glazes" toggle.
 const GLAZE_CHIP_LIMIT = 8;
@@ -218,7 +221,7 @@ function buildTile(piece) {
   const photo = document.createElement("div");
   photo.className = "tile-photo";
   const img = document.createElement("img");
-  img.src = imageUrl(piece.images[0]);
+  img.src = imageUrl(piece.images[0], PIECE_THUMB_BASE);
   img.loading = "lazy";
   img.alt = piece.title;
   photo.appendChild(frameFor(img));
@@ -244,9 +247,9 @@ function buildTile(piece) {
   return btn;
 }
 
-function imageUrl(image) {
+function imageUrl(image, base = PIECE_IMAGE_BASE) {
   if (!image) return "";
-  return PIECE_IMAGE_BASE + (image.fileName || image);
+  return base + (image.fileName || image);
 }
 
 function pad(n) {
