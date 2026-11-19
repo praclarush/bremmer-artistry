@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,15 @@ namespace PotteryJournal.Web.Tests
             {
                 services.RemoveAll<DbContextOptions<AppDbContext>>();
                 services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase(_databaseName));
+
+                // The test host runs as Development, so it picks up a developer's user-secrets
+                // Uploads:RootPath; without this, every test host would start writing thumbnails
+                // into the real local uploads folder.
+                ServiceDescriptor? backfill = services.FirstOrDefault(descriptor => descriptor.ImplementationType == typeof(ThumbnailBackfillService));
+                if (backfill is not null)
+                {
+                    services.Remove(backfill);
+                }
             });
         }
     }

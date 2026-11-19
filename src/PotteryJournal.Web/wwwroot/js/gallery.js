@@ -1,4 +1,7 @@
 const PIECE_IMAGE_BASE = "/uploads/pieces/";
+// Tiles load the small copy; the lightbox loads the full photo. A thumbnail that doesn't exist yet
+// is answered with the full photo by the server, so this never shows a broken image.
+const PIECE_THUMB_BASE = "/uploads/pieces/thumbs/";
 const PHOTO_SWAP_MS = 130;
 const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const STAGGER_CAP = 15;
@@ -104,6 +107,7 @@ function buildCategories(pieces) {
             pieceTitle: hasRealTitle ? piece.title : `${name}, ${monthYear(piece.startedDate)}`,
             hasRealTitle,
             url: imageUrl(fileName),
+            thumbUrl: PIECE_THUMB_BASE + fileName,
             startedDate: piece.startedDate,
           };
         })
@@ -127,7 +131,7 @@ function renderCategoryTiles() {
     photo.className = "category-photo";
     if (category.photos[0]) {
       const img = document.createElement("img");
-      img.src = category.photos[0].url;
+      img.src = category.photos[0].thumbUrl;
       img.loading = "lazy";
       img.alt = category.name;
       photo.appendChild(img);
@@ -168,7 +172,7 @@ function renderCategoryGrid(category) {
     const photoDiv = document.createElement("div");
     photoDiv.className = "tile-photo";
     const img = document.createElement("img");
-    img.src = photo.url;
+    img.src = photo.thumbUrl;
     img.loading = "lazy";
     img.alt = photo.pieceTitle;
     photoDiv.appendChild(frameFor(img));

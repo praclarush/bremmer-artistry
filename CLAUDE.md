@@ -59,6 +59,17 @@ component). Read them before any `/impeccable` design work or UI changes to the 
 - **Piece photo and event banner uploads** are resized (1600px long edge, never upscaled) and
   re-encoded (JPEG quality 82) by `ImageStorageService` before being saved to the `uploads` volume,
   matching the convention documented in the old `Pottery` project's CLAUDE.md.
+- **Thumbnails** live at `uploads/{subfolder}/thumbs/{same file name}` (600px *short* edge, JPEG
+  78, never upscaled) -- no database column, any code with a file name can build the URL.
+  `SaveResizedJpegAsync` writes one with every upload and `Delete` removes both files.
+  `ThumbnailBackfillService` (hosted, runs once at startup) calls `CreateMissingThumbnailsAsync`
+  for `pieces` and `events` to cover older photos; it skips existing thumbnails, so it's a no-op
+  on a caught-up site. `UseThumbnailFallback` answers a missing thumbnail with the full photo and
+  `Cache-Control: no-cache`, so pages never show a broken tile mid-backfill. Grid tiles, cards,
+  Home's category tiles and admin previews use thumbnails; the lightbox, worksheet viewer, flyer
+  lightbox and Home's featured stage / next-event feature use the full photo. The test factory
+  removes the backfill service: test hosts run as Development and would otherwise write into the
+  developer's real user-secrets `Uploads:RootPath`.
 - **Gallery is deliberately independent of the Pottery Journal.** They share the same `Piece` rows
   (no separate content type -- avoids duplicate data entry) but the relationship is opt-in, not
   automatic: a piece only appears on `/gallery` when `Piece.ShowInGallery` is true *and* it has

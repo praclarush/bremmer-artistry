@@ -202,7 +202,9 @@ function buildCard(evt) {
       photo.addEventListener("click", () => openFlyerLightbox(evt.flyerImageFileName, evt.title));
     }
     const img = document.createElement("img");
-    img.src = `/uploads/events/${evt.imageFileName}`;
+    // The card banner is small, so it loads the thumbnail (the server falls back to the full
+    // photo until one exists); the flyer lightbox keeps the full-size image.
+    img.src = `/uploads/events/thumbs/${evt.imageFileName}`;
     img.alt = evt.title;
     img.loading = "lazy";
     photo.appendChild(img);

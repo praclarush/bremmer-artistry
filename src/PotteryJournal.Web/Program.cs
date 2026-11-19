@@ -46,6 +46,7 @@ builder.Services.AddSingleton<IIcsGenerator, IcsGenerator>();
 builder.Services.AddSingleton<IRecurrenceExpander, RecurrenceExpander>();
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>();
 builder.Services.AddSingleton<IPasswordHasher<AllowedAdmin>, PasswordHasher<AllowedAdmin>>();
+builder.Services.AddHostedService<ThumbnailBackfillService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -153,6 +154,7 @@ app.UseStaticFiles();
 
 string uploadsRootPath = Path.Combine(app.Environment.ContentRootPath, app.Configuration["Uploads:RootPath"] ?? "uploads");
 Directory.CreateDirectory(uploadsRootPath);
+app.UseThumbnailFallback(uploadsRootPath);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsRootPath),
@@ -161,7 +163,8 @@ app.UseStaticFiles(new StaticFileOptions
     {
         // Uploaded file names are unique per upload and never reused, so cache aggressively --
         // matches the original static site's nginx.conf treatment of piece photos.
-        context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        context.Context.Response.Headers.CacheControl =
+            ThumbnailFallbackExtensions.UploadsCacheControl(context.Context, "public, max-age=31536000, immutable");
     },
 });
 

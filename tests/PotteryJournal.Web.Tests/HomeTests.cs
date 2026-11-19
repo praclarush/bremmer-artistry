@@ -76,7 +76,7 @@ namespace PotteryJournal.Web.Tests
             string html = await response.Content.ReadAsStringAsync();
             Assert.That(html, Does.Contain(GalleryTeaserHeading));
             Assert.That(html, Does.Contain("href=\"/gallery#category/Tea%20Bowls\""));
-            Assert.That(html, Does.Contain("/uploads/pieces/cover.jpg"));
+            Assert.That(html, Does.Contain("/uploads/pieces/thumbs/cover.jpg"));
             Assert.That(html, Does.Contain("1 piece"));
         }
 

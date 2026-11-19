@@ -89,6 +89,12 @@ pottery pieces (including photo upload, resized to a 1600px long edge and re-enc
 glaze, category, collection and class-type lists, edit notification settings, manage who else is
 allowed to sign in, and change their own password from `/admin/change-password`.
 
+**Thumbnails**: every upload also saves a small copy (600px on its short side) in a `thumbs`
+folder beside it, and grid tiles and cards load that instead of the full photo -- roughly a
+quarter of the bytes. Photos uploaded before thumbnails existed, or restored from a backup, get
+theirs automatically in the background when the site starts; until then the full photo is shown
+in their place. Nothing needs to be run by hand.
+
 **Event banner photos**: the Events page cards display the banner in a 16:9 crop and the Home
 page's "next event" feature in a slightly taller 16:10 crop (both `object-fit: cover`), so upload
 an image already close to 16:9 (e.g. 1600x900) with nothing important at the left or right edge --

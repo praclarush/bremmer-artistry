@@ -93,7 +93,7 @@
     @if (!string.IsNullOrEmpty(Model.ImageFileName))
     {
       <div class="mb-2">
-        <img class="admin-thumb" src="/uploads/events/@Model.ImageFileName" alt="Current banner photo">
+        <img class="admin-thumb" src="/uploads/events/thumbs/@Model.ImageFileName" alt="Current banner photo">
       </div>
     }
     <input type="file" class="form-control" id="image" name="image" accept="image/*">
@@ -104,7 +104,7 @@
     @if (!string.IsNullOrEmpty(Model.FlyerImageFileName))
     {
       <div class="mb-2">
-        <img class="admin-thumb" src="/uploads/events/@Model.FlyerImageFileName" alt="Current flyer photo">
+        <img class="admin-thumb" src="/uploads/events/thumbs/@Model.FlyerImageFileName" alt="Current flyer photo">
       </div>
     }
     <input type="file" class="form-control" id="flyer" name="flyer" accept="image/*">
