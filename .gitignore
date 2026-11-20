@@ -7,3 +7,4 @@ src/**/uploads/
 .vs/
 .env
 .impeccable/
+reference/

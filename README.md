@@ -6,7 +6,8 @@ Events/calendar section, class booking, FAQ, About, and Contact -- modeled on
 static site this replaces, the catalog, gallery, events, and classes are data-driven (Postgres)
 and manageable by the site owner through an internally-authenticated admin area (email + password,
 no third-party sign-in). Page copy (the Home headline and statement, FAQ, About) is
-developer-maintained static content -- this is not a CMS.
+developer-maintained static content -- this is not a CMS. The About page is the artist's
+first-person statement.
 
 ## Structure
 
@@ -30,6 +31,8 @@ tests/
 docker/
   Dockerfile                       Multi-stage build for PotteryJournal.Web
 docker-compose.yml                 App + Postgres + named volumes (pgdata, uploads)
+reference/                         Local-only reference material (old planning docs, database
+                                    dumps); listed in .gitignore and .dockerignore, never committed
 ```
 
 ## Public site

@@ -4,3 +4,4 @@ src/**/uploads/
 .git/
 .vs/
 *.user
+reference/

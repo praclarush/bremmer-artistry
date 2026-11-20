@@ -136,9 +136,15 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `GetGalleryCategoriesAsync`) and `Index.cshtml` renders all of it -- no client-side fetch, unlike
   Gallery/Events/Classes/Journal. The next event renders as one wide `.event-feature` card and any
   later ones as `.event-ledger-row` rows (styles in `events.css`, Home-only); the Events page keeps
-  its JS-built `.event-card` grid. The statement band and the hero paragraph are the original hero
-  copy split in two, not new copy -- PRODUCT.md rules out invented proof or marketing filler, so
-  don't pad Home with any.
+  its JS-built `.event-card` grid. The statement band and the hero paragraph started as the original
+  hero copy split in two; the hero paragraph was later corrected to say the work comes from a
+  community studio. PRODUCT.md rules out invented proof or marketing filler, so don't pad Home
+  with any.
+- **The owner works out of a community studio and does not own one.** Never describe Bremmer
+  Artistry as "a ceramic studio" or imply a private studio in page copy. The About page
+  (`About.cshtml`) is the owner's first-person artist statement; its source of truth is
+  `Artist-Statement.md` in the owner's Bremmer-Artistry documents folder, outside this repo, so
+  edit both together.
 - **`IPieceHandler.GetGalleryCategoriesAsync` and `gallery.js`'s `buildCategories` are two
   implementations of the same grouping and must agree.** The handler method groups
   `GetGalleryPiecesAsync`'s output into `GalleryCategoryModel` (name, piece count, cover photo) for
@@ -299,6 +305,10 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   pattern when a caller needs something custom.
 
 ## Editing Notes
+
+- **Reference material goes in `reference/`, which is gitignored and dockerignored.** Database
+  dumps and retired planning docs (e.g. `CLASS-SCHEDULING-PLAN.md`) live there; don't add them
+  back to the repo root.
 
 - **Page gutters come from `--page-x` (`site.css`), and it is not a plain clamp.** It's fluid up
   to 3rem, then grows so content never runs wider than `--page-max` (82rem); borders and rules
