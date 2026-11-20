@@ -1,6 +1,7 @@
 @page "/"
 @model PotteryJournal.Web.Pages.IndexModel
 @using PotteryJournal.Infrastructure.Models
+@inject Microsoft.Extensions.Options.IOptions<PotteryJournal.Web.SiteFeaturesOptions> SiteFeatures
 @{
     ViewData["Title"] = "Home";
     ViewData["ActiveNav"] = "Home";
@@ -29,7 +30,10 @@
       else
       {
         <a class="btn" href="/gallery">View the Gallery</a>
-        <a class="hero-secondary-link" href="/pottery-journal">Read the Pottery Journal &rarr;</a>
+        @if (SiteFeatures.Value.ShowPotteryJournal)
+        {
+          <a class="hero-secondary-link" href="/pottery-journal">Read the Pottery Journal &rarr;</a>
+        }
       }
     </div>
   </section>
@@ -132,7 +136,10 @@
       The work is defined by ongoing experiments in shape, surface, and firing, often drawing
       inspiration from dynamic natural patterns like lightning and rivers.
     </p>
-    <a class="hero-secondary-link" href="/pottery-journal">Read the Pottery Journal &rarr;</a>
+    @if (SiteFeatures.Value.ShowPotteryJournal)
+    {
+      <a class="hero-secondary-link" href="/pottery-journal">Read the Pottery Journal &rarr;</a>
+    }
   </div>
 </section>
 

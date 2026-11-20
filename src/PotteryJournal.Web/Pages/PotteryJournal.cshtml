@@ -1,10 +1,15 @@
 @page "/pottery-journal"
+@inject Microsoft.Extensions.Options.IOptions<PotteryJournal.Web.SiteFeaturesOptions> SiteFeatures
 @{
     ViewData["Title"] = "Pottery Journal";
     ViewData["ActiveNav"] = "PotteryJournal";
 }
 
 @section Styles {
+  @if (!SiteFeatures.Value.ShowPotteryJournal)
+  {
+    <meta name="robots" content="noindex">
+  }
   <link rel="stylesheet" href="~/css/pottery-journal.css" asp-append-version="true">
 }
 

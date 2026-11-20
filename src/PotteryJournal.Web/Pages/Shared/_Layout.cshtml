@@ -3,6 +3,7 @@
     string activeNav = ViewData["ActiveNav"] as string ?? string.Empty;
     bool showClasses = SiteFeatures.Value.ShowClasses;
     bool showFaq = SiteFeatures.Value.ShowFaq;
+    bool showPotteryJournal = SiteFeatures.Value.ShowPotteryJournal;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -35,7 +36,10 @@
   <ul class="nav-links" id="siteNavLinks">
     <li><a href="/" aria-current="@(activeNav == "Home" ? "page" : null)">Home</a></li>
     <li><a href="/gallery" aria-current="@(activeNav == "Gallery" ? "page" : null)">Gallery</a></li>
-    <li><a href="/pottery-journal" aria-current="@(activeNav == "PotteryJournal" ? "page" : null)">Pottery Journal</a></li>
+    @if (showPotteryJournal)
+    {
+      <li><a href="/pottery-journal" aria-current="@(activeNav == "PotteryJournal" ? "page" : null)">Pottery Journal</a></li>
+    }
     <li><a href="/events" aria-current="@(activeNav == "Events" ? "page" : null)">Events</a></li>
     @if (showClasses)
     {
@@ -64,7 +68,10 @@
     <h2 class="footer-heading" id="footerExploreHeading">Explore</h2>
     <ul class="footer-links">
       <li><a href="/gallery">Gallery</a></li>
-      <li><a href="/pottery-journal">Pottery Journal</a></li>
+      @if (showPotteryJournal)
+      {
+        <li><a href="/pottery-journal">Pottery Journal</a></li>
+      }
       <li><a href="/events">Events</a></li>
       @if (showClasses)
       {

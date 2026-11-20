@@ -68,7 +68,8 @@ namespace PotteryJournal.Web.Tests
             string sitemap = await client.GetStringAsync("/sitemap.xml");
 
             Assert.That(sitemap, Does.Contain("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">"));
-            Assert.That(sitemap, Does.Contain("/pottery-journal</loc>"));
+            Assert.That(sitemap, Does.Contain("/gallery</loc>"));
+            Assert.That(sitemap, Does.Not.Contain("/pottery-journal</loc>"));
             Assert.That(sitemap, Does.Not.Contain("/classes</loc>"));
             Assert.That(sitemap, Does.Not.Contain("/faq</loc>"));
             Assert.That(sitemap, Does.Not.Contain("/admin"));
