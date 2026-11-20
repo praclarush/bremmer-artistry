@@ -17,5 +17,13 @@ namespace PotteryJournal.Web
         /// footer links and the /faq page itself. Off by default until real FAQ copy is written.
         /// </summary>
         public bool ShowFaq { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the Pottery Journal is advertised: its nav and
+        /// footer links, the links to it on Home and Gallery, and its sitemap entry. Off by default,
+        /// since the journal is the studio's own working record. The /pottery-journal page itself
+        /// stays reachable by URL either way; while hidden it tells search engines not to index it.
+        /// </summary>
+        public bool ShowPotteryJournal { get; set; }
     }
 }

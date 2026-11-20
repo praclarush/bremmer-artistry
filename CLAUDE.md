@@ -39,7 +39,7 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   credentials should get the same treatment.
 - **Bot and bandwidth controls.** `SearchEngineEndpointExtensions` serves `/robots.txt` and
   `/sitemap.xml`, both generated per request so absolute URLs follow the serving host; the
-  sitemap honors `ShowClasses`/`ShowFaq`. Robots.txt blocks AI-training and SEO crawlers but must
+  sitemap honors `ShowClasses`/`ShowFaq`/`ShowPotteryJournal`. Robots.txt blocks AI-training and SEO crawlers but must
   never disallow the `/.../data` endpoints: Gallery, Journal and Events render client-side from
   them, so Google couldn't index those pages. `Program.cs` sets a `GlobalLimiter` of 600
   requests/min per client IP, and `UseRouting`/`UseRateLimiter` sit *before* `UseStaticFiles` so
@@ -253,6 +253,13 @@ component). Read them before any `/impeccable` design work or UI changes to the 
   `NotFound()` and `_Layout.cshtml` drops both links; `FaqVisibilityTests` covers it. The test
   factory has three constructors: `(db)` turns both flags on, `(db, showClasses)` leaves ShowFaq
   unset, and `(db, showClasses, showFaq)` sets both (`null` means "unset" for either).
+- **`Site:ShowPotteryJournal` (off by default) hides the Journal's links, not the Journal.** It
+  drops the nav/footer links, Home's two "Read the Pottery Journal" links, Gallery's intro
+  sentence and the sitemap entry, and adds `noindex` to the page -- but `/pottery-journal` and
+  `/pottery-journal/data` keep working, because the owner uses the page as a working record.
+  Unlike Classes/FAQ it is deliberately not a 404 gate. A new public link to the Journal must check
+  the flag; `PotteryJournalVisibilityTests` sets it with `WithWebHostBuilder` rather than adding
+  a fourth factory constructor.
 - **"Today" is the studio's local day, set by `Site:TimeZone` (`StudioTimeOptions`, IANA id,
   default `America/Chicago`).** `EventsHandler.GetUpcomingAsync` keeps an event with no end time
   until the studio's local midnight, not UTC midnight; the UTC version dropped same-day morning
