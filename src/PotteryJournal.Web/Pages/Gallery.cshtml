@@ -1,4 +1,5 @@
 @page "/gallery"
+@inject Microsoft.Extensions.Options.IOptions<PotteryJournal.Web.SiteFeaturesOptions> SiteFeatures
 @{
     ViewData["Title"] = "Gallery";
     ViewData["ActiveNav"] = "Gallery";
@@ -13,8 +14,12 @@
   <h1>Gallery</h1>
 </div>
 <p id="galleryIntro" class="gallery-intro">
-  Finished work, organized by category. The <a href="/pottery-journal">Pottery Journal</a> holds
-  the full record behind each piece: glazes, clay, and notes.
+  Finished work, organized by category.
+  @if (SiteFeatures.Value.ShowPotteryJournal)
+  {
+    <text>The <a href="/pottery-journal">Pottery Journal</a> holds the full record behind each
+    piece: glazes, clay, and notes.</text>
+  }
 </p>
 
 <div id="categoriesView" class="category-grid"></div>

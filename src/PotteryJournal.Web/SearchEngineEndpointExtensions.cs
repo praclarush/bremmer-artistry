@@ -92,11 +92,15 @@ namespace PotteryJournal.Web
             {
                 "/",
                 "/gallery",
-                "/pottery-journal",
                 "/events",
                 "/about",
                 "/contact",
             };
+
+            if (siteFeatures.ShowPotteryJournal)
+            {
+                paths.Add("/pottery-journal");
+            }
 
             if (siteFeatures.ShowClasses)
             {

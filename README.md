@@ -65,6 +65,10 @@ Home (`/`), Gallery (`/gallery`), Pottery Journal (`/pottery-journal`), Events (
   either way, so classes can be set up before they go public.
 - **FAQ** is hidden the same way behind `Site:ShowFaq` (off by default; `/faq` returns 404 and the
   links disappear) until it has real questions in it.
+- **The Pottery Journal is unadvertised by default** (`Site:ShowPotteryJournal`), since it's the
+  studio's own working record. While off, the nav and footer links, Home's and Gallery's links to
+  it, and its sitemap entry disappear, but `/pottery-journal` still works for anyone with the URL
+  and carries `noindex` so search engines skip it. Set `Site__ShowPotteryJournal=true` to show it.
 - **Contact** re-displays the form with everything the visitor typed when a send fails, plus a
   plain-language error and a mailto fallback. SMTP details go to the log, never to the page.
 
